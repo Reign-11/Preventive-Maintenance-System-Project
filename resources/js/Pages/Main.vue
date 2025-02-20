@@ -103,7 +103,7 @@ loadScripts(files);
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>College A</td>
+                                    <td>Agriculture</td>
                                     <td>A</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
                                 </tr>
                                 <tr>
