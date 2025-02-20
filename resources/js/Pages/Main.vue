@@ -87,9 +87,9 @@ loadScripts(files);
                             <thead class="table-dark">
                                 <tr>
                                     <th>College</th>
-                                    <th>January</th>
-                                    <th>February</th>
-                                    <th>March</th>
+                                    <th>January2</th>
+                                    <th>February2</th>
+                                    <th>March2</th>
                                     <th>April</th>
                                     <th>May</th>
                                     <th>June</th>
