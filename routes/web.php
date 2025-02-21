@@ -44,4 +44,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::get('/preventive-maintenance', function () {
+    return Inertia::render('PreventiveMaintenance');
+})->middleware(['auth', 'verified'])->name('preventive-maintenance');
+
+
 require __DIR__.'/auth.php';
