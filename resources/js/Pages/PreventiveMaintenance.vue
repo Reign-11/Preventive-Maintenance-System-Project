@@ -35,6 +35,32 @@ const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS
 const osOptions = ['Windows 10', 'Windows 11', 'Other'];
 const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 'Media Player', 'Anti-Virus', 'Browser', 'Other'];
 
+// Checklist Data
+const checklist = ref([
+  { item: 1, task: 'System Boot', description: 'Boot system from a cold start.Monitor for errors and speed of entire boot process.', status: '' },
+  { item: 2, task: 'System Log-in', description: 'Monitor for Errors. Monitor login script.', status: '' },
+  { item: 3, task: 'Network Settings', description: 'Monitor login script.\nTCP/IP and IPX settings are correct.\nDomain Name\nSecurity Settings\nClient Configurations\nComputer Name', status: '' },
+  { item: 4, task: 'Computer Hardware Settings', description: 'Verify Device Manager settings\nBIOS up-to-date\nHard Disk\nDVD/CD-RW firmware up-to-date\nMemory is O.K.\nFor Laptop battery run-time is norm', status: '' },
+  { item: 5, task: 'Browser/Proxy Settings', description: 'Verify proper settings and operation.', status: '' },
+  { item: 6, task: 'Proper Software Loads', description: 'Required software is installed and operating.', status: '' },
+  { item: 7, task: 'Viruses and Malware', description: 'Anti-virus installed\nVirus scan done', status: '' },
+  { item: 8, task: 'Clearance', description: 'Unused software removed\nTemporary files removed\nRecycle bin and caches emptied\nPeripheral devices clean', status: '' },
+  { item: 9, task: 'Interiors and Cleaning', description: 'Dust removed\nNo loose parts\nAirflow is O.K.\nCables unplugged and re-plugged\nFans are operating', status: '' },
+  { item: 10, task: 'Peripheral Devices', description: 'Mouse\nKeyboard\nMonitor\nUPS\nPrinter\nTelephone extension\nFax', status: '' },
+]);
+
+// Modal state
+const showModal = ref(false);
+
+// Open modal function
+const openModal = () => {
+  showModal.value = true;
+};
+
+// Close modal function
+const closeModal = () => {
+  showModal.value = false;
+};
 </script>
 
 <template>
@@ -165,11 +191,93 @@ const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 
         </div>
         </div>
 
-      <!-- Save Button -->
+      <!-- Next Button -->
       <div class="text-center mt-4">
-        <button class="btn btn-success"><i class="fas fa-save"></i> Save</button>
-
+          <button class="btn btn-success" @click="openModal" type="button">
+              <i class="fas fa-arrow-right"></i> Next
+          </button>
       </div>
+
+        <!-- Modal -->
+        <div v-if="showModal" class="modal-overlay">
+        <div class="modal-content">
+            <h4 class="fw-bold text-center">Preventive Maintenance Checklist</h4>
+            
+            <table class="table table-bordered mt-3">
+            <thead>
+                <tr>
+                <th>Item #</th>
+                <th>Task</th>
+                <th>Description</th>
+                <th class="text-center">OK</th>
+                <th class="text-center">Repair</th>
+                <th class="text-center">N/A</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template v-for="(check, index) in checklist" :key="index">
+                <tr v-for="(desc, i) in check.description.split('\n')" :key="index + '-' + i">
+                    <!-- Show item and task only on the first row of each group -->
+                    <td v-if="i === 0" :rowspan="check.description.split('\n').length">{{ check.item }}</td>
+                    <td v-if="i === 0" :rowspan="check.description.split('\n').length">{{ check.task }}</td>
+
+                    <!-- Description -->
+                    <td>{{ desc }}</td>
+
+                    <!-- Radio Buttons -->
+                    <td class="text-center">
+                    <input type="radio" :name="'status-' + index + '-' + i" value="OK" v-model="check.status[i]">
+                    </td>
+                    <td class="text-center">
+                    <input type="radio" :name="'status-' + index + '-' + i" value="Repair" v-model="check.status[i]">
+                    </td>
+                    <td class="text-center">
+                    <input type="radio" :name="'status-' + index + '-' + i" value="N/A" v-model="check.status[i]">
+                    </td>
+                </tr>
+                </template>
+            </tbody>
+            </table>
+
+
+            <!-- <table class="table table-bordered mt-3">
+            <thead class="table-light">
+                <tr>
+                <th>Item</th>
+                <th>Task</th>
+                <th>Description</th>
+                <th>OK</th>
+                <th>Repair</th>
+                <th>N/A</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="(row, index) in checklist" :key="index">
+                <td>{{ row.item }}</td>
+                <td>{{ row.task }}</td>
+                <td><pre class="m-0">{{ row.description }}</pre></td>
+                <td>
+                    <input type="radio" :name="'status-' + index" value="OK" v-model="row.status">
+                </td>
+                <td>
+                    <input type="radio" :name="'status-' + index" value="Repair" v-model="row.status">
+                </td>
+                <td>
+                    <input type="radio" :name="'status-' + index" value="N/A" v-model="row.status">
+                </td>
+                </tr>
+            </tbody>
+            </table> -->
+
+            <!-- Save Button -->
+            <div class="text-center mt-3">
+                <button class="btn btn-success" @click="closeModal">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+
+        </div>
+        </div>
     </div>
   </MainLayout>
 </template>
@@ -199,5 +307,70 @@ const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 
   padding: 20px;
   border-radius: 10px;
 }
+
+/* Modal Styles */
+/* .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+  text-align: center;
+} */
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Modal Box */
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Table Styling */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+
+pre {
+  white-space: pre-wrap;
+  text-align: left;
+  font-size: 14px;
+}
+
 
 </style>
