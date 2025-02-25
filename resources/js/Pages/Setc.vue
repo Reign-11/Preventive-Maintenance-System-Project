@@ -85,8 +85,8 @@ const addCollege = () => {
                 </div>
             </div>
 
-            <!-- "Set B" Title -->
-            <div class="text-success fw-bold fs-3 text-center mt-4">Set B</div>
+            <!-- "Set C" Title -->
+            <div class="text-success fw-bold fs-3 text-center mt-4">Set C</div>
 
             <!-- Table Section -->
             <div class="card mt-4">

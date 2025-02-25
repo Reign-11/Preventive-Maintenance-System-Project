@@ -5,13 +5,13 @@ import MainLayout from '@/Layouts/MainLayout.vue';
 const selectedYear = ref(2024);
 const entriesToShow = ref(10);
 
-// Define reactive table data
+// Reactive table data
 const tableData = ref([
-    { college: "College of Veterinary Medicine", months: ["", "A", "", "", "", "", "", "", "", "", "", ""] },
-    { college: "College of Agriculture", months: ["", "", "A", "", "", "", "", "", "", "", "", ""] },
-    { college: "College of Education", months: ["", "", "", "A", "", "", "", "", "", "", "", ""] },
-    { college: "College of Business and Management", months: ["", "", "", "", "A", "", "", "", "", "", "", ""] },
-    { college: "College of Forestry and Environmental Science", months: ["", "", "", "", "", "A", "", "", "", "", "", ""] }
+    { college: "College of Veterinary Medicine", months: ["", "", "", "", "", "", "", "", "", "", "", ""] },
+    { college: "College of Agriculture", months: ["", "", "", "", "", "", "", "", "", "", "", ""] },
+    { college: "College of Education", months: ["", "", "", "", "", "", "", "", "", "", "", ""] },
+    { college: "College of Business and Management", months: ["", "", "", "", "", "", "", "", "", "", "", ""] },
+    { college: "College of Forestry and Environmental Science", months: ["", "", "", "", "", "", "", "", "", "", "", ""] }
 ]);
 
 const printTable = () => {
@@ -45,7 +45,6 @@ const addCollege = () => {
     newCollegeName.value = "";
     closeModal();
 };
-
 </script>
 
 <template>
@@ -113,9 +112,9 @@ const addCollege = () => {
                         </div>
                     </div>
 
-                    <!-- Table -->
-                    <div class="datatable text-center">
-                        <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                    <!-- Responsive Table Container -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover text-center">
                             <thead class="table-success">
                                 <tr>
                                     <th>Colleges</th>
@@ -148,22 +147,12 @@ const addCollege = () => {
                             </tbody>
                         </table>
                     </div>
-
-                    <!-- Navigation Buttons -->
-                    <div class="pagination-buttons no-print">
-                        <button class="btn btn-secondary btn-sm">
-                            <i class="fas fa-arrow-left"></i> Previous
-                        </button>
-                        <button class="btn btn-primary btn-sm">
-                            Next <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Add College Modal -->
-        <div class="modal fade" id="addCollegeModal" tabindex="-1" aria-hidden="true" ref="modal">
+        <div class="modal fade" id="addCollegeModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -187,27 +176,44 @@ const addCollege = () => {
 </template>
 
 <style scoped>
-.table-container {
-    max-width: 80%;
-    margin: auto;
-}
-.pagination-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 10px;
-}
-
 @media print {
     .no-print {
         display: none !important;
     }
+    
     .print-only {
         display: inline !important;
     }
+
+    table {
+        border-collapse: collapse !important;
+        width: 100%;
+    }
+
+    table, th, td {
+        border: 1px solid black !important; /* Add light borders for clarity */
+    }
+
+    th, td {
+        padding: 8px;
+        text-align: center;
+        font-size: 14px;
+    }
 }
+
 
 .print-only {
     display: none;
+}
+
+td {
+    overflow: visible !important;
+}
+
+input {
+    min-width: 50px;
+    width: 100%;
+    background-color: transparent;
+    text-align: center;
 }
 </style>

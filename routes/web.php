@@ -36,6 +36,9 @@ Route::get('/main', function () {
 Route::get('/setb', function () {
     return Inertia::render('Setb');
 })->middleware(['auth', 'verified'])->name('setb');
+Route::get('/setc', function () {
+    return Inertia::render('Setc');
+})->middleware(['auth', 'verified'])->name('setc');
 
 
 Route::middleware('auth')->group(function () {

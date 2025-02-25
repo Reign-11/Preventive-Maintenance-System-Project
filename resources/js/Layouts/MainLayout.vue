@@ -64,17 +64,22 @@ onMounted(() => {
             <div id="layoutSidenav_nav" :class="{'d-none': !sidebarOpen}">
                 <nav class="sidenav shadow-right sidenav-light">
                     <ul class="navbar-nav d-flex flex-column align-items-center">
-    <li class="nav-item nav-item-spacing">
-        <NavLink :href="route('main')" :active="route().current('main')" class="nav-link-custom">
-            Set A
-        </NavLink>
-    </li>
-    <li class="nav-item nav-item-spacing">
-        <NavLink :href="route('setb')" :active="route().current('setb')" class="nav-link-custom">
-            Set B
-        </NavLink>
-    </li>
-</ul>
+        <li class="nav-item nav-item-spacing">
+            <NavLink :href="route('main')" :active="route().current('main')" class="nav-link-custom">
+                Set A
+            </NavLink>
+        </li>
+        <li class="nav-item nav-item-spacing">
+            <NavLink :href="route('setb')" :active="route().current('setb')" class="nav-link-custom">
+                Set B
+            </NavLink>
+        </li>
+        <li class="nav-item nav-item-spacing">
+            <NavLink :href="route('setc')" :active="route().current('setc')" class="nav-link-custom">
+                Set C
+            </NavLink>
+        </li>
+    </ul>
         </nav>
 
 
