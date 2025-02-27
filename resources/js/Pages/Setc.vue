@@ -7,11 +7,11 @@ const entriesToShow = ref(10);
 
 // Reactive table data
 const tableData = ref([
-    { college: "College of Veterinary Medicine", months: ["", "", "", "", "", "", "", "", "", "", "", ""] },
-    { college: "College of Agriculture", months: ["", "", "", "", "", "", "", "", "", "", "", ""] },
-    { college: "College of Education", months: ["", "", "", "", "", "", "", "", "", "", "", ""] },
-    { college: "College of Business and Management", months: ["", "", "", "", "", "", "", "", "", "", "", ""] },
-    { college: "College of Forestry and Environmental Science", months: ["", "", "", "", "", "", "", "", "", "", "", ""] }
+    { college: "College of Veterinary Medicine", routeName: 'office-user', months: Array(12).fill("") },
+    { college: "College of Agriculture", routeName: 'office-user', months: Array(12).fill("") },
+    { college: "College of Education", routeName: 'office-user', months: Array(12).fill("") },
+    { college: "College of Business and Management", routeName: 'office-user', months: Array(12).fill("") },
+    { college: "College of Forestry and Environmental Science", routeName: 'office-user', months: Array(12).fill("") }
 ]);
 
 const printTable = () => {
@@ -33,18 +33,19 @@ const closeModal = () => {
     modalInstance.hide();
 };
 
-// Add College
 const addCollege = () => {
     if (newCollegeName.value.trim() === "") return;
 
     tableData.value.push({
         college: newCollegeName.value,
+        routeName: 'office-user', // Set the routeName to 'office-user'
         months: Array(12).fill("")
     });
 
     newCollegeName.value = "";
     closeModal();
 };
+
 </script>
 
 <template>
@@ -133,17 +134,21 @@ const addCollege = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(row, rowIndex) in tableData" :key="rowIndex">
-                                    <td>{{ row.college }}</td>
-                                    <td v-for="(value, monthIndex) in row.months" :key="monthIndex">
-                                        <span class="print-only">{{ value }}</span>
-                                        <input 
-                                            type="text" 
-                                            v-model="tableData[rowIndex].months[monthIndex]" 
-                                            class="form-control text-center no-print"
-                                        />
+                                <tr v-for="(row, index) in tableData" :key="index">
+                                    <td>
+                                        <a v-if="row.routeName" :href="route(row.routeName)">
+                                            {{ row.college }}
+                                        </a>
+                                        <span v-else>{{ row.college }}</span>
                                     </td>
-                                </tr>
+                                    <td v-for="(month, mIndex) in row.months" :key="mIndex">
+                                            <!-- Visible Input for Editing -->
+                                            <input v-model="row.months[mIndex]" type="text" class="form-control text-center no-print">
+    
+                                            <!-- Text Only When Printing -->
+                                            <span class="print-only">{{ row.months[mIndex] }}</span>
+                                        </td>
+                                    </tr>
                             </tbody>
                         </table>
                     </div>
@@ -170,7 +175,6 @@ const addCollege = () => {
                 </div>
             </div>
         </div>
-
     </main>
 </MainLayout>
 </template>
@@ -201,7 +205,6 @@ const addCollege = () => {
     }
 }
 
-
 .print-only {
     display: none;
 }
@@ -216,4 +219,13 @@ input {
     background-color: transparent;
     text-align: center;
 }
+
+@media print {
+    a {
+        text-decoration: none !important;
+        color: black;
+        pointer-events: none;
+    }
+}
+
 </style>

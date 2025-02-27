@@ -40,6 +40,9 @@ Route::get('/setc', function () {
     return Inertia::render('Setc');
 })->middleware(['auth', 'verified'])->name('setc');
 
+Route::get('/office-user', function () {
+    return Inertia::render('OfficeUser');
+})->middleware(['auth', 'verified'])->name('office-user');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -50,6 +53,12 @@ Route::middleware('auth')->group(function () {
 Route::get('/preventive-maintenance', function () {
     return Inertia::render('PreventiveMaintenance');
 })->middleware(['auth', 'verified'])->name('preventive-maintenance');
+Route::get('/checklist-server', function () {
+    return Inertia::render('ChecklistServer');
+})->middleware(['auth', 'verified'])->name('checklist-server');
+Route::get('/office-user', function () {
+    return Inertia::render('OfficeUser');
+})->middleware(['auth', 'verified'])->name('office-user');
 
 
 require __DIR__.'/auth.php';
