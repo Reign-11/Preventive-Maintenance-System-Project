@@ -142,8 +142,9 @@ const addCollege = () => {
                                     <td v-for="(month, mIndex) in row.months" :key="mIndex">
                                             <!-- Visible Input for Editing -->
                                             <input v-model="row.months[mIndex]" type="text" class="form-control text-center no-print">
+
                                             <!-- Text Only When Printing -->
-                                            <span>{{ row.months[mIndex] }}</span>
+                                            <span class="print-only">{{ row.months[mIndex] }}</span>
                                         </td>
                                         <td class="no-print"> <!-- Actions Column -->
                                         <a :href="route(row.routeName)" class="btn btn-primary btn-sm">View Details</a>
