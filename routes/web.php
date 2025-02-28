@@ -50,15 +50,18 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::get('/preventive-maintenance', function () {
-    return Inertia::render('PreventiveMaintenance');
-})->middleware(['auth', 'verified'])->name('preventive-maintenance');
+// Route::get('/preventive-maintenance', function () {
+//     return Inertia::render('PreventiveMaintenance');
+// })->middleware(['auth', 'verified'])->name('preventive-maintenance');
 Route::get('/checklist-server', function () {
     return Inertia::render('ChecklistServer');
 })->middleware(['auth', 'verified'])->name('checklist-server');
 Route::get('/office-user', function () {
     return Inertia::render('OfficeUser');
 })->middleware(['auth', 'verified'])->name('office-user');
+Route::get('/datacenter', function () {
+    return Inertia::render('Datacenter');
+})->middleware(['auth', 'verified'])->name('datacenter');
 
 
 require __DIR__.'/auth.php';

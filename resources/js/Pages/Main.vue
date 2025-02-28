@@ -131,23 +131,23 @@ const addCollege = () => {
                                     <th>Oct</th>
                                     <th>Nov</th>
                                     <th>Dec</th>
+                                    <th class="no-print">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="(row, index) in tableData" :key="index">
                                     <td>
-                                        <a v-if="row.routeName" :href="route(row.routeName)">
-                                            {{ row.college }}
-                                        </a>
-                                        <span v-else>{{ row.college }}</span>
+                                        <span>{{ row.college }}</span>
                                     </td>
                                     <td v-for="(month, mIndex) in row.months" :key="mIndex">
                                             <!-- Visible Input for Editing -->
                                             <input v-model="row.months[mIndex]" type="text" class="form-control text-center no-print">
-    
                                             <!-- Text Only When Printing -->
-                                            <span class="print-only">{{ row.months[mIndex] }}</span>
+                                            <span>{{ row.months[mIndex] }}</span>
                                         </td>
+                                        <td class="no-print"> <!-- Actions Column -->
+                                        <a :href="route(row.routeName)" class="btn btn-primary btn-sm">View Details</a>
+                                    </td>
                                     </tr>
                             </tbody>
                         </table>
