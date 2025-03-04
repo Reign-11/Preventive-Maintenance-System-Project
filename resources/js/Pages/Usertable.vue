@@ -128,90 +128,39 @@ const saveItem = () => {
 };
 
 const isOfficeSelected = computed(() => selectedOption.value === "Office");
+
 const submitForm = () => {
   console.log("Form Submitted", formData.value);
   closeModal();
 };
-
-const printDetails = (item) => {
-  // Dynamically create modal content for the specific item
-  const modalHtml = `
-    <html>
-      <head>
-        <title>Print Modal</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          .modal-content { font-size: 16px; }
-        </style>
-      </head>
-      <body>
-        <h2>${selectedOption.value === 'Office' ? 'Office' : 'User'} Details</h2>
-        <div class="details">
-          <p><strong>Name:</strong> ${item.name}</p>
-          <p><strong>Status:</strong> ${item.status}</p>
-        </div>
-        <div class="modal-body">
-          <p><strong>Equipment Installed:</strong> ${item.equipmentInstalled ? item.equipmentInstalled.join(', ') : 'N/A'}</p>
-          <p><strong>Operating System:</strong> ${item.osInstalled || 'N/A'}</p>
-          <p><strong>Software Installed:</strong> ${item.softwareInstalled ? item.softwareInstalled.join(', ') : 'N/A'}</p>
-          <p><strong>PC Specifications:</strong> ${JSON.stringify(item.desktopSpecs)}</p>
-        </div>
-      </body>
-    </html>
-  `;
-
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(modalHtml);
-  printWindow.document.close();
-  printWindow.print();
-};
-
-
 </script>
 
 <template>
   <MainLayout>
-    <div class="container">
-      <div class="controls">
-        <label for="office-users">Office/Users:</label>
-        <select v-model="selectedOption" id="office-users">
-          <option value="Office">Office</option>
-          <option value="Users">Users</option>
-        </select>
-      </div>
 
-      <table class="data-table">
-        <thead>
-            <tr>
-            <th>User/Office</th>
-            <th v-if="isUserSelected || isOfficeSelected">Actions</th>
-            <th>Status</th>
-            <th v-if="isUserSelected">Print Details</th> <!-- Show only for Users -->
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="(item, index) in displayedData" :key="index">
-            <td>{{ item.name }}</td>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Actions</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(item, index) in userData" :key="index">
+          <td>{{ item.name }}</td>
+          <td>
+            <button class="edit-btn" @click="openStep1Modal(item)">View</button>
+          </td>
+          <td :class="{ 'clear-status': item.status === 'Clear', 'unclear-status': item.status === 'Unclear' }">
+            {{ item.status }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-            <td v-if="isUserSelected || isOfficeSelected">
-                <button class="edit-btn" @click="openStep1Modal(item)">View</button>
-            </td>
-
-            <td :class="{ 'clear-status': item.status === 'Clear', 'unclear-status': item.status === 'Unclear' }">
-                {{ item.status }}
-            </td>
-
-            <td v-if="isUserSelected"> <!-- Ensure "Print" button only appears for Users -->
-            <button class="edit-btn" @click="printDetails(item)">Print</button>
-            </td>
-            </tr>
-        </tbody>
-        </table>
-
-
-
-    <!-- Modal -->
-    <div v-if="isStep1ModalOpen" class="modal fade show d-block">
+        <!-- Modal -->
+        <div v-if="isStep1ModalOpen" class="modal fade show d-block">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
             <div class="modal-header d-flex justify-content-between align-items-center">
@@ -383,10 +332,8 @@ const printDetails = (item) => {
         </div>
       </div>
     </div>
-    </div>
   </MainLayout>
-</template>
-
+  </template>
 
 <style scoped>
 /* Background & Container */
@@ -516,6 +463,7 @@ select {
   min-height: 100vh; /* Centering fix */
 }
 
+
 .input-field {
   width: 100%;
   padding: 8px;
@@ -547,47 +495,4 @@ select {
   border-radius: 5px;
   cursor: pointer;
 }
-
-.print-btn {
-  background-color: #4CAF50; /* Green or any color you prefer */
-  color: white;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background 0.3s ease;
-}
-.print-btn:hover {
-  background-color: #45a049; /* Darker shade on hover */
-}
-
-@media print {
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h2 { text-align: center; }
-    .modal { display: none !important; } /* Hide modals during print */
-}
-
-/* Left-align the headings inside the cards */
-.card h6 {
-  text-align: left;
-}
-
-/* Left-align the labels inside the form groups */
-.card .form-check-label {
-  text-align: left;
-}
-
-/* Additional styling to ensure that the checkboxes and radio buttons align left */
-.card .form-check {
-  text-align: left;
-}
-
-/* Ensure the input fields also align left */
-.card .form-control {
-  text-align: left;
-}
-
 </style>
-
-
