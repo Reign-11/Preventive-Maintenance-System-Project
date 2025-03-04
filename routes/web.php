@@ -56,4 +56,7 @@ Route::get('/datacenter', function () {
     return Inertia::render('Datacenter');
 })->middleware(['auth', 'verified'])->name('datacenter');
 
+Route::get('/usertable', function () {
+    return Inertia::render('Usertable');
+})->middleware(['auth', 'verified'])->name('usertable');
 require __DIR__.'/auth.php';
