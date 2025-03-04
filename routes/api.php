@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MaintenancePlanController; 
+use App\Http\Controllers\OfficeController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
@@ -19,5 +20,8 @@ Route::post('/save-maintenance-plan', [MaintenancePlanController::class, 'saveMa
 
 Route::post('/add-colleges', [MaintenancePlanController::class, 'addCollege']);
 
-
 Route::get('/offices', [MaintenancePlanController::class, 'getOffice']);
+
+Route::delete('/delete-maintenance-plan/{id}', [MaintenancePlanController::class, 'destroy']);
+
+
