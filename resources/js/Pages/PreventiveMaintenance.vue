@@ -240,34 +240,7 @@ const closeModal = () => {
             </table>
 
 
-            <!-- <table class="table table-bordered mt-3">
-            <thead class="table-light">
-                <tr>
-                <th>Item</th>
-                <th>Task</th>
-                <th>Description</th>
-                <th>OK</th>
-                <th>Repair</th>
-                <th>N/A</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="(row, index) in checklist" :key="index">
-                <td>{{ row.item }}</td>
-                <td>{{ row.task }}</td>
-                <td><pre class="m-0">{{ row.description }}</pre></td>
-                <td>
-                    <input type="radio" :name="'status-' + index" value="OK" v-model="row.status">
-                </td>
-                <td>
-                    <input type="radio" :name="'status-' + index" value="Repair" v-model="row.status">
-                </td>
-                <td>
-                    <input type="radio" :name="'status-' + index" value="N/A" v-model="row.status">
-                </td>
-                </tr>
-            </tbody>
-            </table> -->
+  
 
             <!-- Save Button -->
             <div class="text-center mt-3">
@@ -308,27 +281,7 @@ const closeModal = () => {
   border-radius: 10px;
 }
 
-/* Modal Styles */
-/* .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
 
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 400px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
-  text-align: center;
-} */
 
 /* Modal Overlay */
 .modal-overlay {
