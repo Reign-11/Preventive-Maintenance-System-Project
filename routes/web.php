@@ -48,9 +48,16 @@ Route::get('/preventive-maintenance', function () {
     return Inertia::render('PreventiveMaintenance');
 })->middleware(['auth', 'verified'])->name('preventive-maintenance');
 
-Route::get('/office-user', function () {
-    return Inertia::render('OfficeUser');
+
+Route::get('/office-user/{officeId}', function ($officeId) {
+    // Call the stored procedure to update ParentId and get department names
+    $departments = DB::select("CALL GetDepartmentsByOffice(?)", [$officeId]);
+
+    return Inertia::render('OfficeUser', [
+        'departments' => $departments
+    ]);
 })->middleware(['auth', 'verified'])->name('office-user');
+
 
 Route::get('/datacenter', function () {
     return Inertia::render('Datacenter');

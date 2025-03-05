@@ -173,4 +173,13 @@ class MaintenancePlanController extends Controller
             ], 500);
         }
     }
+
+    public function index($officeId)
+    {
+    // Call the stored procedure
+    $departments = DB::select('CALL GetOffice(?)', [$officeId]);
+
+    return view('office_users.index', compact('departments'));
+    }
+
 }

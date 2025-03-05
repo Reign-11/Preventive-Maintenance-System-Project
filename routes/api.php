@@ -24,4 +24,5 @@ Route::get('/offices', [MaintenancePlanController::class, 'getOffice']);
 
 Route::delete('/delete-maintenance-plan/{id}', [MaintenancePlanController::class, 'destroy']);
 
+Route::get('/office-users/{office}', [OfficeUserController::class, 'index'])->name('office-user');
 

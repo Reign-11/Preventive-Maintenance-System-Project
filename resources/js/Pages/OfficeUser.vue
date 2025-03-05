@@ -8,6 +8,17 @@ const selectedOption = ref("Office");
 const isModalOpen = ref(false);
 const editedItem = ref({}); // Store selected user data
 
+
+const props = defineProps({
+  departments: {
+    type: Array,
+    required: true
+  }
+});
+
+
+
+
 const openStep1Modal = () => {
   isStep1ModalOpen.value = true;
   disableBackgroundScroll();
@@ -67,14 +78,8 @@ const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS
 const osOptions = ['Windows 10', 'Windows 11', 'Other'];
 const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 'Media Player', 'Anti-Virus', 'Browser', 'Other'];
 
-// Sample Data
-const officeData = ref([
-  { name: "College of Information Sciences and Computing", status: "Clear" },
-  { name: "College of Arts and Sciences", status: "Clear" },
-  { name: "Registrar Office", status: "Clear" },
-  { name: "Research Office", status: "Clear" },
-  { name: "Library", status: "Clear" },
-]);
+
+
 
 const userData = ref([
   { name: "PC-92", status: "Clear" },
@@ -164,6 +169,9 @@ const printDetails = (item) => {
   printWindow.document.write(modalHtml);
   printWindow.document.close();
   printWindow.print();
+
+
+  
 };
 
 
@@ -181,47 +189,44 @@ const printDetails = (item) => {
       </div>
 
       <table class="data-table">
-        <thead>
-            <tr>
-            <th>User/Office</th>
-            <th v-if="isUserSelected || isOfficeSelected">Actions</th>
-            <th>Status</th>
-            <th v-if="isUserSelected">Print Details</th> <!-- Show only for Users -->
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="(item, index) in displayedData" :key="index">
-            <td>{{ item.name }}</td>
+      <thead>
+        <tr>
+          <th>User/Office</th>
+          <th v-if="isUserSelected || isOfficeSelected">Actions</th>
+          <th>Status</th>
+          <th v-if="isUserSelected">Print Details</th> <!-- Show only for Users -->
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(department, index) in departments" :key="index">
+          <td>{{ department.department_name }}</td>
 
-            <td v-if="isUserSelected || isOfficeSelected">
+          <td v-if="isUserSelected || isOfficeSelected">
             <button 
-                class="edit-btn" 
-                v-if="isUserSelected" 
-                @click="openStep1Modal(item)"
+              class="edit-btn" 
+              v-if="isUserSelected" 
+              @click="openStep1Modal(department)"
             >
-                View
+              View
             </button>
 
             <a 
-                v-else 
-                class="edit-btn" 
-                :href="route('usertable')"
+              v-else 
+              class="edit-btn" 
+              :href="route('usertable')"
             >
-                View
+              View
             </a>
-        </td>
+          </td>
 
+          <td class="status-column">N/A</td> <!-- Placeholder as no status is available -->
 
-            <td :class="{ 'clear-status': item.status === 'Clear', 'unclear-status': item.status === 'Unclear' }">
-                {{ item.status }}
-            </td>
-
-            <td v-if="isUserSelected"> <!-- Ensure "Print" button only appears for Users -->
-            <button class="edit-btn" @click="printDetails(item)">Print</button>
-            </td>
-            </tr>
-        </tbody>
-        </table>
+          <td v-if="isUserSelected">
+            <button class="edit-btn" @click="printDetails(department)">Print</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
 
 
