@@ -425,9 +425,10 @@ const deleteOffice = async (planId) => {
               <!-- View Button -->
 
               <a v-if="plan.OffId" :href="route('office-user', { officeId: plan.OffId })"
-   class="btn btn-sm btn-outline-primary d-flex align-items-center">
-  <i class="fas fa-eye me-1"></i> View
-</a>
+                class="btn btn-sm btn-outline-primary d-flex align-items-center">
+                <i class="fas fa-eye me-1"></i> View
+              </a>
+              
 
 
                 <!-- Delete Button -->

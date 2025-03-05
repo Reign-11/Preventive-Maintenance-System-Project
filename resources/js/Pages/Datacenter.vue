@@ -83,17 +83,56 @@ const saveChecklist = () => {
   closeModal();
 };
 
+const printDetails = (item) => {
+  const modalHtml = `
+    <html>
+      <head>
+        <title>Print Modal</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          .modal-content { font-size: 16px; }
+        </style>
+      </head>
+      <body>
+        <h2>Office/User Details</h2>
+        <div class="details">
+          <p><strong>Name:</strong> ${item.name}</p>
+          <p><strong>Status:</strong> ${item.status}</p>
+        </div>
+        <div class="modal-body">
+          <p><strong>Equipment Installed:</strong> ${item.equipmentInstalled ? item.equipmentInstalled.join(', ') : 'N/A'}</p>
+          <p><strong>Operating System:</strong> ${item.osInstalled || 'N/A'}</p>
+          <p><strong>Software Installed:</strong> ${item.softwareInstalled ? item.softwareInstalled.join(', ') : 'N/A'}</p>
+          <p><strong>PC Specifications:</strong> ${JSON.stringify(item.desktopSpecs)}</p>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(modalHtml);
+  printWindow.document.close();
+
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  },10); // Wait for 500ms before printin
+};
+
 </script>
 
 <template>
   <MainLayout>
     <div class="container">
+      <h2 class="text-center my-3">Preventive Maintenance 2025</h2> 
+
       <table class="data-table">
         <thead>
           <tr>
             <th>Office</th>
             <th>Actions</th>
             <th>Status</th>
+            <th>Print Details</th> <!-- No conditions needed -->
           </tr>
         </thead>
         <tbody>
@@ -105,10 +144,15 @@ const saveChecklist = () => {
             <td :class="{ 'clear-status': item.status === 'Clear', 'unclear-status': item.status === 'Unclear' }">
               {{ item.status }}
             </td>
+            <td>
+              <button class="edit-btn" @click="printDetails(item)">Print</button>
+            </td>
           </tr>
         </tbody>
       </table>
+
     </div>
+
 
     <div v-if="isStep1ModalOpen" class="modal">
     <div class="modal-content">

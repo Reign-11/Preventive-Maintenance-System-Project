@@ -69,20 +69,13 @@ const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 
 
 // Sample Data
 const officeData = ref([
-  { name: "College of Information Sciences and Computing", status: "Clear" },
-  { name: "College of Arts and Sciences", status: "Clear" },
-  { name: "Registrar Office", status: "Clear" },
-  { name: "Research Office", status: "Clear" },
-  { name: "Library", status: "Clear" },
+  { name: "PC1", status: "Clear" },
+  { name: "PC2", status: "Clear" },
+  { name: "PC3", status: "Clear" },
+  { name: "PC4", status: "Clear" },
+  { name: "PC5", status: "Clear" },
 ]);
 
-const userData = ref([
-  { name: "PC-92", status: "Clear" },
-  { name: "PC-12", status: "Clear" },
-  { name: "PC-021", status: "Clear" },
-  { name: "PC-001", status: "Unclear" },
-  { name: "PC-023", status: "Clear" },
-]);
 
 // Checklist Data
 const checklist = ref([
@@ -133,31 +126,81 @@ const submitForm = () => {
   console.log("Form Submitted", formData.value);
   closeModal();
 };
+
+const printDetails = (item) => {
+  // Dynamically create modal content for the specific item
+  const modalHtml = `
+    <html>
+      <head>
+        <title>Print Modal</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          .modal-content { font-size: 16px; }
+        </style>
+      </head>
+      <body>
+        <h2>${selectedOption.value === 'Office' ? 'Office' : 'User'} Details</h2>
+        <div class="details">
+          <p><strong>Name:</strong> ${item.name}</p>
+          <p><strong>Status:</strong> ${item.status}</p>
+        </div>
+        <div class="modal-body">
+          <p><strong>Equipment Installed:</strong> ${item.equipmentInstalled ? item.equipmentInstalled.join(', ') : 'N/A'}</p>
+          <p><strong>Operating System:</strong> ${item.osInstalled || 'N/A'}</p>
+          <p><strong>Software Installed:</strong> ${item.softwareInstalled ? item.softwareInstalled.join(', ') : 'N/A'}</p>
+          <p><strong>PC Specifications:</strong> ${JSON.stringify(item.desktopSpecs)}</p>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(modalHtml);
+  printWindow.document.close();
+  printWindow.print();
+};
+
+const isDropdownOpen = ref(false);
+const selectedYear = ref(new Date().getFullYear());
+const years = ref([2023, 2024, 2025, 2026, 2027]);
+
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+const updateYear = (year) => {
+  selectedYear.value = year;
+  isDropdownOpen.value = false; // Close dropdown after selection
+};
 </script>
 
 <template>
   <MainLayout>
-
+    <h2 class="text-center my-3">Preventive Maintenance 2025</h2> 
     <table class="data-table">
       <thead>
         <tr>
           <th>User</th>
           <th>Actions</th>
           <th>Status</th>
+          <th>Print Details</th> 
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(item, index) in userData" :key="index">
-          <td>{{ item.name }}</td>
-          <td>
-            <button class="edit-btn" @click="openStep1Modal(item)">View</button>
-          </td>
-          <td :class="{ 'clear-status': item.status === 'Clear', 'unclear-status': item.status === 'Unclear' }">
-            {{ item.status }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+        <tr v-for="(item, index) in displayedData" :key="index">
+            <td>{{ item.name }}</td>
+            <td>
+              <button class="edit-btn" @click="openStep1Modal(item)">View</button>
+            </td>
+            <td :class="{ 'clear-status': item.status === 'Clear', 'unclear-status': item.status === 'Unclear' }">
+              {{ item.status }}
+            </td>
+            <td>
+              <button class="edit-btn" @click="printDetails(item)">Print</button> <!-- Fixed reference -->
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
         <!-- Modal -->
         <div v-if="isStep1ModalOpen" class="modal fade show d-block">
@@ -281,8 +324,23 @@ const submitForm = () => {
     <div v-if="isStep2ModalOpen" class="modal fade show d-block">
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
-          <div class="modal-header">
-            <h4 class="modal-title fw-bold text-center">ITEM CHECKLIST</h4>
+          <div class="modal-header d-flex justify-content-between align-items-center">
+            <h4 class="modal-title fw-bold">ITEM CHECKLIST</h4>
+
+            <div class="dropdown position-relative ms-auto">
+              <button class="btn btn-primary dropdown-toggle ms-auto" type="button" @click="toggleDropdown">
+                Save
+              </button>
+              <ul class="dropdown-menu me-2" :class="{ show: isDropdownOpen }">
+                <li v-for="year in years" :key="year">
+                  <a class="dropdown-item" href="#" @click.prevent="updateYear(year)">
+                    {{ year }}
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
 

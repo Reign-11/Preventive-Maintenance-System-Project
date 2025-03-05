@@ -16,8 +16,9 @@ const props = defineProps({
   }
 });
 
-
-
+const printPage = () => {
+  window.print();
+};
 
 const openStep1Modal = () => {
   isStep1ModalOpen.value = true;
@@ -78,9 +79,6 @@ const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS
 const osOptions = ['Windows 10', 'Windows 11', 'Other'];
 const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 'Media Player', 'Anti-Virus', 'Browser', 'Other'];
 
-
-
-
 const userData = ref([
   { name: "PC-92", status: "Clear" },
   { name: "PC-12", status: "Clear" },
@@ -102,7 +100,6 @@ const checklist = ref([
   { item: 9, task: 'Interiors and Cleaning', description: 'Dust removed\nNo loose parts\nAirflow is O.K.\nCables unplugged and re-plugged\nFans are operating', status: '' },
   { item: 10, task: 'Peripheral Devices', description: 'Mouse\nKeyboard\nMonitor\nUPS\nPrinter\nTelephone extension\nFax', status: '' },
 ]);
-
 
 const displayedData = computed(() => {
   return selectedOption.value === "Office" ? officeData.value : userData.value;
@@ -169,24 +166,43 @@ const printDetails = (item) => {
   printWindow.document.write(modalHtml);
   printWindow.document.close();
   printWindow.print();
-
-
-  
 };
 
+const printTable = () => {
+  window.print();
+};
+
+const isDropdownOpen = ref(false);
+const selectedYear = ref(new Date().getFullYear());
+const years = ref([2023, 2024, 2025, 2026, 2027]);
+
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+const updateYear = (year) => {
+  selectedYear.value = year;
+  isDropdownOpen.value = false; // Close dropdown after selection
+};
 
 </script>
 
 <template>
   <MainLayout>
     <div class="container">
-      <div class="controls">
-        <label for="office-users">Office/Users:</label>
-        <select v-model="selectedOption" id="office-users">
+      <h2 class="text-center my-3">Preventive Maintenance 2025</h2> 
+
+      <div class="d-flex align-items-center justify-content-center gap-2">
+        <label for="office-users" class="mb-0">Office/Users:</label>
+        <select v-model="selectedOption" id="office-users" class="form-select w-auto">
           <option value="Office">Office</option>
           <option value="Users">Users</option>
         </select>
+        <button class="btn btn-info d-flex align-items-center" v-if="!isUserSelected" @click="printTable">
+          <i class="fas fa-print me-1"></i> Print
+        </button>
       </div>
+
 
       <table class="data-table">
       <thead>
@@ -219,16 +235,13 @@ const printDetails = (item) => {
             </a>
           </td>
 
-          <td class="status-column">N/A</td> <!-- Placeholder as no status is available -->
-
+          <td class="status-column">N/A</td> 
           <td v-if="isUserSelected">
             <button class="edit-btn" @click="printDetails(department)">Print</button>
           </td>
         </tr>
       </tbody>
     </table>
-
-
 
     <!-- Modal -->
     <div v-if="isStep1ModalOpen" class="modal fade show d-block">
@@ -352,10 +365,26 @@ const printDetails = (item) => {
     <div v-if="isStep2ModalOpen" class="modal fade show d-block">
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
-          <div class="modal-header">
-            <h4 class="modal-title fw-bold text-center">ITEM CHECKLIST</h4>
+          <div class="modal-header d-flex justify-content-between align-items-center">
+            <h4 class="modal-title fw-bold">ITEM CHECKLIST</h4>
+
+            <div class="dropdown position-relative ms-auto">
+              <button class="btn btn-primary dropdown-toggle ms-auto" type="button" @click="toggleDropdown">
+                Save
+              </button>
+              <ul class="dropdown-menu me-2" :class="{ show: isDropdownOpen }">
+                <li v-for="year in years" :key="year">
+                  <a class="dropdown-item" href="#" @click.prevent="updateYear(year)">
+                    {{ year }}
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
+
 
           <div class="modal-body">
             <table class="table table-bordered">
