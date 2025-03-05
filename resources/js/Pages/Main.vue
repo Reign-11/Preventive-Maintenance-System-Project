@@ -422,10 +422,12 @@ const deleteOffice = async (planId) => {
               </td>
               <td class="no-print text-center">
               <div class="d-flex justify-content-center gap-2">
-               <!-- View Button -->
-               <a :href="route('office-user')" class="btn btn-sm btn-outline-primary d-flex align-items-center">
+              <!-- View Button -->
+              <a :href="route('office-user')" class="btn btn-sm btn-outline-primary d-flex align-items-center">
                 <i class="fas fa-eye me-1"></i> View
               </a>
+
+
                 <!-- Delete Button -->
                 <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="deleteOffice(plan.PlanId)">
                   <i class="fas fa-trash me-1"></i> Delete

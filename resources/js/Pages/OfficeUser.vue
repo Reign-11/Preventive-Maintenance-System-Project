@@ -194,8 +194,23 @@ const printDetails = (item) => {
             <td>{{ item.name }}</td>
 
             <td v-if="isUserSelected || isOfficeSelected">
-                <button class="edit-btn" @click="openStep1Modal(item)">View</button>
-            </td>
+            <button 
+                class="edit-btn" 
+                v-if="isUserSelected" 
+                @click="openStep1Modal(item)"
+            >
+                View
+            </button>
+
+            <a 
+                v-else 
+                class="edit-btn" 
+                :href="route('usertable')"
+            >
+                View
+            </a>
+        </td>
+
 
             <td :class="{ 'clear-status': item.status === 'Clear', 'unclear-status': item.status === 'Unclear' }">
                 {{ item.status }}
