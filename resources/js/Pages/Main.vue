@@ -423,9 +423,11 @@ const deleteOffice = async (planId) => {
               <td class="no-print text-center">
               <div class="d-flex justify-content-center gap-2">
               <!-- View Button -->
-              <a :href="route('office-user')" class="btn btn-sm btn-outline-primary d-flex align-items-center">
-                <i class="fas fa-eye me-1"></i> View
-              </a>
+
+              <a v-if="plan.OffId" :href="route('office-user', { officeId: plan.OffId })"
+   class="btn btn-sm btn-outline-primary d-flex align-items-center">
+  <i class="fas fa-eye me-1"></i> View
+</a>
 
 
                 <!-- Delete Button -->
@@ -438,17 +440,8 @@ const deleteOffice = async (planId) => {
           </tbody>
           </table>
         </div>
-
-            <!-- Navigation Buttons -->
-            <!-- <div class="pagination-buttons no-print">
-              <button class="btn btn-secondary btn-sm">
-                <i class="fas fa-arrow-left"></i> Previous
-              </button>
-              <button class="btn btn-primary btn-sm">
-                Next <i class="fas fa-arrow-right"></i>
-              </button>
-            </div> -->
-          </div>
+        
+         </div>
         </div>
       </div>
 
@@ -512,4 +505,5 @@ button {
 }
 
 </style>
+
 
