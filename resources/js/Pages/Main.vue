@@ -2,6 +2,9 @@
 import { ref, computed, watch, onMounted, nextTick } from "vue";
 import MainLayout from '@/Layouts/MainLayout.vue';
 import axios from "axios";
+import { Link } from '@inertiajs/vue3';
+
+
 
 //  Reactive properties
 const years = ref([]);
@@ -353,10 +356,8 @@ const deleteOffice = async (planId) => {
         <!-- Header Section -->
         <div class="text-center">
           <h2 class="fw-bold">
-            {{ selectedYearName }} 
-            <span v-if="selectedYearDescription" style="color: black;"> - {{ selectedYearDescription }}</span>
-          </h2>
-
+  {{ selectedYearName }} {{ selectedYearDescription ? ` - ${selectedYearDescription}` : '' }}
+</h2>
           <!-- Legend -->
           <div class="mt-2">
             <strong>Legend:</strong>
@@ -422,15 +423,10 @@ const deleteOffice = async (planId) => {
               </td>
               <td class="no-print text-center">
               <div class="d-flex justify-content-center gap-2">
-              <!-- View Button -->
-
-              <a v-if="plan.OffId" :href="route('office-user', { officeId: plan.OffId })"
-                class="btn btn-sm btn-outline-primary d-flex align-items-center">
-                <i class="fas fa-eye me-1"></i> View
-              </a>
-              
-
-
+                <!---View Button -->
+                <Link :href="route('office-user', { officeId: plan.OffId, YrId: selectedYear })">
+  <i class="fas fa-eye me-1"></i> View
+</Link>
                 <!-- Delete Button -->
                 <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="deleteOffice(plan.PlanId)">
                   <i class="fas fa-trash me-1"></i> Delete

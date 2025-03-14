@@ -1,12 +1,32 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch,defineProps } from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
+
+const props = defineProps({
+  employees: { type: Array, default: () => [] },
+  deptId: { type: [String, Number], default: null },
+  YrId: { type: [String, Number], default: null },
+  PlanId: { type: [String, Number], default: null },
+  office: { type: Object, default: () => ({}) },
+  employeeId: { type: [String, Number], default: null } 
+  
+});
+
+const employees = ref([]);
+
+watchEffect(() => {
+  employees.value = props.employees;
+});
+
+
+
+
 
 const isStep1ModalOpen = ref(false);
 const isStep2ModalOpen = ref(false);
 const selectedOption = ref("Office");
 const isModalOpen = ref(false);
-const editedItem = ref({}); // Store selected user data
+// const editedItem = ref({}); // Store selected user data
 
 const openStep1Modal = () => {
   isStep1ModalOpen.value = true;
@@ -36,6 +56,7 @@ const enableBackgroundScroll = () => {
 
 // Form Data
 const formData = ref({
+  number: '',
   userOperator: '',
   officeUnit: '',
   dateAcquired: '',
@@ -96,32 +117,6 @@ const displayedData = computed(() => {
   return selectedOption.value === "Office" ? officeData.value : userData.value;
 });
 
-const isUserSelected = computed(() => selectedOption.value === "Users");
-
-const editItem = (item) => {
-  editedItem.value = { ...item }; // Copy selected item data
-
-  // Prefill Preventive Maintenance Form with selected user data
-  formData.value.userOperator = item.name;
-  formData.value.officeUnit = selectedOption.value;
-  formData.value.status = item.status;
-
-  isModalOpen.value = true; // Open modal
-};
-
-const saveItem = () => {
-  const dataList = selectedOption.value === "Office" ? officeData.value : userData.value;
-  const index = dataList.findIndex((item) => item.name === editedItem.value.name);
-
-  if (index !== -1) {
-    dataList[index] = { ...editedItem.value }; // Update item
-  }
-
-  isModalOpen.value = false; // Close modal
-};
-
-const isOfficeSelected = computed(() => selectedOption.value === "Office");
-
 const submitForm = () => {
   console.log("Form Submitted", formData.value);
   closeModal();
@@ -172,11 +167,72 @@ const updateYear = (year) => {
   selectedYear.value = year;
   isDropdownOpen.value = false; // Close dropdown after selection
 };
+// Add User Modal Control
+const isAddUserModalOpen = ref(false);
+
+// New User Data
+const newUser = ref({
+  name: '',
+  status: 'Clear'
+});
+
+// Function to Add User
+const addUser = () => {
+  if (newUser.value.name.trim() !== '') {
+    officeData.value.push({ name: newUser.value.name, status: newUser.value.status });
+    newUser.value = { name: '', status: 'Clear' }; // Reset input fields
+    isAddUserModalOpen.value = false; // Close modal
+  }
+};
+
+
+
+
+
+const isStatusDropdownOpen = ref(false);
+const searchStatus = ref("");
+const statusOptions = ref(["Clear", "Unclear", "Pending", "Completed"]); // Example statuses
+
+// Filter statuses based on search input
+const filteredStatusOptions = computed(() => {
+  return statusOptions.value.filter(status =>
+    status.toLowerCase().includes(searchStatus.value.toLowerCase())
+  );
+});
+
+// Function to set selected status
+const selectStatus = (status) => {
+  newUser.value.status = status; // Set selected status to form data
+  searchStatus.value = status; // Update input field
+  isStatusDropdownOpen.value = false; // Close dropdown
+};
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event) => {
+  if (!event.target.closest(".status-dropdown")) {
+    isStatusDropdownOpen.value = false;
+  }
+};
+
+// Attach event listener when dropdown opens
+watch(isStatusDropdownOpen, (newVal) => {
+  if (newVal) {
+    document.addEventListener("click", handleClickOutside);
+  } else {
+    document.removeEventListener("click", handleClickOutside);
+  }
+});
 </script>
 
 <template>
   <MainLayout>
-    <h2 class="text-center my-3">Preventive Maintenance 2025</h2> 
+    <h2 class="d-flex justify-content-center my-3">Preventive Maintenance 2025</h2> 
+    <div class="d-flex justify-content-center mb-3">
+    <button class="btn btn-success" @click="isAddUserModalOpen = true">
+      <i class="fas fa-user-plus"></i> Add User
+    </button>
+    
+    </div>
     <table class="data-table">
       <thead>
         <tr>
@@ -187,8 +243,8 @@ const updateYear = (year) => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(item, index) in displayedData" :key="index">
-            <td>{{ item.name }}</td>
+        <tr v-for="employee in employees" :key="employee.employeeId">
+          <td>{{ employee.emp_name }}</td>
             <td>
               <button class="edit-btn" @click="openStep1Modal(item)">View</button>
             </td>
@@ -202,18 +258,92 @@ const updateYear = (year) => {
         </tbody>
       </table>
 
-        <!-- Modal -->
-        <div v-if="isStep1ModalOpen" class="modal fade show d-block">
+        <!-- Add User Modal -->
+      <div v-if="isAddUserModalOpen" class="modal fade show d-block">
         <div class="modal-dialog modal-xl" role="document">
-            <div class="modal-content">
-            <div class="modal-header d-flex justify-content-between align-items-center">
-                <h5 class="modal-title">Preventive Maintenance Form</h5>
-                <div class="d-flex align-items-center ms-auto">
-                <button class="btn btn-danger me-2" @click="markForDisposal">For Disposal</button>
-                <button type="button" class="btn-close" @click="isModalOpen = false"></button>
-                </div>
-            </div>
+        <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title">Add New User</h5>
+              <button type="button" class="btn-close" @click="isAddUserModalOpen = false"></button>
 
+
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">User Name</label>
+                <input type="text" class="form-control" v-model="newUser.name" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Status</label>
+                <select class="form-control" v-model="newUser.status">
+                  <option value="Clear">Clear</option>
+                  <option value="Unclear">Unclear</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-danger" @click="isAddUserModalOpen = false">Cancel</button>
+              <button class="btn btn-primary" @click="addUser">Add User</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Modal -->
+    <div v-if="isStep1ModalOpen" class="modal fade show d-block">
+      <div class="modal-dialog modal-xl" role="document">
+        <!-- Preventive Maintenance Form Modal -->
+        <div class="modal-content">
+          <!-- Modal Header -->
+          <div class="modal-header d-flex align-items-center justify-content-between w-100 flex-wrap gap-3">
+
+            <!-- Title -->
+            <h5 class="modal-title mb-0">Preventive Maintenance Form</h5>
+
+            <!-- Inputs Group -->
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              
+              <!-- Number Input -->
+              <div class="d-flex flex-column">
+                <label class="form-label mb-0" style="font-size: 14px;"></label>
+                <input 
+                  type="text" 
+                  class="form-control form-control-sm" 
+                  v-model="formData.number"
+                  placeholder="Number"
+                  style="width: 150px; height: 30px; font-size: 14px; padding: 5px;"
+                >
+              </div>
+
+          <!-- Status Dropdown -->
+          <div class="dropdown status-dropdown position-relative">
+            <i class="fas fa-search position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              v-model="searchStatus"
+              placeholder="Equipment Number"
+              style="width: 200px; height: 30px; font-size: 14px; padding: 5px 10px;"
+              @focus="isStatusDropdownOpen = true"
+            />
+            <ul v-if="isStatusDropdownOpen" class="dropdown-menu show" style="max-height: 150px; overflow-y: auto;">
+              <li 
+                v-for="status in filteredStatusOptions" 
+                :key="status" 
+                @click="selectStatus(status)"
+                class="dropdown-item"
+                style="font-size: 14px; padding: 5px 10px;"
+              >
+                {{ status }}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- For Disposal Button -->
+        <button class="btn btn-danger btn-sm">For Disposal</button>
+
+      </div>
 
           <div class="modal-body modal-scrollable">
             <!-- User & Date Info -->
@@ -222,17 +352,21 @@ const updateYear = (year) => {
                 <label class="form-label">User/Operator</label>
                 <input type="text" class="form-control" v-model="formData.userOperator">
               </div>
-              <div class="col-md-3">
+              <div class="col-md-2">
                 <label class="form-label">Office/College/Unit</label>
                 <input type="text" class="form-control" v-model="formData.officeUnit">
               </div>
-              <div class="col-md-3">
+              <div class="col-md-2">
                 <label class="form-label">Department</label>
                 <input type="text" class="form-control" v-model="formData.department">
               </div>
               <div class="col-md-2">
                 <label class="form-label">Date Acquired</label>
                 <input type="date" class="form-control" v-model="formData.dateAcquired">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Date</label>
+                <input type="text" class="form-control" v-model="formData.pcName">
               </div>
               <div class="col-md-2">
                 <label class="form-label">PC Name</label>
@@ -388,8 +522,9 @@ const updateYear = (year) => {
             <button type="button" class="btn btn-primary" @click="submitForm">Submit</button>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    <!-- </div> -->
   </MainLayout>
   </template>
 

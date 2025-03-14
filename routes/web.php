@@ -5,6 +5,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Controllers\Admin\MainController;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
+use App\Http\Controllers\MaintenancePlanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,21 +51,22 @@ Route::get('/preventive-maintenance', function () {
 })->middleware(['auth', 'verified'])->name('preventive-maintenance');
 
 
-Route::get('/office-user/{officeId}', function ($officeId) {
-    // Call the stored procedure to update ParentId and get department names
-    $departments = DB::select("CALL GetDepartmentsByOffice(?)", [$officeId]);
 
-    return Inertia::render('OfficeUser', [
-        'departments' => $departments
-    ]);
-})->middleware(['auth', 'verified'])->name('office-user');
+Route::get('/office-user/{officeId}', [MaintenancePlanController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('office-user');
 
 
+    
 Route::get('/datacenter', function () {
     return Inertia::render('Datacenter');
 })->middleware(['auth', 'verified'])->name('datacenter');
 
+
+
 Route::get('/usertable', function () {
     return Inertia::render('Usertable');
 })->middleware(['auth', 'verified'])->name('usertable');
+
+
 require __DIR__.'/auth.php';
