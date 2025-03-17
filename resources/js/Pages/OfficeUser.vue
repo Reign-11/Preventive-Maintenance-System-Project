@@ -1,28 +1,99 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, defineProps, watchEffect, onMounted } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import MainLayout from '@/Layouts/MainLayout.vue';
 
+const props = defineProps({
+  departments: { type: Array, default: () => [] },  
+  pmYear: { type: Object, default: () => ({}) },
+  YrId: { type: [String, Number], default: '' },
+  PlanId: { type: [String, Number], default: '' },
+  office: { type: Object, default: () => ({}) },
+  deptId: { type: [String, Number], default: '' } 
+
+});
+
+// Reactive variables
 const isStep1ModalOpen = ref(false);
 const isStep2ModalOpen = ref(false);
 const selectedOption = ref("Office");
 const isModalOpen = ref(false);
-const editedItem = ref({}); // Store selected user data
+const editedItem = ref({});
+const selectedPmYear = computed(() => props.pmYear ?? {});
+const selectedOfficeId = ref(props.office?.OffId || '');
+const selectedYear = ref(props.YrId || '');
+const departments = ref(props.departments || []);
+const officeData = ref([]); 
+const selectedplan = ref(props.PlanId || '');
+
+const selectedDeptId = ref((props.deptId) || (props.departments?.[0]?.DeptId ? (props.departments[0].DeptId) : null));
 
 
-const props = defineProps({
-  departments: {
-    type: Array,
-    required: true
+
+watchEffect(() => {
+  if (!selectedDeptId.value && props.departments?.length) {
+    const firstDeptId = props.departments[0]?.DeptId; 
+    if (firstDeptId) {
+      selectedDeptId.value = (firstDeptId); // Ensure it's a number
+    }
   }
 });
 
-const printPage = () => {
-  window.print();
+
+
+const logParams = (deptId) => {
+  if (deptId) {
+    selectedDeptId.value = deptId; // Update before navigating
+  }
+  console.log("Navigating to UserTable with Params:", {
+    officeId: selectedOfficeId.value,
+    YrId: selectedYear.value,
+    deptId: selectedDeptId.value, // Now correctly updated
+    PlanId: selectedplan.value
+  });
 };
 
+
+onMounted(() => {
+  console.log('Departments:', props.departments);
+  console.log('Selected Office ID:', selectedOfficeId.value);
+  console.log('Selected Year:', selectedYear.value);
+  console.log('Selected Plan:', selectedplan.value);
+});
+
+
+// Options
+const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS', 'AVR', 'Other'];
+const osOptions = ['Windows 10', 'Windows 11', 'Other'];
+const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 'Media Player', 'Anti-Virus', 'Browser', 'Other'];
+
+
+
+const userData = ref([
+  { name: "PC-92", status: "Clear" },
+  { name: "PC-12", status: "Clear" },
+  { name: "PC-021", status: "Clear" },
+  { name: "PC-001", status: "Unclear" },
+  { name: "PC-023", status: "Clear" }
+]);
+
+const checklist = ref([
+  { item: 1, task: 'System Boot', description: 'Monitor boot errors and speed.', status: '' },
+  { item: 2, task: 'System Log-in', description: 'Monitor login script and errors.', status: '' },
+  { item: 3, task: 'Network Settings', description: 'Check TCP/IP settings, domain security.', status: '' }
+]);
+
+
+
+// Computed properties
+const displayedData = computed(() => selectedOption.value === "Office" ? officeData.value : userData.value);
+const isUserSelected = computed(() => selectedOption.value === "Users");
+const isOfficeSelected = computed(() => selectedOption.value === "Office");
+
+// Modal functions
 const openStep1Modal = () => {
   isStep1ModalOpen.value = true;
-  disableBackgroundScroll();
+  document.body.style.overflow = 'hidden';
 };
 
 const openStep2Modal = () => {
@@ -33,16 +104,6 @@ const openStep2Modal = () => {
 const closeModal = () => {
   isStep1ModalOpen.value = false;
   isStep2ModalOpen.value = false;
-  enableBackgroundScroll();
-};
-
-// Disable background scrolling when modal is open
-const disableBackgroundScroll = () => {
-  document.body.style.overflow = 'hidden';
-};
-
-// Enable background scrolling when modal is closed
-const enableBackgroundScroll = () => {
   document.body.style.overflow = '';
 };
 
@@ -56,66 +117,19 @@ const formData = ref({
   osLicense: '',
   softwareInstalled: [],
   desktopSpecs: {
-    Processor: '',
-    Motherboard: '',
-    Memory: '',
-    GraphicCard: '',
-    UPS: '',
-    HardDisk: '',
-    OpticalDrive: '',
-    Monitor: '',
-    Casing: '',
-    Printer: '',
-    PowerSupply: '',
-    Keyboard: '',
-    Mouse: '',
-    AVR: '',
-    NetWorkMacIp: ''
+    Processor: '', Motherboard: '', Memory: '', GraphicCard: '', UPS: '',
+    HardDisk: '', OpticalDrive: '', Monitor: '', Casing: '', Printer: '',
+    PowerSupply: '', Keyboard: '', Mouse: '', AVR: '', NetWorkMacIp: ''
   }
 });
 
-// Options for checkboxes
-const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS', 'AVR', 'Other'];
-const osOptions = ['Windows 10', 'Windows 11', 'Other'];
-const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 'Media Player', 'Anti-Virus', 'Browser', 'Other'];
-
-const userData = ref([
-  { name: "PC-92", status: "Clear" },
-  { name: "PC-12", status: "Clear" },
-  { name: "PC-021", status: "Clear" },
-  { name: "PC-001", status: "Unclear" },
-  { name: "PC-023", status: "Clear" },
-]);
-
-// Checklist Data
-const checklist = ref([
-  { item: 1, task: 'System Boot', description: 'Boot system from a cold start.Monitor for errors and speed of entire boot process.', status: '' },
-  { item: 2, task: 'System Log-in', description: 'Monitor for Errors. Monitor login script.', status: '' },
-  { item: 3, task: 'Network Settings', description: 'Monitor login script.\nTCP/IP and IPX settings are correct.\nDomain Name\nSecurity Settings\nClient Configurations\nComputer Name', status: '' },
-  { item: 4, task: 'Computer Hardware Settings', description: 'Verify Device Manager settings\nBIOS up-to-date\nHard Disk\nDVD/CD-RW firmware up-to-date\nMemory is O.K.\nFor Laptop battery run-time is norm', status: '' },
-  { item: 5, task: 'Browser/Proxy Settings', description: 'Verify proper settings and operation.', status: '' },
-  { item: 6, task: 'Proper Software Loads', description: 'Required software is installed and operating.', status: '' },
-  { item: 7, task: 'Viruses and Malware', description: 'Anti-virus installed\nVirus scan done', status: '' },
-  { item: 8, task: 'Clearance', description: 'Unused software removed\nTemporary files removed\nRecycle bin and caches emptied\nPeripheral devices clean', status: '' },
-  { item: 9, task: 'Interiors and Cleaning', description: 'Dust removed\nNo loose parts\nAirflow is O.K.\nCables unplugged and re-plugged\nFans are operating', status: '' },
-  { item: 10, task: 'Peripheral Devices', description: 'Mouse\nKeyboard\nMonitor\nUPS\nPrinter\nTelephone extension\nFax', status: '' },
-]);
-
-const displayedData = computed(() => {
-  return selectedOption.value === "Office" ? officeData.value : userData.value;
-});
-
-const isUserSelected = computed(() => selectedOption.value === "Users");
-
+// Edit and save functions
 const editItem = (item) => {
-  editedItem.value = { ...item }; // Copy selected item data
-
-  // Prefill Preventive Maintenance Form with selected user data
+  editedItem.value = { ...item };
   formData.value.userOperator = item.name;
   formData.value.officeUnit = selectedOption.value;
   formData.value.status = item.status;
-
-  isModalOpen.value = true; // Open modal
+  isModalOpen.value = true;
 };
 
 const saveItem = () => {
@@ -123,20 +137,20 @@ const saveItem = () => {
   const index = dataList.findIndex((item) => item.name === editedItem.value.name);
 
   if (index !== -1) {
-    dataList[index] = { ...editedItem.value }; // Update item
+    dataList[index] = { ...editedItem.value };
   }
 
-  isModalOpen.value = false; // Close modal
+  isModalOpen.value = false;
 };
 
-const isOfficeSelected = computed(() => selectedOption.value === "Office");
+// Form submission
 const submitForm = () => {
   console.log("Form Submitted", formData.value);
   closeModal();
 };
 
+// Print modal content
 const printDetails = (item) => {
-  // Dynamically create modal content for the specific item
   const modalHtml = `
     <html>
       <head>
@@ -148,49 +162,36 @@ const printDetails = (item) => {
       </head>
       <body>
         <h2>${selectedOption.value === 'Office' ? 'Office' : 'User'} Details</h2>
-        <div class="details">
-          <p><strong>Name:</strong> ${item.name}</p>
-          <p><strong>Status:</strong> ${item.status}</p>
-        </div>
-        <div class="modal-body">
-          <p><strong>Equipment Installed:</strong> ${item.equipmentInstalled ? item.equipmentInstalled.join(', ') : 'N/A'}</p>
-          <p><strong>Operating System:</strong> ${item.osInstalled || 'N/A'}</p>
-          <p><strong>Software Installed:</strong> ${item.softwareInstalled ? item.softwareInstalled.join(', ') : 'N/A'}</p>
-          <p><strong>PC Specifications:</strong> ${JSON.stringify(item.desktopSpecs)}</p>
-        </div>
+        <p><strong>Name:</strong> ${item.name}</p>
+        <p><strong>Status:</strong> ${item.status}</p>
+        <p><strong>Equipment Installed:</strong> ${item.equipmentInstalled?.join(', ') || 'N/A'}</p>
+        <p><strong>Operating System:</strong> ${item.osInstalled || 'N/A'}</p>
+        <p><strong>Software Installed:</strong> ${item.softwareInstalled?.join(', ') || 'N/A'}</p>
+        <p><strong>PC Specifications:</strong> ${JSON.stringify(item.desktopSpecs)}</p>
       </body>
     </html>
   `;
-
+  
   const printWindow = window.open('', '_blank');
   printWindow.document.write(modalHtml);
   printWindow.document.close();
   printWindow.print();
 };
 
-const printTable = () => {
-  window.print();
-};
-
-const isDropdownOpen = ref(false);
-const selectedYear = ref(new Date().getFullYear());
-const years = ref([2023, 2024, 2025, 2026, 2027]);
-
-const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value;
-};
-
-const updateYear = (year) => {
-  selectedYear.value = year;
-  isDropdownOpen.value = false; // Close dropdown after selection
-};
 
 </script>
+
+
+
 
 <template>
   <MainLayout>
     <div class="container">
-      <h2 class="text-center my-3">Preventive Maintenance 2025</h2> 
+      <div>
+    
+    <h1> {{ selectedPmYear.Description }} {{ selectedPmYear.Name }}</h1>
+
+  </div>
 
       <div class="d-flex align-items-center justify-content-center gap-2">
         <label for="office-users" class="mb-0">Office/Users:</label>
@@ -214,9 +215,8 @@ const updateYear = (year) => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(department, index) in departments" :key="index">
+        <tr v-for="department in departments" :key="department.deptId">
           <td>{{ department.department_name }}</td>
-
           <td v-if="isUserSelected || isOfficeSelected">
             <button 
               class="edit-btn" 
@@ -225,16 +225,19 @@ const updateYear = (year) => {
             >
               View
             </button>
-
-            <a 
-              v-else 
-              class="edit-btn" 
-              :href="route('usertable')"
-            >
-              View
-            </a>
+            <Link 
+  v-else
+  :href="route('department-employees', { 
+ departmentId: selectedDeptId, 
+    officeId: selectedOfficeId, 
+    YrId: selectedYear,
+    PlanId:selectedplan
+  })"
+  class="btn btn-primary" 
+  @click.prevent="logParams(department.DeptId)">
+  <i class="fas fa-eye me-1"></i> View
+</Link>
           </td>
-
           <td class="status-column">N/A</td> 
           <td v-if="isUserSelected">
             <button class="edit-btn" @click="printDetails(department)">Print</button>
