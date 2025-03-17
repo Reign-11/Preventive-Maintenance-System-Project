@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, defineProps, watchEffect, onMounted } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import MainLayout from '@/Layouts/MainLayout.vue';
 
 const props = defineProps({
@@ -10,7 +10,7 @@ const props = defineProps({
   PlanId: { type: [String, Number], default: '' },
   office: { type: Object, default: () => ({}) },
   deptId: { type: [String, Number], default: '' } 
-  
+
 });
 
 // Reactive variables
@@ -26,39 +26,36 @@ const departments = ref(props.departments || []);
 const officeData = ref([]); 
 const selectedplan = ref(props.PlanId || '');
 
-const selectedDeptId = ref('');
+const selectedDeptId = ref((props.deptId) || (props.departments?.[0]?.DeptId ? (props.departments[0].DeptId) : null));
+
+
 
 watchEffect(() => {
-  if (props.departments?.length) {
-    const firstDeptId = props.departments[0]?.deptId;
-
-    // Convert to a number, fallback to 0 if invalid
-    selectedDeptId.value = firstDeptId ? Number(firstDeptId) : 0;
+  if (!selectedDeptId.value && props.departments?.length) {
+    const firstDeptId = props.departments[0]?.DeptId; 
+    if (firstDeptId) {
+      selectedDeptId.value = (firstDeptId); // Ensure it's a number
+    }
   }
 });
 
 
+
 const logParams = (deptId) => {
-  console.log("Clicked department ID:", deptId);  
-
+  if (deptId) {
+    selectedDeptId.value = deptId; // Update before navigating
+  }
   console.log("Navigating to UserTable with Params:", {
-    officeId: Number(selectedOfficeId.value),
-    YrId: Number(selectedYear.value),
-    deptId: Number(deptId || selectedDeptId.value), 
-  PlanId: selectedplan.value
-});
-
-router.get(route('usertable', {  
-  departmentId,  
-  officeId: selectedOfficeId.value, 
-  YrId: selectedYear.value,
-  PlanId: selectedplan.value
-}), { preserveState: true });
+    officeId: selectedOfficeId.value,
+    YrId: selectedYear.value,
+    deptId: selectedDeptId.value, // Now correctly updated
+    PlanId: selectedplan.value
+  });
 };
+
 
 onMounted(() => {
   console.log('Departments:', props.departments);
-  console.log('First Department:', props.departments?.[0]);
   console.log('Selected Office ID:', selectedOfficeId.value);
   console.log('Selected Year:', selectedYear.value);
   console.log('Selected Plan:', selectedplan.value);
@@ -230,14 +227,14 @@ const printDetails = (item) => {
             </button>
             <Link 
   v-else
-  :href="route('usertable', { 
-    deptId: Number(selectedDeptId.value),  // Convert to number
-    officeId: Number(selectedOfficeId), 
-    YrId: Number(selectedYear) 
+  :href="route('department-employees', { 
+ departmentId: selectedDeptId, 
+    officeId: selectedOfficeId, 
+    YrId: selectedYear,
+    PlanId:selectedplan
   })"
   class="btn btn-primary" 
-  @click="logParams(department.deptId)"
->
+  @click.prevent="logParams(department.DeptId)">
   <i class="fas fa-eye me-1"></i> View
 </Link>
           </td>

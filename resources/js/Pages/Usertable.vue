@@ -9,15 +9,9 @@ const props = defineProps({
   PlanId: { type: [String, Number], default: null },
   office: { type: Object, default: () => ({}) },
   employeeId: { type: [String, Number], default: null } 
-  
 });
 
-const employees = ref([]);
-
-watchEffect(() => {
-  employees.value = props.employees;
-});
-
+const employees = ref(props.employees);
 
 
 
@@ -243,19 +237,19 @@ watch(isStatusDropdownOpen, (newVal) => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="employee in employees" :key="employee.employeeId">
-          <td>{{ employee.emp_name }}</td>
-            <td>
-              <button class="edit-btn" @click="openStep1Modal(item)">View</button>
-            </td>
-            <td :class="{ 'clear-status': item.status === 'Clear', 'unclear-status': item.status === 'Unclear' }">
-              {{ item.status }}
-            </td>
-            <td>
-              <button class="edit-btn" @click="printDetails(item)">Print</button> <!-- Fixed reference -->
-            </td>
-          </tr>
-        </tbody>
+  <tr v-for="employee in employees" :key="employee.employeeId">
+    <td>{{ employee.emp_name }}</td>
+    <td>
+      <button class="edit-btn" @click="openStep1Modal(employee)">View</button>
+    </td>
+    <td :class="{ 'clear-status': employee.status === 'Clear', 'unclear-status': employee.status === 'Unclear' }">
+      {{ employee.status }}
+    </td>
+    <td>
+      <button class="edit-btn" @click="printDetails(employee)">Print</button> 
+    </td>
+  </tr>
+</tbody>
       </table>
 
         <!-- Add User Modal -->

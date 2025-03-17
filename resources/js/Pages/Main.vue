@@ -424,7 +424,7 @@ const deleteOffice = async (planId) => {
               <td class="no-print text-center">
               <div class="d-flex justify-content-center gap-2">
                 <!---View Button -->
-                <Link :href="route('office-user', { officeId: plan.OffId, YrId: selectedYear })">
+                <Link :href="route('officeuser', { officeId: plan.OffId, YrId: selectedYear })">
   <i class="fas fa-eye me-1"></i> View
 </Link>
                 <!-- Delete Button -->

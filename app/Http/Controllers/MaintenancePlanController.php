@@ -177,94 +177,103 @@ class MaintenancePlanController extends Controller
     }
 
 
-public function index(Request $request, int $officeId)
-{
-    try {
-        $yrId = $request->query('YrId'); // ✅ Extract YrId from query params
-        Log::info("Received Office ID: $officeId, Year ID: $yrId");
-
-        // Fetch departments using stored procedure
-        $departments = DB::select("CALL GetDepartmentsByOffice(?)", [$officeId]);
-        Log::info('Departments:', ['data' => $departments]); // Log departments for debugging
-
-        if (empty($departments)) {
-            throw new \Exception('No departments found for the given office ID');
+    public function index(Request $request, int $officeId)
+    {
+        try {
+            $yrId = $request->query('YrId');  
+            $deptId = $request->query('departmentId'); // ✅ Extract deptId from query params
+            Log::info("Received Office ID: $officeId, Year ID: $yrId, Dept ID: $deptId");
+    
+            // Fetch departments using stored procedure
+            $departments = DB::select("CALL GetDepartmentsByOffice(?)", [$officeId]);
+            Log::info('Departments:', ['data' => $departments]);
+    
+            if (empty($departments)) {
+                throw new \Exception('No departments found for the given office ID');
+            }
+    
+            // Extract PlanId
+            $planId = $departments[0]->PlanId ?? null;
+    
+            // Fetch PM Year data
+            $pmYear = $yrId ? DB::table('tbl_pmyear')->where('YrId', $yrId)->first() : null;
+            $pmYearData = $pmYear ? (array) $pmYear : ['Name' => '', 'Description' => ''];
+    
+            // Fetch office data
+            $office = DB::table('tbl_office')->where('OffId', $officeId)->first();
+            $officeData = $office ? (array) $office : ['OfficeName' => '', 'OfficeDescription' => ''];
+    
+            return Inertia::render('OfficeUser', [
+                'departments' => $departments,
+                'pmYear' => $pmYearData ?? ['Name' => '', 'Description' => ''],
+                'YrId' => $yrId ?? '',
+                'PlanId' => $planId ?? '',
+                'office' => $officeData ?? ['OfficeName' => '', 'OfficeDescription' => ''],
+                'deptId' => $deptId , 
+                'officeId' => $officeId ?? '',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching office data: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Failed to fetch office data']);
         }
-
-        // Extract PlanId
-        $planId = $departments[0]->PlanId ?? null;
-
-        // Fetch PM Year data
-        $pmYear = $yrId ? DB::table('tbl_pmyear')->where('YrId', $yrId)->first() : null;
-        $pmYearData = $pmYear ? (array) $pmYear : ['Name' => '', 'Description' => ''];
-
-        // Fetch office data
-        $office = DB::table('tbl_office')->where('OffId', $officeId)->first();
-        $officeData = $office ? (array) $office : ['OfficeName' => '', 'OfficeDescription' => ''];
-
-        // Ensure deptId is set correctly
-        $deptId = $departments[0]->deptId ?? null;
-
-      return Inertia::render('OfficeUser', [
-    'departments' => $departments ?? [],
-    'pmYear' => $pmYearData ?? ['Name' => '', 'Description' => ''],
-    'YrId' => $yrId ?? '',
-    'PlanId' => $planId ?? '',
-    'office' => $officeData ?? ['OfficeName' => '', 'OfficeDescription' => ''],
-    'deptId' => $deptId ?? '', // ✅ Ensure this is included
-    'officeId' => $officeId ?? '',
-]);
-    } catch (\Exception $e) {
-        Log::error('Error fetching office data: ' . $e->getMessage());
-        return redirect()->back()->withErrors(['error' => 'Failed to fetch office data']);
     }
-}
-
-
+    
 
 
 public function employee(Request $request, int $departmentId)
 {
-    
     try {
-        Log::info("🔍 Fetching employees for department ID: " . $departmentId);
+        Log::info("🔍 Fetching employees for department ID: $departmentId");
 
-        // Call stored procedure
+        // Validate and cast query parameters
+        $officeId = intval($request->query('officeId', 0));
+        $yrId = intval($request->query('YrId', 0));
+
+        // Call stored procedure to get employees
         $employees = DB::select('CALL GetEmployeesByDepartment(?)', [$departmentId]);
 
-        Log::info("✅ Employees fetched from DB:", ['employees' => $employees]);
+        Log::info("✅ Employees fetched from DB:", ['count' => count($employees)]);
 
         if (empty($employees)) {
-            Log::warning("⚠️ No employees found for department ID: " . $departmentId);
+            Log::warning("⚠️ No employees found for department ID: $departmentId");
         }
-        $employees = json_decode(json_encode($employees), true);
 
-        $yrId = $employees[0]->YrId ?? null;
-        $planId = $employees[0]->PlanId ?? null;
-        $OffId = $employees[0]->OffId ?? null; // Fix: Corrected from `$employees->Offid`
+        // Convert employees data to an associative array
+        $employeesArray = json_decode(json_encode($employees), true) ?? [];
 
-        // Fetch PM Year data
+        // Get first employee details safely
+        $firstEmployee = $employees[0] ?? null;
+        $planId = $firstEmployee?->PlanId ?? null;
+        $employeeId = $firstEmployee?->employeeId ?? null;
+
+        // Fetch PM Year data safely
         $pmYear = $yrId ? DB::table('tbl_pmyear')->where('YrId', $yrId)->first() : null;
         $pmYearData = $pmYear ? (array) $pmYear : ['Name' => '', 'Description' => ''];
 
-        // Fetch Office details
-        $office = DB::table('tbl_office')->where('OffId', $OffId)->first();
+        // Fetch Office details safely
+        $office = $officeId ? DB::table('tbl_office')->where('OffId', $officeId)->first() : null;
         $officeData = $office ? (array) $office : ['OfficeName' => '', 'OfficeDescription' => ''];
 
         return Inertia::render('Usertable', [
-            'employees' => $employees, 
+            'employees' => $employeesArray,
             'deptId' => $departmentId,
-            'officeId' => $OffId,
+            'officeId' => $officeId,
             'YrId' => $yrId,
             'PlanId' => $planId,
             'office' => $officeData,
-            'employeeId' => $employees[0]->employeeId ?? null,
+            'employeeId' => $employeeId,
         ]);
     } catch (\Exception $e) {
-        Log::error('❌ Error fetching employees: ' . $e->getMessage());
+        Log::error('❌ Error fetching employees: ' . $e->getMessage(), [
+            'departmentId' => $departmentId,
+            'officeId' => $officeId,
+            'YrId' => $yrId
+        ]);
+
         return redirect()->back()->withErrors(['error' => 'Failed to fetch employee data']);
     }
 }
+
 }
 
     
