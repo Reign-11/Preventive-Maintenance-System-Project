@@ -1,19 +1,24 @@
 <script setup>
-import { ref, computed, watch,defineProps } from 'vue';
+import { ref, computed, watch,defineProps, reactive } from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 
 const props = defineProps({
-  employees: { type: Array, default: () => [] },
-  deptId: { type: [String, Number], default: null },
+  employee: { type: Array, default: () => [] },
+  departmentId: { type: [String, Number], default: null },
+  officeId: { type: [String, Number], default: null },
   YrId: { type: [String, Number], default: null },
   PlanId: { type: [String, Number], default: null },
-  office: { type: Object, default: () => ({}) },
-  employeeId: { type: [String, Number], default: null } 
+  employeeId: { type: [String, Number], default: null },
+  office: { type: Object, default: () => ({}) }, 
+  pmYear: { type: Object, default: () => ({}) },
+  categoryId: { type: [String, Number], default: null } 
+
 });
 
-const employees = ref(props.employees);
 
+const employee = ref(props.employee || []);
 
+console.log('employee:', props.employee);
 
 
 const isStep1ModalOpen = ref(false);
@@ -49,47 +54,40 @@ const enableBackgroundScroll = () => {
 };
 
 // Form Data
-const formData = ref({
-  number: '',
-  userOperator: '',
-  officeUnit: '',
-  dateAcquired: '',
+const formData = reactive({
+  userOperator: props.employee?.emp_name || "", // Initialize with prop value
+  officeUnit: props.employee?.OfficeName || "",
+  department: props.employee?.department_name || "",
+  dateAcquired: "", // These will be filled via Axios
   equipmentInstalled: [],
-  osInstalled: '',
-  osLicense: '',
+  osInstalled: "",
+  osLicense: "",
+  other_os: "",
   softwareInstalled: [],
+  other_sys: "",
   desktopSpecs: {
-    Processor: '',
-    Motherboard: '',
-    Memory: '',
-    GraphicCard: '',
-    UPS: '',
-    HardDisk: '',
-    OpticalDrive: '',
-    Monitor: '',
-    Casing: '',
-    Printer: '',
-    PowerSupply: '',
-    Keyboard: '',
-    Mouse: '',
-    AVR: '',
-    NetWorkMacIp: ''
+    Processor: "",
+    Motherboard: "",
+    Memory: "",
+    GraphicCard: "",
+    UPS: "",
+    HardDisk: "",
+    OpticalDrive: "",
+    Monitor: "",
+    Casing: "",
+    Printer: "",
+    PowerSupply: "",
+    Keyboard: "",
+    Mouse: "",
+    AVR: "",
+    NetWorkMacIp: ""
   }
 });
-
 // Options for checkboxes
 const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS', 'AVR', 'Other'];
 const osOptions = ['Windows 10', 'Windows 11', 'Other'];
 const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 'Media Player', 'Anti-Virus', 'Browser', 'Other'];
 
-// Sample Data
-const officeData = ref([
-  { name: "PC1", status: "Clear" },
-  { name: "PC2", status: "Clear" },
-  { name: "PC3", status: "Clear" },
-  { name: "PC4", status: "Clear" },
-  { name: "PC5", status: "Clear" },
-]);
 
 
 // Checklist Data
@@ -107,16 +105,16 @@ const checklist = ref([
 ]);
 
 
-const displayedData = computed(() => {
-  return selectedOption.value === "Office" ? officeData.value : userData.value;
-});
 
 const submitForm = () => {
   console.log("Form Submitted", formData.value);
   closeModal();
 };
 
+
+  // BUTTON PRINT 
 const printDetails = (item) => {
+
   // Dynamically create modal content for the specific item
   const modalHtml = `
     <html>
@@ -164,6 +162,9 @@ const updateYear = (year) => {
 // Add User Modal Control
 const isAddUserModalOpen = ref(false);
 
+
+
+
 // New User Data
 const newUser = ref({
   name: '',
@@ -178,11 +179,6 @@ const addUser = () => {
     isAddUserModalOpen.value = false; // Close modal
   }
 };
-
-
-
-
-
 const isStatusDropdownOpen = ref(false);
 const searchStatus = ref("");
 const statusOptions = ref(["Clear", "Unclear", "Pending", "Completed"]); // Example statuses
@@ -216,6 +212,9 @@ watch(isStatusDropdownOpen, (newVal) => {
     document.removeEventListener("click", handleClickOutside);
   }
 });
+
+
+
 </script>
 
 <template>
@@ -237,10 +236,10 @@ watch(isStatusDropdownOpen, (newVal) => {
         </tr>
       </thead>
       <tbody>
-  <tr v-for="employee in employees" :key="employee.employeeId">
-    <td>{{ employee.emp_name }}</td>
+        <tr v-for="employee in employee" :key="employee.employeeId">
+              <td>{{ employee.emp_name }}</td>
     <td>
-      <button class="edit-btn" @click="openStep1Modal(employee)">View</button>
+      <button class="edit-btn" @click="openStep1Modal(employee.employeeId)">View</button>
     </td>
     <td :class="{ 'clear-status': employee.status === 'Clear', 'unclear-status': employee.status === 'Unclear' }">
       {{ employee.status }}
@@ -251,7 +250,21 @@ watch(isStatusDropdownOpen, (newVal) => {
   </tr>
 </tbody>
       </table>
+<!-- 
 
+             Step1Modal 
+      <div v-if="selectedEmployee" class="modal">
+      <div class="modal-content">
+        <h2>Employee Details</h2>
+        <p><strong>User/Operator:</strong> {{ employeeDetails.emp_name }}</p>
+        <p><strong>Office/College/Unit:</strong> {{ employeeDetails.OfficeName }}</p>
+        <p><strong>Department:</strong> {{ employeeDetails.department_name }}</p>
+        <button @click="selectedEmployee = null">Close</button>
+      </div>
+    </div> -->
+  
+
+      
         <!-- Add User Modal -->
       <div v-if="isAddUserModalOpen" class="modal fade show d-block">
         <div class="modal-dialog modal-xl" role="document">
@@ -334,6 +347,9 @@ watch(isStatusDropdownOpen, (newVal) => {
           </div>
         </div>
 
+
+        <!-- MODAL -->
+
         <!-- For Disposal Button -->
         <button class="btn btn-danger btn-sm">For Disposal</button>
 
@@ -344,7 +360,7 @@ watch(isStatusDropdownOpen, (newVal) => {
             <div class="row mb-3">
               <div class="col-md-2">
                 <label class="form-label">User/Operator</label>
-                <input type="text" class="form-control" v-model="formData.userOperator">
+                <input type="text" class="form-control" v-model="formData.userOperator ">
               </div>
               <div class="col-md-2">
                 <label class="form-label">Office/College/Unit</label>
@@ -369,6 +385,7 @@ watch(isStatusDropdownOpen, (newVal) => {
             </div>
 
             <!-- Equipment Installed -->
+
             <div class="card p-3 mt-3">
               <h6 class="fw-bold">Equipment Installed:</h6>
               <div class="row">
@@ -388,6 +405,7 @@ watch(isStatusDropdownOpen, (newVal) => {
             </div>
 
              <!-- Operating System Installed -->
+
              <div class="card p-3 mt-3">
               <h6 class="fw-bold">Operating System Installed:</h6>
               <div v-for="(option, index) in osOptions" :key="index" class="mb-2">
@@ -412,6 +430,7 @@ watch(isStatusDropdownOpen, (newVal) => {
             </div>
 
             <!-- Software Installed -->
+
             <div class="card p-3 mt-3">
               <h6 class="fw-bold">Software Application Installed:</h6>
               <div class="row">
@@ -426,6 +445,7 @@ watch(isStatusDropdownOpen, (newVal) => {
             </div>
 
             <!-- Desktop Specifications -->
+
             <div class="card p-3 mt-3">
               <h6 class="fw-bold">Desktop Specifications:</h6>
               <div class="row">
@@ -438,6 +458,7 @@ watch(isStatusDropdownOpen, (newVal) => {
           </div>
 
           <!-- Modal Footer -->
+
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
             <button type="button" class="btn btn-success" @click="openStep2Modal">
@@ -449,12 +470,14 @@ watch(isStatusDropdownOpen, (newVal) => {
     </div>
 
     <!-- Step 2: Preventive Maintenance Checklist Modal -->
+
     <div v-if="isStep2ModalOpen" class="modal fade show d-block">
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header d-flex justify-content-between align-items-center">
             <h4 class="modal-title fw-bold">ITEM CHECKLIST</h4>
 
+            <!-- SAVE BUTTON ON WHAT YR TO BE SAVED IF NEEDED -->
             <div class="dropdown position-relative ms-auto">
               <button class="btn btn-primary dropdown-toggle ms-auto" type="button" @click="toggleDropdown">
                 Save
@@ -472,6 +495,7 @@ watch(isStatusDropdownOpen, (newVal) => {
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
 
+              <!-- HERE IS THE CHECKLIST -->
           <div class="modal-body">
             <table class="table table-bordered">
               <thead>
@@ -518,7 +542,6 @@ watch(isStatusDropdownOpen, (newVal) => {
         </div>
         </div>
       </div>
-    <!-- </div> -->
   </MainLayout>
   </template>
 

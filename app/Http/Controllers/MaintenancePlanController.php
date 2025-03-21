@@ -177,40 +177,57 @@ class MaintenancePlanController extends Controller
     }
 
 
+    
     public function index(Request $request, int $officeId)
     {
         try {
             $yrId = $request->query('YrId');  
-            $deptId = $request->query('departmentId'); // ✅ Extract deptId from query params
-            Log::info("Received Office ID: $officeId, Year ID: $yrId, Dept ID: $deptId");
+            $deptId = $request->query('departmentId'); 
+            $PlanId  = $request->query('PlanId'); 
+            $categoryId = $request->query('CatId', 1); // Default categoryId to 1
+
+
+            Log::info('Yrd Data:', ['data' => $yrId]);
     
-            // Fetch departments using stored procedure
-            $departments = DB::select("CALL GetDepartmentsByOffice(?)", [$officeId]);
-            Log::info('Departments:', ['data' => $departments]);
+            // Fetch office data (which contains the correct PlanId)
+            $office = DB::table('tbl_office')->where('OffId', $officeId)->first();
+            Log::info('Office Data:', ['data' => $office]);
     
-            if (empty($departments)) {
-                throw new \Exception('No departments found for the given office ID');
+            // Fetch departments using the stored procedure
+            $departmentData = DB::select("CALL GetDepartmentsByOffice(?)", [$officeId]); 
+            Log::info("📢 Raw departments Data Before Filtering:", $departmentData  );
+
+            // Filter departments based on PlanId, YrId, and OfficeId
+            $departments = array_filter($departmentData, function ($department) use ($PlanId, $yrId, $officeId,$categoryId) {
+                return $department->PlanId == $PlanId && $department->YrId == $yrId && $department->OffId == $officeId  &&  ($department->CatId == $categoryId || is_null($department->CatId));  ;
+            });
+    
+            // Re-index to ensure departments is a clean array (not an object)
+            $departments = array_values($departments);
+    
+            // Apply default values for missing fields
+            foreach ($departments as $dept) {
+                $dept->employeeId = $dept->employeeId ?? null; 
+                $dept->employee_number = $dept->employee_number ?? 'N/A';
+                $dept->emp_name = $dept->emp_name ?? 'No Employee';
+                $dept->is_Active = $dept->is_Active ?? 0;
             }
     
-            // Extract PlanId
-            $planId = $departments[0]->PlanId ?? null;
-    
-            // Fetch PM Year data
+            // Fetch PM Year data if YrId is provided
             $pmYear = $yrId ? DB::table('tbl_pmyear')->where('YrId', $yrId)->first() : null;
             $pmYearData = $pmYear ? (array) $pmYear : ['Name' => '', 'Description' => ''];
     
-            // Fetch office data
-            $office = DB::table('tbl_office')->where('OffId', $officeId)->first();
-            $officeData = $office ? (array) $office : ['OfficeName' => '', 'OfficeDescription' => ''];
-    
+            // Return to Inertia with the required data
             return Inertia::render('OfficeUser', [
-                'departments' => $departments,
-                'pmYear' => $pmYearData ?? ['Name' => '', 'Description' => ''],
+                'departments' => $departments,  
+                'pmYear' => $pmYearData,
                 'YrId' => $yrId ?? '',
-                'PlanId' => $planId ?? '',
-                'office' => $officeData ?? ['OfficeName' => '', 'OfficeDescription' => ''],
-                'deptId' => $deptId , 
+                'PlanId' => $PlanId ?? '', 
+                'office' => $office ?? [],
+                'deptId' => $deptId ?? '', 
                 'officeId' => $officeId ?? '',
+                'categoryId' => $categoryId ?? 1,  // Ensure categoryId is 1 if missing
+
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching office data: ' . $e->getMessage());
@@ -218,63 +235,183 @@ class MaintenancePlanController extends Controller
         }
     }
     
+    
 
-
-public function employee(Request $request, int $departmentId)
-{
+    Public function employee(Request $request, int $departmentId )
+    {
     try {
-        Log::info("🔍 Fetching employees for department ID: $departmentId");
+        // Use route parameter directly
+        $yrId = $request->query('YrId');  
+        $PlanId  = $request->query('PlanId'); 
+        $officeId  = $request->query('officeId'); 
+        $employeeId = $request->query('employeeId');  
+        $categoryId = $request->query('CatId', 1); 
 
-        // Validate and cast query parameters
-        $officeId = intval($request->query('officeId', 0));
-        $yrId = intval($request->query('YrId', 0));
 
-        // Call stored procedure to get employees
+        $department = DB::table('tbl_department')->where('deptId', $departmentId)->first();
+
+        // Fetch employees using the stored procedure
         $employees = DB::select('CALL GetEmployeesByDepartment(?)', [$departmentId]);
+        Log::info("📢 Raw Employees Data Before Filtering:", $employees);
 
-        Log::info("✅ Employees fetched from DB:", ['count' => count($employees)]);
+            // Filter Employee based on PlanId, YrId, OfficeId, And Department
 
-        if (empty($employees)) {
-            Log::warning("⚠️ No employees found for department ID: $departmentId");
-        }
+        $employee = array_filter($employees, function ($emp) use ($PlanId, $yrId, $officeId, $departmentId,$categoryId) {
+            return $emp-> PlanId == $PlanId && $emp-> YrId == $yrId && $emp-> OffId == $officeId && $emp-> DeptId == $departmentId &&  ($emp->CatId == $categoryId || is_null($emp->CatId));
+        });
 
-        // Convert employees data to an associative array
-        $employeesArray = json_decode(json_encode($employees), true) ?? [];
+        $employee = array_values($employee);
+        
+        Log::info("📢 Filtered Employees:", $employee);
 
-        // Get first employee details safely
-        $firstEmployee = $employees[0] ?? null;
-        $planId = $firstEmployee?->PlanId ?? null;
-        $employeeId = $firstEmployee?->employeeId ?? null;
-
-        // Fetch PM Year data safely
-        $pmYear = $yrId ? DB::table('tbl_pmyear')->where('YrId', $yrId)->first() : null;
-        $pmYearData = $pmYear ? (array) $pmYear : ['Name' => '', 'Description' => ''];
-
-        // Fetch Office details safely
-        $office = $officeId ? DB::table('tbl_office')->where('OffId', $officeId)->first() : null;
-        $officeData = $office ? (array) $office : ['OfficeName' => '', 'OfficeDescription' => ''];
+        // Fetch additional data (PM Year & Office Details)
+        $pmYearData = DB::table('tbl_pmyear')->where('YrId', $yrId)->first();
 
         return Inertia::render('Usertable', [
-            'employees' => $employeesArray,
-            'deptId' => $departmentId,
-            'officeId' => $officeId,
-            'YrId' => $yrId,
-            'PlanId' => $planId,
-            'office' => $officeData,
-            'employeeId' => $employeeId,
-        ]);
-    } catch (\Exception $e) {
-        Log::error('❌ Error fetching employees: ' . $e->getMessage(), [
-            'departmentId' => $departmentId,
-            'officeId' => $officeId,
-            'YrId' => $yrId
+            'employee' => $employee,
+            'officeId' => $officeId ?? '',
+            'YrId' => $yrId ?? '',
+            'employeeId' => $employeeId ?? '',
+            'PlanId' => $PlanId ?? '', 
+            'departmentId ' => $departmentId ?? '', 
+            'department' => $department ?? [], 
+            'categoryId' => $categoryId ?? 1,  // Ensure categoryId is 1 if missing
+
+            'pmYear' => $pmYearData ? (array) $pmYearData : ['Name' => '', 'Description' => ''],
         ]);
 
+    
+    } catch (\Exception $e) {
+        Log::error("❌ Error fetching employees:", ['error' => $e->getMessage()]);
         return redirect()->back()->withErrors(['error' => 'Failed to fetch employee data']);
     }
 }
 
+
+public function employeeChecklist(Request $request)
+
+{
+    $employeeId = (int) $request->query('employeeId');
+    $officeId = $request->query('officeId');
+    $YrId = $request->query('YrId');
+    $PlanId = $request->query('PlanId');
+
+    // Validate incoming request data
+    $validatedData = $request->validate([
+        'ticketNumber' => 'required|string|max:50',
+        'pcName' => 'required|string|max:100',
+        'dateAcquired' => 'required|date',
+        'cpu_status' => 'required|integer',
+        'keyboard_status' => 'required|integer',
+        'printer_status' => 'required|integer',
+        'monitor_status' => 'required|integer',
+        'mouse_status' => 'required|integer',
+        'ups_status' => 'required|integer',
+        'avr_status' => 'required|integer',
+        'windows10' => 'required|integer',
+        'windows11' => 'required|integer',
+        'license' => 'required|integer',
+        'enrollment' => 'required|integer',
+        'microsoft' => 'required|integer',
+        'browser' => 'required|integer',
+        'anti_virus' => 'required|integer',
+        'other_os' => 'nullable|string|max:255',
+        'other_sys' => 'nullable|string|max:255',
+        'processor_details' => 'required|string|max:255',
+        'motherboard_details' => 'required|string|max:255',
+        'memory_details' => 'required|string|max:255',
+        'graphics_card_details' => 'required|string|max:255',
+        'hard_disk_details' => 'required|string|max:255',
+        'monitor_details' => 'required|string|max:255',
+        'casing_details' => 'required|string|max:255',
+        'power_supply_details' => 'required|string|max:255',
+        'keyboard_details' => 'required|string|max:255',
+        'mouse_details' => 'required|string|max:255',
+        'avr_details' => 'required|string|max:255',
+        'ups_details' => 'required|string|max:255',
+        'printer_details' => 'required|string|max:255',
+        'network_mac_ip_details' => 'required|string|max:255'
+    ]);
+
+    try {
+        // Ensure we are selecting the correct employee by filtering by employeeId
+        $employee = DB::table('tbl_employee')
+            ->where('employeeId', $employeeId)
+            ->select('deptId', 'OffId', 'emp_name')
+            ->first();
+
+        if (!$employee) {
+            return response()->json(['error' => 'Employee not found.'], 404);
+        }
+
+        // Fetch department and office details linked to this specific employee
+        $details = DB::table('tbl_department')
+            ->join('tbl_office', 'tbl_department.OffId', '=', 'tbl_office.OffId')
+            ->where('tbl_department.deptId', $employee->deptId)
+            ->select('tbl_department.department_name', 'tbl_office.OfficeName')
+            ->first();
+
+        // Fetch the latest PlanId and YrId for the specific employee's office
+        $planDetails = DB::table('tbl_premainplan_details')
+            ->where('OffId', $employee->OffId)
+            ->orderBy('PlanId', 'DESC')
+            ->select('PlanId', 'YrId')
+            ->first();
+
+        // Call the stored procedure with the employeeId included to ensure the correct employee is updated
+        DB::statement('CALL InsertPreventiveMaintenance(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [
+            $employeeId, // Ensure the stored procedure gets the correct employee ID
+            $validatedData['ticketNumber'],
+            $validatedData['pcName'],
+            $validatedData['dateAcquired'],
+            $validatedData['cpu_status'],
+            $validatedData['keyboard_status'],
+            $validatedData['printer_status'],
+            $validatedData['monitor_status'],
+            $validatedData['mouse_status'],
+            $validatedData['ups_status'],
+            $validatedData['avr_status'],
+            $validatedData['windows10'],
+            $validatedData['windows11'],
+            $validatedData['license'],
+            $validatedData['enrollment'],
+            $validatedData['microsoft'],
+            $validatedData['browser'],
+            $validatedData['anti_virus'],
+            $validatedData['other_os'],
+            $validatedData['other_sys'],
+            $validatedData['processor_details'],
+            $validatedData['motherboard_details'],
+            $validatedData['memory_details'],
+            $validatedData['graphics_card_details'],
+            $validatedData['hard_disk_details'],
+            $validatedData['monitor_details'],
+            $validatedData['casing_details'],
+            $validatedData['power_supply_details'],
+            $validatedData['keyboard_details'],
+            $validatedData['mouse_details'],
+            $validatedData['avr_details'],
+            $validatedData['ups_details'],
+            $validatedData['printer_details'],
+            $validatedData['network_mac_ip_details']
+        ]);
+
+        return response()->json([
+            'message' => 'Preventive maintenance record inserted successfully!',
+            'employeeId' => $employeeId, // Ensuring response has correct employee ID
+            'emp_name' => $employee->emp_name,
+            'department_name' => $details->department_name ?? null,
+            'OfficeName' => $details->OfficeName ?? null,
+            'PlanId' => $planDetails->PlanId ?? null,
+            'YrId' => $planDetails->YrId ?? null,
+        ], 200);
+        
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to process request', 'details' => $e->getMessage()], 500);
+    }
 }
+
+}    
 
     
 

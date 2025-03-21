@@ -6,10 +6,11 @@ import MainLayout from '@/Layouts/MainLayout.vue';
 const props = defineProps({
   departments: { type: Array, default: () => [] },  
   pmYear: { type: Object, default: () => ({}) },
-  YrId: { type: [String, Number], default: '' },
-  PlanId: { type: [String, Number], default: '' },
+  YrId: { type: [String, Number], default: null }, // Changed default to null
+  PlanId: { type: [String, Number], default: null }, // Changed default to null
   office: { type: Object, default: () => ({}) },
-  deptId: { type: [String, Number], default: '' } 
+  deptId: { type: [String, Number], default: null },  // Changed default to null
+  categoryId: { type: [String, Number], default: null } // Changed default to null
 
 });
 
@@ -24,23 +25,26 @@ const selectedOfficeId = ref(props.office?.OffId || '');
 const selectedYear = ref(props.YrId || '');
 const departments = ref(props.departments || []);
 const officeData = ref([]); 
-const selectedplan = ref(props.PlanId || '');
-
-const selectedDeptId = ref((props.deptId) || (props.departments?.[0]?.DeptId ? (props.departments[0].DeptId) : null));
-
-
+const selectedPlan = ref(props.PlanId || '');
+const selectedDeptId = ref(props.deptId ?? null);
+const selectedCategoryId = ref(props.categoryId ?? 1); // Default categoryId to 1
 
 watchEffect(() => {
-  if (!selectedDeptId.value && props.departments?.length) {
-    const firstDeptId = props.departments[0]?.DeptId; 
-    if (firstDeptId) {
-      selectedDeptId.value = (firstDeptId); // Ensure it's a number
-    }
+  if (!selectedDeptId.value && props.departments?.length > 0) {
+    selectedDeptId.value = props.departments[0].DeptId;
+  }
+  if (!selectedCategoryId.value && props.categories?.length > 0) {
+    selectedCategoryId.value = 1; // Ensure categoryId is set to 1
   }
 });
 
+// Watch for changes in the PlanId prop and log (remove if unnecessary)
+watchEffect(() => {
+  selectedPlan.value = props.PlanId || '';
+  console.log("Updated PlanId:", selectedPlan.value);
+});
 
-
+// Log selected parameters when navigating
 const logParams = (deptId) => {
   if (deptId) {
     selectedDeptId.value = deptId; // Update before navigating
@@ -48,17 +52,17 @@ const logParams = (deptId) => {
   console.log("Navigating to UserTable with Params:", {
     officeId: selectedOfficeId.value,
     YrId: selectedYear.value,
-    deptId: selectedDeptId.value, // Now correctly updated
-    PlanId: selectedplan.value
+    deptId: selectedDeptId.value,
+    PlanId: selectedPlan.value
   });
 };
 
-
+// On mounted, log data for debugging
 onMounted(() => {
   console.log('Departments:', props.departments);
   console.log('Selected Office ID:', selectedOfficeId.value);
   console.log('Selected Year:', selectedYear.value);
-  console.log('Selected Plan:', selectedplan.value);
+  console.log('Selected Plan:', selectedPlan.value);
 });
 
 
@@ -226,13 +230,13 @@ const printDetails = (item) => {
               View
             </button>
             <Link 
-  v-else
-  :href="route('department-employees', { 
- departmentId: selectedDeptId, 
-    officeId: selectedOfficeId, 
-    YrId: selectedYear,
-    PlanId:selectedplan
-  })"
+      v-else
+      :href="route('department-employees', { 
+    departmentId: department.DeptId , 
+       officeId: selectedOfficeId, 
+        YrId: selectedYear,
+        PlanId: selectedPlan
+      })"
   class="btn btn-primary" 
   @click.prevent="logParams(department.DeptId)">
   <i class="fas fa-eye me-1"></i> View
