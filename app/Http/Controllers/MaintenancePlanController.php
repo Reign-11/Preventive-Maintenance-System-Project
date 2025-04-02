@@ -235,9 +235,9 @@ class MaintenancePlanController extends Controller
         }
     }
     
-    
+     
 
-    Public function employee(Request $request, int $departmentId )
+    public function employee(Request $request, int $departmentId )
     {
     try {
         // Use route parameter directly
@@ -287,131 +287,113 @@ class MaintenancePlanController extends Controller
     }
 }
 
-
 public function employeeChecklist(Request $request)
-
 {
-    $employeeId = (int) $request->query('employeeId');
-    $officeId = $request->query('officeId');
-    $YrId = $request->query('YrId');
-    $PlanId = $request->query('PlanId');
-
-    // Validate incoming request data
-    $validatedData = $request->validate([
-        'ticketNumber' => 'required|string|max:50',
-        'pcName' => 'required|string|max:100',
-        'dateAcquired' => 'required|date',
-        'cpu_status' => 'required|integer',
-        'keyboard_status' => 'required|integer',
-        'printer_status' => 'required|integer',
-        'monitor_status' => 'required|integer',
-        'mouse_status' => 'required|integer',
-        'ups_status' => 'required|integer',
-        'avr_status' => 'required|integer',
-        'windows10' => 'required|integer',
-        'windows11' => 'required|integer',
-        'license' => 'required|integer',
-        'enrollment' => 'required|integer',
-        'microsoft' => 'required|integer',
-        'browser' => 'required|integer',
-        'anti_virus' => 'required|integer',
-        'other_os' => 'nullable|string|max:255',
-        'other_sys' => 'nullable|string|max:255',
-        'processor_details' => 'required|string|max:255',
-        'motherboard_details' => 'required|string|max:255',
-        'memory_details' => 'required|string|max:255',
-        'graphics_card_details' => 'required|string|max:255',
-        'hard_disk_details' => 'required|string|max:255',
-        'monitor_details' => 'required|string|max:255',
-        'casing_details' => 'required|string|max:255',
-        'power_supply_details' => 'required|string|max:255',
-        'keyboard_details' => 'required|string|max:255',
-        'mouse_details' => 'required|string|max:255',
-        'avr_details' => 'required|string|max:255',
-        'ups_details' => 'required|string|max:255',
-        'printer_details' => 'required|string|max:255',
-        'network_mac_ip_details' => 'required|string|max:255'
-    ]);
-
     try {
-        // Ensure we are selecting the correct employee by filtering by employeeId
-        $employee = DB::table('tbl_employee')
-            ->where('employeeId', $employeeId)
-            ->select('deptId', 'OffId', 'emp_name')
-            ->first();
+        $currentTimestamp = now();
+        $day = $currentTimestamp->format('d');
+        $month = $currentTimestamp->format('m');
+        $year = $currentTimestamp->format('y');
 
-        if (!$employee) {
-            return response()->json(['error' => 'Employee not found.'], 404);
-        }
+        // Generate Ticket Number
+        $submissionOrder = DB::table('tbl_preventive_maintainance')
+            ->whereDate('date', $currentTimestamp->toDateString())
+            ->count() + 1;
 
-        // Fetch department and office details linked to this specific employee
-        $details = DB::table('tbl_department')
-            ->join('tbl_office', 'tbl_department.OffId', '=', 'tbl_office.OffId')
-            ->where('tbl_department.deptId', $employee->deptId)
-            ->select('tbl_department.department_name', 'tbl_office.OfficeName')
-            ->first();
+        $generatedTicketNumber = str_pad($submissionOrder, 2, '0', STR_PAD_LEFT) . $day . $month . $year;
 
-        // Fetch the latest PlanId and YrId for the specific employee's office
-        $planDetails = DB::table('tbl_premainplan_details')
-            ->where('OffId', $employee->OffId)
-            ->orderBy('PlanId', 'DESC')
-            ->select('PlanId', 'YrId')
-            ->first();
-
-        // Call the stored procedure with the employeeId included to ensure the correct employee is updated
-        DB::statement('CALL InsertPreventiveMaintenance(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [
-            $employeeId, // Ensure the stored procedure gets the correct employee ID
-            $validatedData['ticketNumber'],
-            $validatedData['pcName'],
-            $validatedData['dateAcquired'],
-            $validatedData['cpu_status'],
-            $validatedData['keyboard_status'],
-            $validatedData['printer_status'],
-            $validatedData['monitor_status'],
-            $validatedData['mouse_status'],
-            $validatedData['ups_status'],
-            $validatedData['avr_status'],
-            $validatedData['windows10'],
-            $validatedData['windows11'],
-            $validatedData['license'],
-            $validatedData['enrollment'],
-            $validatedData['microsoft'],
-            $validatedData['browser'],
-            $validatedData['anti_virus'],
-            $validatedData['other_os'],
-            $validatedData['other_sys'],
-            $validatedData['processor_details'],
-            $validatedData['motherboard_details'],
-            $validatedData['memory_details'],
-            $validatedData['graphics_card_details'],
-            $validatedData['hard_disk_details'],
-            $validatedData['monitor_details'],
-            $validatedData['casing_details'],
-            $validatedData['power_supply_details'],
-            $validatedData['keyboard_details'],
-            $validatedData['mouse_details'],
-            $validatedData['avr_details'],
-            $validatedData['ups_details'],
-            $validatedData['printer_details'],
-            $validatedData['network_mac_ip_details']
+        // Validate Request
+        $validated = $request->validate([
+            'employeeId' => 'required|integer',
+            'pcName' => 'required|string|max:100',
+            'dateAcquired' => 'required|date',
+            'cpu_status' => 'required|integer',
+            'keyboard_status' => 'required|integer',
+            'printer_status' => 'required|integer',
+            'monitor_status' => 'required|integer',
+            'mouse_status' => 'required|integer',
+            'ups_status' => 'required|integer',
+            'avr_status' => 'required|integer',
+            'windows10' => 'integer',
+            'windows11' => 'integer',
+            'license' => 'required|integer',
+            'enrollment' => 'required|integer',
+            'microsoft' => 'required|integer',
+            'browser' => 'required|integer',
+            'anti_virus' => 'required|integer',
+            'other_equip' => 'nullable|string|max:255',
+            'other_os' => 'nullable|string|max:255',
+            'other_sys' => 'nullable|string|max:255',
+            'processor_details' => 'nullable|string|max:255',
+            'motherboard_details' => 'nullable|string|max:255',
+            'memory_details' => 'nullable|string|max:255',
+            'graphics_card_details' => 'nullable|string|max:255',
+            'hard_disk_details' => 'nullable|string|max:255',
+            'monitor_details' => 'nullable|string|max:255',
+            'casing_details' => 'nullable|string|max:255',
+            'power_supply_details' => 'nullable|string|max:255',
+            'keyboard_details' => 'nullable|string|max:255',
+            'mouse_details' => 'nullable|string|max:255',
+            'avr_details' => 'nullable|string|max:255',
+            'ups_details' => 'nullable|string|max:255',
+            'printer_details' => 'nullable|string|max:255',
+            'network_mac_ip_details' => 'nullable|string|max:255',
+            'checklist' => 'required|array',
+            'checklist.*.task' => 'required|string|max:255',
+            'checklist.*.details' => 'required|string',
+            'checklist.*.status' => 'required|array',
+            'checklist.*.status.*' => 'integer|min:0|max:1',
         ]);
 
-        return response()->json([
-            'message' => 'Preventive maintenance record inserted successfully!',
-            'employeeId' => $employeeId, // Ensuring response has correct employee ID
-            'emp_name' => $employee->emp_name,
-            'department_name' => $details->department_name ?? null,
-            'OfficeName' => $details->OfficeName ?? null,
-            'PlanId' => $planDetails->PlanId ?? null,
-            'YrId' => $planDetails->YrId ?? null,
-        ], 200);
-        
+        // Convert checklist array to JSON
+        $checklistJson = json_encode($validated['checklist']);
+
+        // Call Stored Procedure
+        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+            $validated['employeeId'],
+            $generatedTicketNumber,
+            $validated['pcName'],
+            $validated['dateAcquired'],
+            $validated['cpu_status'],
+            $validated['keyboard_status'],
+            $validated['printer_status'],
+            $validated['monitor_status'],
+            $validated['mouse_status'],
+            $validated['ups_status'],
+            $validated['avr_status'],
+            $validated['windows10'],
+            $validated['windows11'],
+            $validated['license'],
+            $validated['enrollment'],
+            $validated['microsoft'],
+            $validated['browser'],
+            $validated['anti_virus'],
+            $validated['other_equip'],
+            $validated['other_os'],
+            $validated['other_sys'],
+            $validated['processor_details'],
+            $validated['motherboard_details'],
+            $validated['memory_details'],
+            $validated['graphics_card_details'],
+            $validated['hard_disk_details'],
+            $validated['monitor_details'],
+            $validated['casing_details'],
+            $validated['power_supply_details'],
+            $validated['keyboard_details'],
+            $validated['mouse_details'],
+            $validated['avr_details'],
+            $validated['ups_details'],
+            $validated['printer_details'],
+            $validated['network_mac_ip_details'],
+            $checklistJson,  // Store checklist as JSON
+        ]);
+
+        return response()->json(['message' => 'Checklist submitted successfully']);
     } catch (\Exception $e) {
-        return response()->json(['error' => 'Failed to process request', 'details' => $e->getMessage()], 500);
+        return response()->json(['error' => $e->getMessage()], 500);
     }
 }
-
-}    
+}
 
     
 
