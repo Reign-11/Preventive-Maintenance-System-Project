@@ -197,7 +197,7 @@ const printDetails = (item) => {
 
   </div>
 
-      <div class="d-flex align-items-center justify-content-center gap-2">
+      <div class="d-flex align-items-center justify-content-center gap-2 ">
         <label for="office-users" class="mb-0">Office/Users:</label>
         <select v-model="selectedOption" id="office-users" class="form-select w-auto">
           <option value="Office">Office</option>
@@ -209,7 +209,7 @@ const printDetails = (item) => {
       </div>
 
 
-      <table class="data-table">
+      <table class="data-table mt-2">
       <thead>
         <tr>
           <th>User/Office</th>
@@ -237,10 +237,10 @@ const printDetails = (item) => {
         YrId: selectedYear,
         PlanId: selectedPlan
       })"
-  class="btn btn-primary" 
-  @click.prevent="logParams(department.DeptId)">
-  <i class="fas fa-eye me-1"></i> View
-</Link>
+      class="btn btn-sm btn-outline-primary w-auto align-items-center"
+      @click.prevent="logParams(department.DeptId)">
+      <i class="fas fa-eye me-1"></i> View
+    </Link>
           </td>
           <td class="status-column">N/A</td> 
           <td v-if="isUserSelected">

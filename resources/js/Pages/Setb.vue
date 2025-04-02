@@ -48,12 +48,27 @@ const openModal = () => {
   }
 };
 
+const closeModal = () => {
+  try {
+    const modalElement = document.getElementById("addCollegeModal");
+    if (!modalElement) {
+      console.error("Modal element not found");
+      return;
+    }
+
+    // Use the correct method to instantiate a modal in Bootstrap 5
+    const modalInstance = new bootstrap.Modal(modalElement);
+    modalInstance.hide();  // Close the modal
+  } catch (error) {
+    console.error("Error closing modal:", error);
+  }
+};
 
 // ✅ Fetch offices for the dropdown
 const fetchOffices = async () => {
   try {
     console.log("📡 Fetching offices...");
-    const response = await axios.get("/api/offices");
+    const response = await axios.get("/api/officesB");
     console.log("✅ Response:", response.data);
 
     offices.value = response.data; // Ensure this is reactive
@@ -65,7 +80,7 @@ const fetchOffices = async () => {
 // ✅ Fetch available years
 const fetchYears = async () => {
   try {
-    const response = await axios.get("/api/years");
+    const response = await axios.get("/api/yearsB");
     years.value = response.data;
   } catch (error) {
     console.error("Error fetching years:", error);
@@ -82,7 +97,7 @@ const fetchData = async () => {
   isFetchingData.value = true;
 
   try {
-    const response = await axios.get(`/api/maintenance-plans?YrId=${selectedYear.value}&CatId=1`);
+    const response = await axios.get(`/api/maintenance-plansB?YrId=${selectedYear.value}&CatId=2`);
 
     console.log("📡 Fetching Data for YrId:", selectedYear.value);
     console.log("📦 Fetched Data:", response.data);
@@ -178,7 +193,7 @@ const saveOnEnter = async (plan) => {
 
     console.log("📩 Sending Data:", payload);
 
-    const response = await axios.post("/api/save-maintenance-plan", payload);
+    const response = await axios.post("/api/save-maintenance-planB", payload);
 
     console.log(" Maintenance plan saved successfully", response.data);
 
@@ -218,12 +233,13 @@ const addOffice = async () => {
     OfficeName: selectedOfficeData.OfficeName,
     ParentOffId: selectedParentOffice?.value || null, // ✅ Ensure defined
     YrId: selectedYear.value,
+    CatId: 2, // ✅ Ensure CatId is always set to 2
   };
 
   console.log("📡 Sending request:", requestData);
 
   try {
-    const response = await axios.post("/api/add-colleges", requestData);
+    const response = await axios.post("/api/add-collegesB", requestData);
     console.log("✅ Response received:", response.data);
 
     alert("Office added successfully!");
@@ -247,6 +263,7 @@ const addOffice = async () => {
     }
   }
 };
+
 
 // ✅ Watcher for updates
 watch(maintenancePlans, (newValue) => {
@@ -342,7 +359,7 @@ const printTable = () => {
             <span class="badge bg-warning text-white">M</span> Monthly
           </div>
 
-          <div class="d-flex justify-content-center gap-3 mt-3 no-print">
+          <div class="d-flex justify-content-center gap-3 mt- no-print">
             <button class="btn btn-success"><i class="fas fa-save"></i> Save</button>
             <button class="btn btn-warning"><i class="fas fa-lock"></i> Lock</button>
             <button class="btn btn-info" @click="printTable">
@@ -351,7 +368,7 @@ const printTable = () => {
           </div>
 
           <!-- Year Selection -->
-          <div>
+          <div class="mt-2">
             <label for="year">Select Year:</label>
             <select v-model="selectedYear">
               <option v-for="year in years" :key="year.YrId" :value="year.YrId">
@@ -362,10 +379,10 @@ const printTable = () => {
         </div>
 
         <!-- "Set B" Title -->
-        <div class="text-success fw-bold fs-3 text-center mt-4">Set B</div>
+        <div class="text-success fw-bold fs-3 text-center mt-2">Set B</div>
 
         <!-- Table Section -->
-        <div class="card mt-4">
+        <div class="card mt-2">
           <div class="card-body">
             <!-- Top Controls -->
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -426,27 +443,39 @@ const printTable = () => {
         </div>
       </div>
 
-      <!-- Bootstrap Modal -->
-      <div class="modal fade" id="addCollegeModal" tabindex="-1" aria-hidden="true">
+    <!-- Bootstrap Modal -->
+    <div class="modal fade" id="addCollegeModal" aria-labelledby="exampleModalLabel" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <label for="yearDropdown">Select Year:</label>
-              <select id="yearDropdown" v-model="selectedYear" class="form-control">
-                <option v-for="year in years" :key="year.YrId" :value="year.YrId">{{ year.Name }}</option>
-              </select>
+              <h5 class="modal-title">Add College</h5>
+               <!-- Close button -->
+              <button type="button" class="btn-close" @click="closeModal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+              <!-- Year Dropdown -->
+              <div class="mb-3">
+                <label for="yearDropdown" class="form-label">Select Year:</label>
+                <select id="yearDropdown" v-model="selectedYear" class="form-control">
+                  <option v-for="year in years" :key="year.YrId" :value="year.YrId">{{ year.Name }}</option>
+                </select>
+              </div>
 
               <!-- Office Name Dropdown -->
-              <label for="officeDropdown">Select Office:</label>
-              <select id="officeDropdown" v-model="selectedOffice" class="form-control">
-                <option v-for="office in offices" :key="office.OffId" :value="office.OffId">
-                  {{ office.OfficeName }}
-                </option>
-              </select>
+              <div class="mb-3">
+                <label for="officeDropdown" class="form-label">Select Office:</label>
+                <select id="officeDropdown" v-model="selectedOffice" class="form-control">
+                  <option v-for="office in offices" :key="office.OffId" :value="office.OffId">
+                    {{ office.OfficeName }}
+                  </option>
+                </select>
+              </div>
             </div>
 
             <div class="modal-footer">
-              <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+              <!-- Close Button to dismiss modal -->
+              <button type="button" class="btn btn-danger"  data-dismiss="modal">Close</button>
               <button type="button" class="btn btn-success" @click="addOffice">Save</button>
             </div>
           </div>

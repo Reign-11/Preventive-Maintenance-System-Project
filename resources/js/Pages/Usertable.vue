@@ -391,55 +391,70 @@ watch(isStatusDropdownOpen, (newVal) => {
           <th>Print Details</th> 
         </tr>
       </thead>
+      
       <tbody>
         <tr v-for="employee in employee" :key="employee.employeeId">
               <td>{{ employee.emp_name }}</td>
-    <td>
-      <button class="edit-btn" @click="openStep1Modal(employeeId)">View</button>
-    </td>
-    <td :class="{ 'clear-status': employee.status === 'Clear', 'unclear-status': employee.status === 'Unclear' }">
-      {{ employee.status }}
-    </td>
-    <td>
-      <button class="edit-btn" @click="printDetails(employee)">Print</button> 
-    </td>
-  </tr>
-</tbody>
-      </table>
-
-  
-
-      
-        <!-- Add User Modal -->
-      <div v-if="isAddUserModalOpen" class="modal fade show d-block">
-        <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-              <h5 class="modal-title">Add New User</h5>
-              <button type="button" class="btn-close" @click="isAddUserModalOpen = false"></button>
 
 
-            </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label class="form-label">User Name</label>
-                <input type="text" class="form-control" v-model="newUser.name" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Status</label>
-                <select class="form-control" v-model="newUser.status">
-                  <option value="Clear">Clear</option>
-                  <option value="Unclear">Unclear</option>
-                </select>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-danger" @click="isAddUserModalOpen = false">Cancel</button>
-              <button class="btn btn-primary" @click="addUser">Add User</button>
-            </div>
+        <td class="text-center">
+          <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto"
+              @click="openStep1Modal(employeeId)">
+            <i class="fas fa-eye me-1"></i> View
+            </button>
           </div>
+        </td>
+
+        <td :class="{ 'clear-status': employee.status === 'Clear', 'unclear-status': employee.status === 'Unclear' }">
+          {{ employee.status }}
+        </td>
+        <td class="text-center">
+          <div class="d-flex justify-content-center">
+          <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+          @click="printDetails(employee)">
+          <i class="fas fa-eye me-1"></i>Print</button>
+          </div> 
+        </td>
+          </tr>
+      </tbody>
+      </table>
+      
+    
+   
+
+<!-- Add User Modal -->
+<div v-if="isAddUserModalOpen" class="modal fade show d-block" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
+        <button type="button" class="btn-close" @click="isAddUserModalOpen = false" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Employee Name inline with label and input -->
+        <div class="mb-3 d-flex">
+          <label class="form-label me-3" style="width: 150px;">Employee Name</label>
+          <input type="text" class="form-control" style="flex-grow: 1;" v-model="newUser.name" />
+        </div>
+        
+        <!-- Employee Number inline with label and input -->
+        <div class="mb-4 d-flex">
+          <label class="form-label me-3" style="width: 150px;">Employee Number</label>
+          <input type="text" class="form-control" style="flex-grow: 1;" v-model="newUser.number" />
         </div>
       </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" @click="isAddUserModalOpen = false">Close</button>
+        <button class="btn btn-primary" @click="addUser">Add User</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
 
     <!-- Modal -->
     <div v-if="isStep1ModalOpen" class="modal fade show d-block">

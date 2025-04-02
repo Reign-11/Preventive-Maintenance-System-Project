@@ -138,14 +138,22 @@ const printDetails = (item) => {
         <tbody>
           <tr v-for="(item, index) in displayedData" :key="index">
             <td>{{ item.name }}</td>
-            <td>
-              <button class="edit-btn" @click="openStep1Modal(item)">View</button>
+            <td class="text-center">
+              <div class="d-flex justify-content-center">
+              <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+              @click="openStep1Modal(item)">
+              <i class="fas fa-eye me-1"></i>View</button>
+            </div>
             </td>
             <td :class="{ 'clear-status': item.status === 'Clear', 'unclear-status': item.status === 'Unclear' }">
               {{ item.status }}
             </td>
-            <td>
-              <button class="edit-btn" @click="printDetails(item)">Print</button>
+            <td class="text-center">
+              <div class="d-flex justify-content-center">
+              <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+              @click="printDetails(item)">
+              <i class="fas fa-eye me-1"></i>Print</button>
+              </div>
             </td>
           </tr>
         </tbody>

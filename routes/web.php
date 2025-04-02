@@ -7,6 +7,9 @@ use Illuminate\Controllers\Admin\MainController;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Http\Controllers\MaintenancePlanController;
+use App\Http\Controllers\MaintenancePlanControllerB;
+use App\Http\Controllers\MaintenancePlanControllerC;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -38,6 +41,9 @@ Route::get('/main', function () {
 Route::get('/setb', function () {
     return Inertia::render('Setb');
 })->middleware(['auth', 'verified'])->name('setb');
+Route::get('/setc', function () {
+    return Inertia::render('Setc');
+})->middleware(['auth', 'verified'])->name('setc');
 
 
 Route::middleware('auth')->group(function () {

@@ -74,11 +74,11 @@ onMounted(() => {
                             <i data-feather="layers" style="margin-right: 8px;"></i> Set B
                         </NavLink>
                     </li>
-                    <!-- <li class="nav-item nav-item-spacing">
+                    <li class="nav-item nav-item-spacing">
                         <NavLink :href="route('setc')" :active="route().current('setc')" class="nav-link-custom">
                             <i data-feather="folder" style="margin-right: 8px;"></i> Set C
                         </NavLink>
-                    </li> -->
+                    </li>
                 </ul>
             </nav>
         </div>
