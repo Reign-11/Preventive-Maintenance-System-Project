@@ -104,43 +104,48 @@ class MaintenancePlanController extends Controller
             'ParentOffId' => 'nullable|integer|exists:tbl_office,OffId',
             'YrId'        => 'nullable|integer|exists:tbl_pmyear,YrId'
         ]);
-
+    
         $officeName  = $request->input('OfficeName');
         $parentOffId = $request->filled('ParentOffId') ? $request->input('ParentOffId') : null;
         $yrId        = $request->filled('YrId') ? $request->input('YrId') : null;
-
+        $catId       = 1; // Set the CatId to 2
+    
         try {
             $existingOffice = DB::table('tbl_premainplan_details')
-                ->join('tbl_office', 'tbl_office.OffId', '=', 'tbl_premainplan_details.OffId')
-                ->where('tbl_office.OfficeName', $officeName)
-                ->where('tbl_premainplan_details.YrId', $yrId)
-                ->exists();
-
+            ->join('tbl_office', 'tbl_office.OffId', '=', 'tbl_premainplan_details.OffId')
+            ->where('tbl_office.OfficeName', $officeName)
+            ->where('tbl_premainplan_details.YrId', $yrId)
+            ->where('tbl_premainplan_details.CatId', $catId)
+            ->exists();
+        
+    
             if ($existingOffice) {
-                return response()->json([
+                return response()->json([   
                     'message' => 'Office already exists for the selected year.'
                 ], 409);
             }
-
-            $result = DB::select("CALL AddOffice(?, ?, ?)", [$officeName, $parentOffId, $yrId]);
-
+    
+            // Include CatId in the stored procedure call
+            $result = DB::select("CALL AddOffice(?, ?, ?, ? )", [$officeName, $parentOffId, $yrId, $catId]);
+    
             if (!empty($result) && isset($result[0]->NewOfficeID)) {
                 return response()->json([
                     'message'  => 'Office recorded successfully in the selected year.',
                     'OfficeID' => $result[0]->NewOfficeID
                 ]);
             }
-
+    
             return response()->json([
                 'message' => 'Failed to record office. No valid ID returned.'
             ], 500);
-
+    
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Database error: ' . $e->getMessage()
             ], 500);
         }
     }
+    
 
     public function destroy($id)
     {
@@ -349,7 +354,8 @@ public function employeeChecklist(Request $request)
         $checklistJson = json_encode($validated['checklist']);
 
         // Call Stored Procedure
-        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)", [
+            
             $validated['employeeId'],
             $generatedTicketNumber,
             $validated['pcName'],
@@ -387,6 +393,7 @@ public function employeeChecklist(Request $request)
             $validated['network_mac_ip_details'],
             $checklistJson,  // Store checklist as JSON
         ]);
+\Log::info('Parameters passed to stored procedure: ', $parameters);
 
         return response()->json(['message' => 'Checklist submitted successfully']);
     } catch (\Exception $e) {

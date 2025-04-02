@@ -2,11 +2,8 @@
 import { ref, computed, watch, onMounted, nextTick } from "vue";
 import MainLayout from '@/Layouts/MainLayout.vue';
 import axios from "axios";
-import { Link } from '@inertiajs/vue3';
 
-
-
-//  Reactive properties
+// ✅ Reactive properties
 const years = ref([]);
 const selectedYear = ref(new Date().getFullYear());
 const maintenancePlans = ref([]);
@@ -14,11 +11,11 @@ const selectedYearDescription = ref("");
 const isFetchingData = ref(false);
 const selectedYearName = ref("");
 const offices = ref([]); // Store the list of offices for the dropdown
-const selectedOffice= ref(null); //  Holds selected value
-const selectedParentOffice = ref(null); // Define this to avoid ReferenceError
-const addedOffices = ref([]); //  Fix: Declare addedOffices as a reactive array
+const selectedOffice= ref(null); // ✅ Holds selected value
+const selectedParentOffice = ref(null); // ✅ Define this to avoid ReferenceError
+const addedOffices = ref([]); // ✅ Fix: Declare addedOffices as a reactive array
 
-//  External Scripts
+// ✅ External Scripts
 const files = [
     '/script/jquery-3.5.1.min.js',  
     '/script/jquery.dataTables.min.js', 
@@ -30,7 +27,7 @@ const files = [
     '/script/moment.min.js'
 ];
 
-//  Load external scripts dynamically
+// ✅ Load external scripts dynamically
 const loadScripts = (fileList) => {
     fileList.forEach(file => {
         if (!document.querySelector(`script[src="${file}"]`)) {
@@ -42,7 +39,7 @@ const loadScripts = (fileList) => {
     });
 };
 
-//  Open Modal
+// ✅ Open Modal
 const openModal = () => {
   const modalElement = document.getElementById("addCollegeModal");
   if (modalElement) {
@@ -51,12 +48,13 @@ const openModal = () => {
   }
 };
 
-//  Fetch offices for the dropdown
+
+// ✅ Fetch offices for the dropdown
 const fetchOffices = async () => {
   try {
     console.log("📡 Fetching offices...");
-    const response = await axios.get("/api/offices");
-    console.log(" Response:", response.data);
+    const response = await axios.get("/api/officesC");
+    console.log("✅ Response:", response.data);
 
     offices.value = response.data; // Ensure this is reactive
   } catch (error) {
@@ -64,17 +62,17 @@ const fetchOffices = async () => {
   }
 };
 
-//  Fetch available years
+// ✅ Fetch available years
 const fetchYears = async () => {
   try {
-    const response = await axios.get("/api/years");
+    const response = await axios.get("/api/yearsC");
     years.value = response.data;
   } catch (error) {
     console.error("Error fetching years:", error);
   }
 };
 
-//  Fetch maintenance plans
+// ✅ Fetch maintenance plans
 const fetchData = async () => {
   if (!selectedYear.value) {
     maintenancePlans.value = [];
@@ -84,7 +82,7 @@ const fetchData = async () => {
   isFetchingData.value = true;
 
   try {
-    const response = await axios.get(`/api/maintenance-plans?YrId=${selectedYear.value}&CatId=1`);
+    const response = await axios.get(`/api/maintenance-plansC?YrId=${selectedYear.value}&CatId=3`);
 
     console.log("📡 Fetching Data for YrId:", selectedYear.value);
     console.log("📦 Fetched Data:", response.data);
@@ -180,7 +178,7 @@ const saveOnEnter = async (plan) => {
 
     console.log("📩 Sending Data:", payload);
 
-    const response = await axios.post("/api/save-maintenance-plan", payload);
+    const response = await axios.post("/api/save-maintenance-planC", payload);
 
     console.log(" Maintenance plan saved successfully", response.data);
 
@@ -196,7 +194,9 @@ const saveOnEnter = async (plan) => {
   }
 };
 
+
 // Add College (POST Request to Laravel API)
+
 
 const addOffice = async () => {
   if (!selectedOffice.value) {
@@ -219,13 +219,13 @@ const addOffice = async () => {
     OfficeName: selectedOfficeData.OfficeName,
     ParentOffId: selectedParentOffice?.value || null, // ✅ Ensure defined
     YrId: selectedYear.value,
-    CatId: 1,
+    CatId: 3, // ✅ Ensure CatId is always set to 2
   };
 
   console.log("📡 Sending request:", requestData);
 
   try {
-    const response = await axios.post("/api/add-colleges", requestData);
+    const response = await axios.post("/api/add-collegesC", requestData);
     console.log("✅ Response received:", response.data);
 
     alert("Office added successfully!");
@@ -250,7 +250,9 @@ const addOffice = async () => {
   }
 };
 
-//  Watcher for updates
+
+
+// ✅ Watcher for updates
 watch(maintenancePlans, (newValue) => {
   if (isFetchingData.value || !selectedYear.value || !newValue.length) return;
 
@@ -266,7 +268,7 @@ watch(maintenancePlans, (newValue) => {
 }, { deep: true });
 
 
-//  Watcher for real-time updates (but skip if fetching data)
+// ✅ Watcher for real-time updates (but skip if fetching data)
 watch(maintenancePlans, (newValue) => {
   if (isFetchingData.value || !selectedYear.value || !newValue.length) return;
 
@@ -322,33 +324,6 @@ const printTable = () => {
   window.print();
 };
 
-const deleteOffice = async (planId) => {
-  if (!planId) {
-    alert("Invalid Office ID.");
-    return;
-  }
-
-  if (!confirm("Are you sure you want to delete this office?")) {
-    return;
-  }
-
-  try {
-    console.log(`🗑 Deleting Office with Plan ID: ${planId}`);
-
-    // Make DELETE request to API
-    await axios.delete(`/api/delete-maintenance-plan/${planId}`);
-
-    //  Filter out deleted plan from `maintenancePlans`
-    maintenancePlans.value = maintenancePlans.value.filter(plan => plan.PlanId !== planId);
-
-    console.log(" Office deleted successfully.");
-    alert("Office deleted successfully!");
-  } catch (error) {
-    console.error(" Error deleting office:", error);
-    alert(error.response?.data?.message || "Failed to delete office.");
-  }
-};
-
 </script>
 
 <template>
@@ -358,8 +333,10 @@ const deleteOffice = async (planId) => {
         <!-- Header Section -->
         <div class="text-center">
           <h2 class="fw-bold">
-  {{ selectedYearName }} {{ selectedYearDescription ? ` - ${selectedYearDescription}` : '' }}
-</h2>
+            {{ selectedYearName }} 
+            <span v-if="selectedYearDescription" style="color: black;"> - {{ selectedYearDescription }}</span>
+          </h2>
+
           <!-- Legend -->
           <div class="mt-2">
             <strong>Legend:</strong>
@@ -388,8 +365,8 @@ const deleteOffice = async (planId) => {
           </div>
         </div>
 
-        <!-- "Set A" Title -->
-        <div class="text-success fw-bold fs-3 text-center mt-2">Set A</div>
+        <!-- "Set C" Title -->
+        <div class="text-success fw-bold fs-3 text-center mt-2">Set B</div>
 
         <!-- Table Section -->
         <div class="card mt-2">
@@ -425,12 +402,10 @@ const deleteOffice = async (planId) => {
               </td>
               <td class="no-print text-center">
               <div class="d-flex justify-content-center gap-2">
-                <!---View Button -->
-                <Link :href="route('officeuser', { officeId: plan?.OffId, YrId: selectedYear, PlanId: plan?.PlanId , CatId: plan?.CatId})"
-                class="btn btn-sm btn-outline-primary d-flex align-items-center"
-                >
-                  <i class="fas fa-eye me-1"></i> View
-                </Link>
+               <!-- View Button -->
+               <a :href="route('datacenter')" class="btn btn-sm btn-outline-primary d-flex align-items-center">
+                <i class="fas fa-eye me-1"></i> View
+              </a>
                 <!-- Delete Button -->
                 <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="deleteOffice(plan.PlanId)">
                   <i class="fas fa-trash me-1"></i> Delete
@@ -441,8 +416,17 @@ const deleteOffice = async (planId) => {
           </tbody>
           </table>
         </div>
-        
-         </div>
+
+            <!-- Navigation Buttons -->
+            <!-- <div class="pagination-buttons no-print">
+              <button class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> Previous
+              </button>
+              <button class="btn btn-primary btn-sm">
+                Next <i class="fas fa-arrow-right"></i>
+              </button>
+            </div> -->
+          </div>
         </div>
       </div>
 
@@ -518,5 +502,4 @@ button {
 }
 
 </style>
-
 
