@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch,defineProps, reactive } from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
+import axios from "axios";
 
 const props = defineProps({
   employee: { type: Array, default: () => [] },
@@ -21,6 +22,10 @@ const employee = ref(props.employee || []);
 console.log('employee:', props.employee);
 
 
+      // API FORM 
+
+
+
 const isStep1ModalOpen = ref(false);
 const isStep2ModalOpen = ref(false);
 const selectedOption = ref("Office");
@@ -29,7 +34,6 @@ const isModalOpen = ref(false);
 
 const openStep1Modal = () => {
   isStep1ModalOpen.value = true;
-  disableBackgroundScroll();
 };
 
 const openStep2Modal = () => {
@@ -55,13 +59,16 @@ const enableBackgroundScroll = () => {
 
 // Form Data
 const formData = reactive({
-  userOperator: props.employee?.emp_name || "", // Initialize with prop value
-  officeUnit: props.employee?.OfficeName || "",
-  department: props.employee?.department_name || "",
-  dateAcquired: "", // These will be filled via Axios
+  ticketnumber: "",
+  userOperator: "",
+  officeUnit: "",
+  department: "",
+  dateAcquired: "",
+  date: "",
   equipmentInstalled: [],
-  osInstalled: "",
-  osLicense: "",
+  windows10: "0",
+  windows11: "0",
+  license : null,
   other_os: "",
   softwareInstalled: [],
   other_sys: "",
@@ -81,34 +88,183 @@ const formData = reactive({
     Mouse: "",
     AVR: "",
     NetWorkMacIp: ""
-  }
+  },
+
 });
+
+watch(() => props.employee, (newVal) => {
+  if (Array.isArray(newVal) && newVal.length > 0) {
+    const employeeData = newVal[0];
+    formData.userOperator = employeeData.emp_name || "";
+    formData.officeUnit =    employeeData.OfficeName || "";
+    formData.department = employeeData.department_name || "";
+  }
+}, { immediate: true });
+
+
 // Options for checkboxes
 const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS', 'AVR', 'Other'];
 const osOptions = ['Windows 10', 'Windows 11', 'Other'];
-const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 'Media Player', 'Anti-Virus', 'Browser', 'Other'];
+const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 'Media Player', 'Anti-Virus', 'Browser', 'Microsoft', 'Other'];
+
+const updateOsInstalled = (option) => {
+  // Reset values to 0
+  formData.windows10 = 0;
+  formData.windows11 = 0;
+  formData.other_os = "";
+  formData.license = null; // Reset license when switching OS
+
+  // Assign value when Windows 10 or 11 is selected
+  if (option === "Windows 10") {
+    formData.windows10 = 1;
+  } else if (option === "Windows 11") {
+    formData.windows11 = 1;
+  }
+};
+
+
+const updateEquipmentStatus = (option) => {
+  // Reset all statuses to "0"
+  formData.cpu_status = "0";
+  formData.keyboard_status = "0";
+  formData.printer_status = "0";
+  formData.monitor_status = "0";
+  formData.mouse_status = "0";
+  formData.ups_status = "0";
+  formData.avr_status = "0";
+  formData.other_equip = "";
+
+  // Set the selected option to "1"
+  if (option === "CPU") formData.cpu_status = "1";
+  if (option === "Keyboard") formData.keyboard_status = "1";
+  if (option === "Monitor") formData.monitor_status = "1";
+  if (option === "Mouse") formData.mouse_status = "1";
+  if (option === "Printer") formData.printer_status = "1";
+  if (option === "UPS") formData.ups_status = "1";
+  if (option === "AVR") formData.avr_status = "1";
+  if (option === "Other") formData.other_equip = ""; // Allow user input
+};
+
+const updateSoftwareStatus = (option) => {
+  if (formData.softwareInstalled.includes(option)) {
+    if (option === "Enrollment System") formData.enrollment = "1";
+    if (option === "Adobe Reader") formData.adobe_reader = "1";
+    if (option === "Word Processor") formData.word_processor = "1";
+    if (option === "Media Player") formData.media_player = "1";
+    if (option === "Anti-Virus") formData.anti_virus = "1";
+    if (option === "Browser") formData.browser = "1";
+    if (option === "Microsoft") formData.microsoft = "1";
+    if (option === "Other") formData.other_sys = ""; // Allow user input
+
+  } else {
+    if (option === "Enrollment System") formData.enrollment = "0";
+    if (option === "Adobe Reader") formData.adobe_reader = "0";
+    if (option === "Word Processor") formData.word_processor = "0";
+    if (option === "Media Player") formData.media_player = "0";
+    if (option === "Anti-Virus") formData.anti_virus = "0";
+    if (option === "Browser") formData.browser = "0";
+    if (option === "Microsoft") formData.microsoft = "0";
+    if (option === "Other") formData.other_sys = ""; // Allow user input
+
+  }
+};
 
 
 
-// Checklist Data
-const checklist = ref([
-  { item: 1, task: 'System Boot', description: 'Boot system from a cold start.Monitor for errors and speed of entire boot process.', status: '' },
-  { item: 2, task: 'System Log-in', description: 'Monitor for Errors. Monitor login script.', status: '' },
-  { item: 3, task: 'Network Settings', description: 'Monitor login script.\nTCP/IP and IPX settings are correct.\nDomain Name\nSecurity Settings\nClient Configurations\nComputer Name', status: '' },
-  { item: 4, task: 'Computer Hardware Settings', description: 'Verify Device Manager settings\nBIOS up-to-date\nHard Disk\nDVD/CD-RW firmware up-to-date\nMemory is O.K.\nFor Laptop battery run-time is norm', status: '' },
-  { item: 5, task: 'Browser/Proxy Settings', description: 'Verify proper settings and operation.', status: '' },
-  { item: 6, task: 'Proper Software Loads', description: 'Required software is installed and operating.', status: '' },
-  { item: 7, task: 'Viruses and Malware', description: 'Anti-virus installed\nVirus scan done', status: '' },
-  { item: 8, task: 'Clearance', description: 'Unused software removed\nTemporary files removed\nRecycle bin and caches emptied\nPeripheral devices clean', status: '' },
-  { item: 9, task: 'Interiors and Cleaning', description: 'Dust removed\nNo loose parts\nAirflow is O.K.\nCables unplugged and re-plugged\nFans are operating', status: '' },
-  { item: 10, task: 'Peripheral Devices', description: 'Mouse\nKeyboard\nMonitor\nUPS\nPrinter\nTelephone extension\nFax', status: '' },
-]);
+const checklist = reactive({
+  items: [
+    { item: 1, task: "System Boot", details: "Boot system from a cold start", status: [3] },  
+    { item: 2, task: "System Log-in", details: "Monitor for errors and speed of entire boot process", status: [3] },
+    { item: 3, task: "Network Settings", details: "Monitor login script.\nTCP/IP and IPX settings are correct.\nDomain Name\nSecurity Settings\nClient Configurations\nComputer Name", status: Array(6).fill(3) },
+    { item: 4, task: "Computer Hardware Settings", details: "Verify Device Manager settings\nBIOS up-to-date\nHard Disk\nDVD/CD-RW firmware up-to-date\nMemory is O.K.\nFor Laptop battery run-time is norm", status: Array(6).fill(3) },
+    { item: 5, task: "Browser/Proxy Settings", details: "Verify proper settings and operation.", status: [3] },
+    { item: 6, task: "Proper Software Loads", details: "Required software is installed and operating.", status: [3] },
+    { item: 7, task: "Viruses and Malware", details: "Anti-virus installed\nVirus scan done", status: Array(2).fill(3) },
+    { item: 8, task: "Clearance", details: "Unused software removed\nTemporary files removed\nRecycle bin and caches emptied\nPeripheral devices clean", status: Array(4).fill(3) },
+    { item: 9, task: "Interiors and Cleaning", details: "Dust removed\nNo loose parts\nAirflow is O.K.\nCables unplugged and re-plugged\nFans are operating", status: Array(5).fill(3) },
+    { item: 10, task: "Peripheral Devices", details: "Mouse\nKeyboard\nMonitor\nUPS\nPrinter\nTelephone extension\nFax", status: Array(7).fill(3) }
+  ],
+  Summary: ""
+});
+
+const updateStatus = (index, i, value) => {
+  if (!checklist.items[index].status[i]) {
+    checklist.items[index].status[i] = 3; // Default to N/A
+  }
+  checklist.items[index].status[i] = value;
+};
 
 
+const submitForm = async () => {
+  try {
+    if (!props.employee || props.employee.length === 0) {
+      console.error("Employee data is missing");
+      return;
+    }
 
-const submitForm = () => {
-  console.log("Form Submitted", formData.value);
-  closeModal();
+    const employeeId = props.employee[0].employeeId; // Extract employeeId from props
+
+    console.log("Submitting Form Data:", formData, checklist);
+
+    // Construct request payload
+    const payload = {
+      employeeId,
+      ticketnumber: formData.ticketnumber, 
+      pcName: formData.pcName,
+      dateAcquired: formData.dateAcquired,
+      cpu_status: formData.cpu_status,
+      keyboard_status: formData.keyboard_status,
+      printer_status: formData.printer_status,
+      monitor_status: formData.monitor_status,
+      mouse_status: formData.mouse_status,
+      ups_status: formData.ups_status,
+      avr_status: formData.avr_status,
+      windows10: formData.windows10,
+      windows11: formData.windows11,
+      license: formData.license,
+      enrollment: formData.enrollment,
+      microsoft: formData.microsoft,
+      browser: formData.browser,
+      anti_virus: formData.anti_virus,
+      other_equip: formData.other_equip,
+      other_os: formData.other_os,
+      other_sys: formData.other_sys,
+      processor_details: formData.desktopSpecs.Processor,
+      motherboard_details: formData.desktopSpecs.Motherboard,
+      memory_details: formData.desktopSpecs.Memory,
+      graphics_card_details: formData.desktopSpecs.GraphicCard,
+      monitor_details: formData.desktopSpecs.Monitor,
+      hard_disk_details: formData.desktopSpecs.HardDisk,
+      casing_details: formData.desktopSpecs.Casing,
+      power_supply_details: formData.desktopSpecs.PowerSupply,
+      keyboard_details: formData.desktopSpecs.Keyboard,
+      mouse_details: formData.desktopSpecs.Mouse,
+      avr_details: formData.desktopSpecs.AVR,
+      ups_details: formData.desktopSpecs.UPS,
+      printer_details: formData.desktopSpecs.Printer,
+      network_mac_ip_details: formData.desktopSpecs.NetWorkMacIp, 
+      
+      // Send checklist with status as numbers
+      checklist: checklist.items.map(item => ({
+      item: item.item,
+      task: item.task,
+      details: item.details,
+      status: item.status.map(s => s)  // Send selected status values
+    })),
+    summary: checklist.Summary
+  };
+
+
+    // Send the data to the Laravel backend
+    const response = await axios.post(`/api/employeeChecklist/${employeeId}`, payload);
+
+    console.log("Response:", response.data);
+
+    // Close the modal after successful submission
+    closeModal();
+  } catch (error) {
+    console.error("Error submitting form:", error.response?.data || error.message);
+  }
 };
 
 
@@ -239,7 +395,7 @@ watch(isStatusDropdownOpen, (newVal) => {
         <tr v-for="employee in employee" :key="employee.employeeId">
               <td>{{ employee.emp_name }}</td>
     <td>
-      <button class="edit-btn" @click="openStep1Modal(employee.employeeId)">View</button>
+      <button class="edit-btn" @click="openStep1Modal(employeeId)">View</button>
     </td>
     <td :class="{ 'clear-status': employee.status === 'Clear', 'unclear-status': employee.status === 'Unclear' }">
       {{ employee.status }}
@@ -250,18 +406,7 @@ watch(isStatusDropdownOpen, (newVal) => {
   </tr>
 </tbody>
       </table>
-<!-- 
 
-             Step1Modal 
-      <div v-if="selectedEmployee" class="modal">
-      <div class="modal-content">
-        <h2>Employee Details</h2>
-        <p><strong>User/Operator:</strong> {{ employeeDetails.emp_name }}</p>
-        <p><strong>Office/College/Unit:</strong> {{ employeeDetails.OfficeName }}</p>
-        <p><strong>Department:</strong> {{ employeeDetails.department_name }}</p>
-        <button @click="selectedEmployee = null">Close</button>
-      </div>
-    </div> -->
   
 
       
@@ -314,12 +459,14 @@ watch(isStatusDropdownOpen, (newVal) => {
               <div class="d-flex flex-column">
                 <label class="form-label mb-0" style="font-size: 14px;"></label>
                 <input 
-                  type="text" 
-                  class="form-control form-control-sm" 
-                  v-model="formData.number"
-                  placeholder="Number"
-                  style="width: 150px; height: 30px; font-size: 14px; padding: 5px;"
-                >
+                 type="text" 
+                 class="form-control form-control-sm" 
+                 @input="console.log('Ticket Number:', formData.ticketnumber)"
+
+                 v-model="formData.ticketnumber"
+                 placeholder="Number"
+                style="width: 150px; height: 30px; font-size: 14px; padding: 5px;"
+            >
               </div>
 
           <!-- Status Dropdown -->
@@ -376,7 +523,7 @@ watch(isStatusDropdownOpen, (newVal) => {
               </div>
               <div class="col-md-2">
                 <label class="form-label">Date</label>
-                <input type="text" class="form-control" v-model="formData.pcName">
+                <input type="text" class="form-control" v-model="formData.date">
               </div>
               <div class="col-md-2">
                 <label class="form-label">PC Name</label>
@@ -387,62 +534,108 @@ watch(isStatusDropdownOpen, (newVal) => {
             <!-- Equipment Installed -->
 
             <div class="card p-3 mt-3">
-              <h6 class="fw-bold">Equipment Installed:</h6>
-              <div class="row">
-                <div v-for="(option, index) in equipmentOptions" :key="index" class="col-md-3">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" :value="option" v-model="formData.equipmentInstalled">
-                    <label class="form-check-label">{{ option }}</label>
-                  </div>
-                  <input 
-                  v-if="option === 'Other' && formData.equipmentInstalled.includes('Other')" 
-                  type="text" 
-                  class="form-control mt-1 ms-3" 
-                  v-model="formData.otherEquipment" 
-                  placeholder="Specify Other Equipment">
-                </div>
-              </div>
-            </div>
+    <h6 class="fw-bold">Equipment Installed:</h6>
+    <div class="row">
+      <div v-for="(option, index) in equipmentOptions" :key="index" class="col-md-3">
+        <div class="form-check">
+          <input 
+            class="form-check-input" 
+            type="checkbox" 
+            :value="option" 
+            v-model="formData.equipmentInstalled"
+            @change="updateEquipmentStatus(option)" 
+          />
+          <label class="form-check-label">{{ option }}</label>
+        </div>
+
+        <!-- Input Field for 'Other' Equipment -->
+        <input 
+          v-if="option === 'Other' && formData.equipmentInstalled.includes('Other')" 
+          type="text" 
+          class="form-control mt-1 ms-3" 
+          v-model="formData.other_equip" 
+          placeholder="Specify Other Equipment">
+      </div>
+    </div>
+  </div>
+
 
              <!-- Operating System Installed -->
-
              <div class="card p-3 mt-3">
-              <h6 class="fw-bold">Operating System Installed:</h6>
-              <div v-for="(option, index) in osOptions" :key="index" class="mb-2">
-                <div class="form-check">
-                  <input type="radio" class="form-check-input" :value="option" v-model="formData.osInstalled">
-                  <label class="form-check-label">{{ option }}</label>
-                </div>
-                <div v-if="formData.osInstalled === 'Other' && option === 'Other'" class="ms-3">
-                  <input type="text" class="form-control mt-1" v-model="formData.otherOS" placeholder="Specify Other OS">
-                </div>
-                <div v-if="formData.osInstalled === option && (option === 'Windows 10' || option === 'Windows 11')" class="ms-4">
-                  <div class="form-check">
-                    <input type="radio" class="form-check-input" value="Licensed" v-model="formData.osLicense">
-                    <label class="form-check-label">Licensed</label>
-                  </div>
-                  <div class="form-check">
-                    <input type="radio" class="form-check-input" value="Not Licensed" v-model="formData.osLicense">
-                    <label class="form-check-label">Not Licensed</label>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <h6 class="fw-bold">Operating System Installed:</h6>
+
+    <div v-for="(option, index) in osOptions" :key="index" class="form-check">
+      <input 
+        type="radio" 
+        class="form-check-input" 
+        :value="option" 
+        v-model="formData.osInstalled"
+        @change="updateOsInstalled(option)" 
+      />
+      <label class="form-check-label">{{ option }}</label>
+    </div>
+
+    <!-- Input Field for 'Other' OS -->
+    <div v-if="formData.osInstalled === 'Other'" class="ms-3">
+      <input 
+        type="text" 
+        class="form-control mt-1" 
+        v-model="formData.other_os" 
+        placeholder="Specify Other OS"
+      />
+    </div>
+
+    <!-- License selection (only for Windows 10 & 11) -->
+    <div v-if="formData.windows10 === 1 || formData.windows11 === 1" class="mt-2 ms-4">
+      <h6 class="fw-bold">License:</h6>
+      <div class="form-check">
+        <input 
+          type="radio" 
+          class="form-check-input" 
+          :value="1" 
+          v-model.number="formData.license"
+        />
+        <label class="form-check-label">Licensed</label>
+      </div>
+      <div class="form-check">
+        <input 
+          type="radio" 
+          class="form-check-input" 
+          :value="0" 
+          v-model.number="formData.license"
+        />
+        <label class="form-check-label">Not Licensed</label>
+      </div>
+    </div>
+  </div>
+
 
             <!-- Software Installed -->
-
             <div class="card p-3 mt-3">
-              <h6 class="fw-bold">Software Application Installed:</h6>
-              <div class="row">
-                <div v-for="(option, index) in softwareOptions" :key="index" class="col-md-3">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" :value="option" v-model="formData.softwareInstalled">
-                    <label class="form-check-label">{{ option }}</label>
-                  </div>
-                  <input v-if="option === 'Other' && formData.softwareInstalled.includes('Other')" type="text" class="form-control mt-1 ms-3" v-model="formData.otherSoftware" placeholder="Specify Other Software">
-                </div>
-              </div>
-            </div>
+    <h6 class="fw-bold">Software Application Installed:</h6>
+    <div class="row">
+      <div v-for="(option, index) in softwareOptions" :key="index" class="col-md-3">
+        <div class="form-check">
+          <input 
+            class="form-check-input" 
+            type="checkbox" 
+            :value="option" 
+            v-model="formData.softwareInstalled"
+            @change="updateSoftwareStatus(option)" 
+          />
+          <label class="form-check-label">{{ option }}</label>
+        </div>
+
+        <!-- Input Field for 'Other' Software -->
+        <input 
+          v-if="option === 'Other' && formData.softwareInstalled.includes('Other')" 
+          type="text" 
+          class="form-control mt-1 ms-3" 
+          v-model="formData.other_sys" 
+          placeholder="Specify Other Software">
+      </div>
+    </div>
+  </div>
 
             <!-- Desktop Specifications -->
 
@@ -461,7 +654,7 @@ watch(isStatusDropdownOpen, (newVal) => {
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
-            <button type="button" class="btn btn-success" @click="openStep2Modal">
+            <button type="button" class="btn btn-success" @click="openStep2Modal(employeeId)">
               <i class="fas fa-arrow-right"></i> Next
             </button>
           </div>
@@ -496,44 +689,59 @@ watch(isStatusDropdownOpen, (newVal) => {
           </div>
 
               <!-- HERE IS THE CHECKLIST -->
-          <div class="modal-body">
-            <table class="table table-bordered">
-              <thead>
-                <tr>
-                  <th>Item #</th>
-                  <th>Task</th>
-                  <th>Description</th>
-                  <th class="text-center">OK</th>
-                  <th class="text-center">Repair</th>
-                  <th class="text-center">N/A</th>
-                </tr>
-              </thead>
-              <tbody>
-                <template v-for="(check, index) in checklist" :key="index">
-                  <tr v-for="(desc, i) in check.description.split('\n')" :key="index + '-' + i">
-                    <td v-if="i === 0" :rowspan="check.description.split('\n').length">{{ check.item }}</td>
-                    <td v-if="i === 0" :rowspan="check.description.split('\n').length">{{ check.task }}</td>
-                    <td>{{ desc }}</td>
-                    <td class="text-center">
-                      <input type="radio" :name="'status-' + index + '-' + i" value="OK" v-model="check.status[i]">
-                    </td>
-                    <td class="text-center">
-                      <input type="radio" :name="'status-' + index + '-' + i" value="Repair" v-model="check.status[i]">
-                    </td>
-                    <td class="text-center">
-                      <input type="radio" :name="'status-' + index + '-' + i" value="N/A" v-model="check.status[i]">
-                    </td>
-                  </tr>
-                </template>
-              </tbody>
-            </table>
+              <div class="modal-body">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Item #</th>
+        <th>Task</th>
+        <th>Description</th>
+        <th class="text-center">OK</th>
+        <th class="text-center">Repair</th>
+        <th class="text-center">N/A</th>
+      </tr>
+    </thead>
+    <tbody>
+      <template v-for="(check, index) in checklist.items" :key="check.item">
+        <tr v-for="(desc, i) in check.details.split('\n')" :key="`${check.item}-${i}`">
+          <td v-if="i === 0" :rowspan="check.details.split('\n').length">{{ check.item }}</td>
+          <td v-if="i === 0" :rowspan="check.details.split('\n').length">{{ check.task }}</td>
+          <td>{{ desc }}</td>
+          
+          <!-- OK -->
+          <td class="text-center">
+            <input type="radio" :name="'status-' + check.item + '-' + i" 
+                   :value="1" v-model="checklist.items[index].status[i]"
+                   @change="updateStatus(index, i, 1)">
+          </td>
 
-            <!-- Comments Section -->
-            <div class="mt-3">
-              <label for="comments" class="fw-bold">Summary/Recommendation</label>
-              <textarea id="comments" v-model="comments" class="form-control" rows="3" placeholder="Enter any additional comments..."></textarea>
-            </div>
-          </div>
+          <!-- Repair -->
+          <td class="text-center">
+            <input type="radio" :name="'status-' + check.item + '-' + i" 
+                   :value="2" v-model="checklist.items[index].status[i]"
+                   @change="updateStatus(index, i, 2)">
+          </td>
+
+          <!-- N/A -->
+          <td class="text-center">
+            <input type="radio" :name="'status-' + check.item + '-' + i" 
+                   :value="3" v-model="checklist.items[index].status[i]"
+                   @change="updateStatus(index, i, 3)">
+          </td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+
+  <!-- Comments Section -->
+  <div class="mt-3">
+    <label for="comments" class="fw-bold">Summary/Recommendation</label>
+    <textarea id="comments" v-model="checklist.Summary" class="form-control" rows="3"
+              placeholder="Enter any additional comments..."></textarea>
+  </div>
+</div>
+
+
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
