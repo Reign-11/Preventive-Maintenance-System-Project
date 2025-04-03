@@ -380,7 +380,7 @@ const printTable = () => {
             </div>
 
         <!-- Data Table -->
-        <div class="datatable text-center">
+        <div class="datatable text-center table-responsive">
           <table class="table table-bordered table-hover" width="100%" cellspacing="0">
             <thead class="table-success">
               <tr>
@@ -403,7 +403,7 @@ const printTable = () => {
               <td class="no-print text-center">
               <div class="d-flex justify-content-center gap-2">
                <!-- View Button -->
-               <a :href="route('datacenter')" class="btn btn-sm btn-outline-primary d-flex align-items-center">
+               <a :href="route('prevoffice')" class="btn btn-sm btn-outline-primary d-flex align-items-center">
                 <i class="fas fa-eye me-1"></i> View
               </a>
                 <!-- Delete Button -->
@@ -501,5 +501,10 @@ button {
     }
 }
 
+.table-responsive {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
 </style>
 
