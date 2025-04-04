@@ -349,6 +349,37 @@ const deleteOffice = async (planId) => {
   }
 };
 
+// Reactive variables for pagination
+const entriesPerPage = ref(10); // Default to 10 entries per page
+const currentPage = ref(1); // Start at page 1
+
+const paginatedPlans = computed(() => {
+  const start = (currentPage.value - 1) * entriesPerPage.value;
+  const end = start + entriesPerPage.value;
+  return maintenancePlans.value.slice(start, end);
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(maintenancePlans.value.length / entriesPerPage.value);
+});
+
+const goToPage = (page) => {
+  if (page < 1 || page > totalPages.value) return;
+  currentPage.value = page;
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
 </script>
 
 <template>
@@ -378,7 +409,7 @@ const deleteOffice = async (planId) => {
           </div>
 
           <!-- Year Selection -->
-          <div class="mt-2">
+          <div class="mt-2 w-auto rounded">
             <label for="year">Select Year:</label>
             <select v-model="selectedYear">
               <option v-for="year in years" :key="year.YrId" :value="year.YrId">
@@ -391,29 +422,42 @@ const deleteOffice = async (planId) => {
         <!-- "Set A" Title -->
         <div class="text-success fw-bold fs-3 text-center mt-2">Set A</div>
 
-        <!-- Table Section -->
-        <div class="card mt-2">
-          <div class="card-body">
-            <!-- Top Controls -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <!-- Add College Button -->
-              <button class="btn btn-success btn-lg fw-bold px-4 py-2 no-print" @click="openModal">
-                <i class="fas fa-file-signature"></i> Add College/Office
-              </button>
-            </div>
+       <!-- Table Section -->
+       <div class="card mt-2">
+       <div class="card-body">
+      <!-- Top Controls --> 
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <!-- Add College Button -->
+        <button class="btn btn-success btn-lg fw-bold px-4 py-2 no-print" @click="openModal">
+          <i class="fas fa-file-signature"></i> Add College/Office
+        </button>
 
-        <!-- Data Table -->
-        <div class="datatable text-center">
-          <table class="table table-bordered table-hover" width="100%" cellspacing="0">
-            <thead class="table-success">
-              <tr>
-                <th>Colleges</th>
-                <th v-for="month in months" :key="month">{{ month }}</th>
-                <th class="no-print">Actions</th>  <!-- Added Actions Column -->
-              </tr>
-            </thead>
-            <tbody>
-            <tr v-for="plan in maintenancePlans" :key="plan.PlanId">
+        <!-- Entries Dropdown -->
+        <div class="d-flex align-items-center">
+          <label for="entries" class="me-2">Show</label>
+          <select id="entries" class="form-select w-auto rounded" v-model="entriesPerPage">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+          </select>
+          <label for="entries" class="ms-2">entries</label>
+        </div>
+      </div>
+
+
+      <!-- Data Table -->
+      <div class="datatable text-center table-responsive">
+        <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+          <thead class="table-success">
+            <tr>
+              <th>Colleges</th>
+              <th v-for="month in months" :key="month">{{ month }}</th>
+              <th class="no-print">Actions</th> <!-- Added Actions Column -->
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="plan in paginatedPlans" :key="plan.PlanId">
               <td>{{ plan.OffName ?? 'N/A' }}</td>
               <td v-for="month in months" :key="month">
                 <input 
@@ -424,27 +468,47 @@ const deleteOffice = async (planId) => {
                 <span v-if="plan.isSaving">Saving...</span>
               </td>
               <td class="no-print text-center">
-              <div class="d-flex justify-content-center gap-2">
-                <!---View Button -->
-                <Link :href="route('officeuser', { officeId: plan?.OffId, YrId: selectedYear, PlanId: plan?.PlanId , CatId: plan?.CatId})"
-                class="btn btn-sm btn-outline-primary d-flex align-items-center"
-                >
-                  <i class="fas fa-eye me-1"></i> View
-                </Link>
-                <!-- Delete Button -->
-                <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="deleteOffice(plan.PlanId)">
-                  <i class="fas fa-trash me-1"></i> Delete
-                </button>
-              </div>
-            </td>
+                <div class="d-flex justify-content-center gap-2">
+                  <!-- View Button -->
+                  <Link :href="route('officeuser', { officeId: plan?.OffId, YrId: selectedYear, PlanId: plan?.PlanId , CatId: plan?.CatId})"
+                    class="btn btn-sm btn-outline-primary d-flex align-items-center">
+                    <i class="fas fa-eye me-1"></i> View
+                  </Link>
+                  <!-- Delete Button -->
+                  <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="deleteOffice(plan.PlanId)">
+                    <i class="fas fa-trash me-1"></i> Delete
+                  </button>
+                </div>
+              </td>
             </tr>
           </tbody>
-          </table>
-        </div>
-        
-         </div>
+        </table>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="dataTables_paginate paging_simple_numbers" id="dataTable_paginate">
+            <ul class="pagination justify-content-end">
+              <!-- Previous Button -->
+              <li class="paginate_button page-item previous" :class="{'disabled': currentPage === 1}">
+                <a href="#" @click.prevent="prevPage" class="page-link">Previous</a>
+              </li>
+
+              <!-- Page Numbers -->
+              <li class="paginate_button page-item" v-for="page in totalPages" :key="page">
+                <a href="#" @click.prevent="goToPage(page)" :class="{'active': currentPage === page}" class="page-link">{{ page }}</a>
+              </li>
+
+              <!-- Next Button -->
+              <li class="paginate_button page-item next" :class="{'disabled': currentPage === totalPages}">
+                <a href="#" @click.prevent="nextPage" class="page-link">Next</a>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
+    </div>
+  </div>
+  </div>
 
     <!-- Bootstrap Modal -->
     <div class="modal fade" id="addCollegeModal" aria-labelledby="exampleModalLabel" tabindex="-1" aria-hidden="true">
@@ -457,13 +521,15 @@ const deleteOffice = async (planId) => {
             </div>
 
             <div class="modal-body">
-              <!-- Year Dropdown -->
-              <div class="mb-3">
-                <label for="yearDropdown" class="form-label">Select Year:</label>
-                <select id="yearDropdown" v-model="selectedYear" class="form-control">
-                  <option v-for="year in years" :key="year.YrId" :value="year.YrId">{{ year.Name }}</option>
-                </select>
-              </div>
+            <!-- Year Dropdown -->
+            <div class="mb-3">
+              <label for="yearDropdown" class="form-label">Select Year:</label>
+              <select id="yearDropdown" v-model="selectedYear" class="form-control rounded-sm"> <!-- Add rounded-sm for small rounding -->
+                <option v-for="year in years" :key="year.YrId" :value="year.YrId">{{ year.Name }}</option>
+              </select>
+            </div>
+          </div>
+
 
               <!-- Office Name Dropdown -->
               <div class="mb-3">
@@ -483,7 +549,6 @@ const deleteOffice = async (planId) => {
             </div>
           </div>
         </div>
-      </div>
     </main>
   </MainLayout>
 </template>
@@ -517,6 +582,11 @@ button {
     }
 }
 
+.table-responsive {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
 </style>
 
 

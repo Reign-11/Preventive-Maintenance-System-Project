@@ -10,7 +10,6 @@ use App\Http\Controllers\MaintenancePlanController;
 use App\Http\Controllers\MaintenancePlanControllerB;
 use App\Http\Controllers\MaintenancePlanControllerC;
 
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -45,7 +44,6 @@ Route::get('/setc', function () {
     return Inertia::render('Setc');
 })->middleware(['auth', 'verified'])->name('setc');
 
-
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -56,23 +54,20 @@ Route::get('/preventive-maintenance', function () {
     return Inertia::render('PreventiveMaintenance');
 })->middleware(['auth', 'verified'])->name('preventive-maintenance');
 
-
-
 Route::get('/officeuser/{officeId}', [MaintenancePlanController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('officeuser');
-
 
 Route::get('/department-employees/{departmentId}', [MaintenancePlanController::class, 'employee'])
     ->middleware(['auth', 'verified'])
     ->name('department-employees');
 
-    
 Route::get('/datacenter', function () {
     return Inertia::render('Datacenter');
 })->middleware(['auth', 'verified'])->name('datacenter');
 
-
-
+Route::get('/prevoffice', function () {
+    return Inertia::render('Prevoffice');
+})->middleware(['auth', 'verified'])->name('prevoffice');
 
 require __DIR__.'/auth.php';

@@ -97,19 +97,69 @@ const formData = ref({
     Speed: '',
     Ports_router: '',
     Ports_switch: '',
-    Wifi_freq: '',
     IP: '',
     Mac: '',
-    Subnet: '',
-    Gateway: '',
     DNS: '',
     DHCP: ''
   }
 });
 
 // Options
-const equipmentOptions = ['Router', 'Switch', 'Access Point', 'Mouse', 'Modem', 'Network Cable', 'Patch Panel', 'Other'];
+const equipmentOptions = ['Router', 'Switch', 'Access Point', 'Modem', 'Network Cable', 'Patch Panel', 'Other'];
 const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Client', 'Network Configuration Tool', 'Other'];
+
+const submitForm = async () => {
+  try {
+    // Check if required fields are filled
+    if (!formData.value.userOperator || !formData.value.officeUnit || !formData.value.department) {
+      console.error("Please fill in all required fields.");
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    // Create a data object for submission
+    const payload = {
+      userOperator: formData.value.userOperator,
+      officeUnit: formData.value.officeUnit,
+      department: formData.value.department,
+      dateAcquired: formData.value.dateAcquired,
+      pcName: formData.value.pcName,
+      equipmentInstalled: formData.value.equipmentInstalled,
+      otherEquipment: formData.value.otherEquipment,
+      osInstalled: formData.value.osInstalled,
+      otherOS: formData.value.otherOS,
+      osLicense: formData.value.osLicense,
+      softwareInstalled: formData.value.softwareInstalled,
+      otherSoftware: formData.value.otherSoftware,
+      desktopSpecs: { ...formData.value.desktopSpecs }
+    };
+
+    console.log("Submitting form data:", payload);
+
+    // Simulating an API request (Replace with your actual API call)
+    const response = await fetch('/api/submit-form', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      alert("Form submitted successfully!");
+      closeModal(); // Close modal on success
+    } else {
+      console.error("Submission failed:", result);
+      alert("Error submitting form.");
+    }
+  } catch (error) {
+    console.error("Error submitting form:", error);
+    alert("An unexpected error occurred.");
+  }
+};
+
 </script>
 
 <template>
@@ -123,7 +173,6 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
             <th>Office</th>
             <th>Actions</th>
             <th>Status</th>
-            <!-- <th>Print Details</th> -->
           </tr>
         </thead>
         <tbody>
@@ -131,10 +180,11 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
             <td>{{ item.name }}</td>
             <td class="text-center">
               <div class="d-flex justify-content-center">
-              <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-              @click="openStep1Modal(item)">
-              <i class="fas fa-eye me-1"></i>View</button>
-            </div>
+                <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+                  @click="openStep1Modal(item)">
+                  <i class="fas fa-eye me-1"></i>View
+                </button>
+              </div>
             </td>
             <td :class="{ 'clear-status': item.status === 'Clear', 'unclear-status': item.status === 'Unclear' }">
               {{ item.status }}
@@ -142,71 +192,67 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
           </tr>
         </tbody>
       </table>
-
     </div>
 
-   <!-- Modal -->
-   <div v-if="isStep1ModalOpen" class="modal fade show d-block">
-        <div class="modal-dialog modal-xl" role="document">
-            <div class="modal-content">
-            <div class="modal-header d-flex align-items-center justify-content-between w-100 flex-wrap gap-3">
-                <h5 class="modal-title">Preventive Maintenance Form</h5>
+    <!-- Modal -->
+    <div v-if="isStep1ModalOpen" class="modal fade show d-block">
+      <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+          <!-- Modal Header -->
+          <div class="modal-header d-flex align-items-center justify-content-between w-100 flex-wrap gap-3">
+            <h5 class="modal-title">Preventive Maintenance Form</h5>
+
             <!-- Inputs Group -->
             <div class="d-flex align-items-center gap-4 flex-wrap">
-              
               <!-- Number Input -->
               <div class="d-flex flex-column ms-auto">
                 <label class="form-label mb-0" style="font-size: 14px;"></label>
                 <input 
-                 type="text" 
-                 class="form-control form-control-sm" 
-                 @input="console.log('Ticket Number:', formData.ticketnumber)"
-
-                 v-model="formData.ticketnumber"
-                 placeholder="Number"
-                style="width: 150px; height: 30px; font-size: 14px; padding: 5px;"
-                  >
-                    </div>
-
-                <!-- Status Dropdown -->
-                <div class="dropdown status-dropdown position-relative">
-                  <i class="fas fa-search position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
-                  <input
-                    type="text"
-                    class="form-control form-control-sm"
-                    v-model="searchStatus"
-                    placeholder="Equipment Number"
-                    style="width: 200px; height: 30px; font-size: 14px; padding: 5px 10px;"
-                    @focus="isStatusDropdownOpen = true"
-                  />
-                  <ul v-if="isStatusDropdownOpen" class="dropdown-menu show" style="max-height: 150px; overflow-y: auto;">
-                    <li 
-                      v-for="status in filteredStatusOptions" 
-                      :key="status" 
-                      @click="selectStatus(status)"
-                      class="dropdown-item"
-                      style="font-size: 14px; padding: 5px 10px;"
-                    >
-                      {{ status }}
-                    </li>
-                  </ul>
-                </div>
+                  type="text" 
+                  class="form-control form-control-sm"
+                  @input="console.log('Ticket Number:', formData.ticketnumber)"
+                  v-model="formData.ticketnumber"
+                  placeholder="Number"
+                  style="width: 150px; height: 30px; font-size: 14px; padding: 5px;"
+                >
               </div>
-                <div class="d-flex align-items-center ms-auto">
-                <!-- <button class="btn btn-danger me-2" @click="markForDisposal">For Disposal</button> -->
-                <button type="button" class="btn-close" @click="isModalOpen = false"></button>
-                </div>
+
+              <!-- Status Dropdown -->
+              <div class="dropdown status-dropdown position-relative">
+                <i class="fas fa-search position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  v-model="searchStatus"
+                  placeholder="Equipment Number"
+                  style="width: 200px; height: 30px; font-size: 14px; padding: 5px 10px;"
+                  @focus="isStatusDropdownOpen = true"
+                />
+                <ul v-if="isStatusDropdownOpen" class="dropdown-menu show" style="max-height: 150px; overflow-y: auto;">
+                  <li 
+                    v-for="status in filteredStatusOptions" 
+                    :key="status" 
+                    @click="selectStatus(status)"
+                    class="dropdown-item"
+                    style="font-size: 14px; padding: 5px 10px;"
+                  >
+                    {{ status }}
+                  </li>
+                </ul>
+              </div>
             </div>
 
-            
+            <!-- Modal Controls -->
+            <div class="d-flex align-items-center ms-auto">
+              <button type="button" class="btn-close" @click="isModalOpen = false"></button>
+              <button type="button" class="btn btn-primary" @click="submitForm">Submit</button>
+            </div>
+          </div>
 
+          <!-- Modal Body -->
           <div class="modal-body modal-scrollable">
             <!-- User & Date Info -->
-            <div class="row mb-3">
-              <div class="col-md-2">
-                <label class="form-label">User/Operator</label>
-                <input type="text" class="form-control" v-model="formData.userOperator">
-              </div>
+            <div class="row">
               <div class="col-md-3">
                 <label class="form-label">Office/College/Unit</label>
                 <input type="text" class="form-control" v-model="formData.officeUnit">
@@ -215,13 +261,13 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
                 <label class="form-label">Department</label>
                 <input type="text" class="form-control" v-model="formData.department">
               </div>
-              <div class="col-md-2">
+              <div class="col-md-3">
                 <label class="form-label">Date Acquired</label>
                 <input type="date" class="form-control" v-model="formData.dateAcquired">
               </div>
-              <div class="col-md-2">
-                <label class="form-label">PC Name</label>
-                <input type="text" class="form-control" v-model="formData.pcName">
+              <div class="col-md-3">
+                <label class="form-label">Date</label>
+                <input type="text" class="form-control" v-model="formData.date">
               </div>
             </div>
 
@@ -235,11 +281,12 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
                     <label class="form-check-label">{{ option }}</label>
                   </div>
                   <input 
-                  v-if="option === 'Other' && formData.equipmentInstalled.includes('Other')" 
-                  type="text" 
-                  class="form-control mt-1 ms-3" 
-                  v-model="formData.otherEquipment" 
-                  placeholder="Specify Other Equipment">
+                    v-if="option === 'Other' && formData.equipmentInstalled.includes('Other')" 
+                    type="text" 
+                    class="form-control mt-1 ms-3" 
+                    v-model="formData.otherEquipment" 
+                    placeholder="Specify Other Equipment"
+                  >
                 </div>
               </div>
             </div>
@@ -253,12 +300,18 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
                     <input class="form-check-input" type="checkbox" :value="option" v-model="formData.softwareInstalled">
                     <label class="form-check-label">{{ option }}</label>
                   </div>
-                  <input v-if="option === 'Other' && formData.softwareInstalled.includes('Other')" type="text" class="form-control mt-1 ms-3" v-model="formData.otherSoftware" placeholder="Specify Other Software">
+                  <input 
+                    v-if="option === 'Other' && formData.softwareInstalled.includes('Other')" 
+                    type="text" 
+                    class="form-control mt-1 ms-3" 
+                    v-model="formData.otherSoftware" 
+                    placeholder="Specify Other Software"
+                  >
                 </div>
               </div>
             </div>
 
-            <!-- Desktop Specifications -->
+            <!-- Desktop Specs -->
             <div class="card p-3 mt-3">
               <h6 class="fw-bold">Desktop Specifications:</h6>
               <div class="row">
@@ -273,14 +326,11 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
           <!-- Modal Footer -->
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
-            <!-- <button type="button" class="btn btn-success" @click="openStep2Modal">
-              <i class="fas fa-arrow-right"></i> Next
-            </button> -->
+            <!-- <button type="button" class="btn btn-success" @click="openStep2Modal">Next</button> -->
           </div>
         </div>
       </div>
     </div>
-
   </MainLayout>
 </template>
 
@@ -355,21 +405,61 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
   justify-content: center;
 }
 
-/* Make modal larger */
-.modal-content {
-  width: 300%;
-  max-width: 1200px; /* Increase max width */
-  max-height: 95vh; /* Prevent it from going beyond the viewport */
-  display: flex;
-  flex-direction: column;
+/* Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 10px; /* Prevents clipping of modal on small screens */
 }
 
-/* Increase the height and make it scrollable */
+.modal-content {
+  width: 90%; /* Set the width to 90% of the screen */
+  max-width: 1200px; /* Ensure it doesn't get too large on bigger screens */
+  max-height: 90vh; /* Set max height to be 90% of the viewport height */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent content overflow */
+  border-radius: 8px; /* Optional: adds rounded corners to the modal */
+  background-color: white; /* Modal content background */
+}
+
+/* Modal Body */
 .modal-body {
-  max-height: 70vh; /* Adjust height for better visibility */
-  overflow-y: auto; /* Enable scrolling */
+  max-height: 70vh; /* Limit height of the modal body */
+  overflow-y: auto; /* Enable scrolling within the body */
   padding-right: 10px;
 }
+
+/* Media Queries for smaller screens */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 100%; /* Full width on small screens */
+    max-height: 90vh; /* Make the modal content take up more space vertically */
+  }
+
+  .modal-body {
+    max-height: 60vh; /* Adjust the height for smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    width: 100%;
+    padding: 10px; /* Add padding around the modal content on mobile devices */
+  }
+
+  .modal-body {
+    max-height: 50vh; /* Adjust modal body height further for very small screens */
+  }
+}
+
 
 .dropdown-container {
   margin-bottom: 15px; /* Adds space below the dropdown */
@@ -420,4 +510,6 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
 .close-btn:hover {
   background-color: #c0392b;
 }
+
+
 </style>

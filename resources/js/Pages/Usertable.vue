@@ -423,38 +423,34 @@ watch(isStatusDropdownOpen, (newVal) => {
     
    
 
-<!-- Add User Modal -->
-<div v-if="isAddUserModalOpen" class="modal fade show d-block" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
-        <button type="button" class="btn-close" @click="isAddUserModalOpen = false" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <!-- Employee Name inline with label and input -->
-        <div class="mb-3 d-flex">
-          <label class="form-label me-3" style="width: 150px;">Employee Name</label>
-          <input type="text" class="form-control" style="flex-grow: 1;" v-model="newUser.name" />
+      <!-- Add User Modal -->
+      <div v-if="isAddUserModalOpen" class="modal fade show d-block" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
+              <button type="button" class="btn-close" @click="isAddUserModalOpen = false" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <!-- Employee Name inline with label and input -->
+              <div class="mb-3 d-flex">
+                <label class="form-label me-3" style="width: 150px;">Employee Name</label>
+                <input type="text" class="form-control" style="flex-grow: 1;" v-model="newUser.name" />
+              </div>
+              
+              <!-- Employee Number inline with label and input -->
+              <div class="mb-4 d-flex">
+                <label class="form-label me-3" style="width: 150px;">Employee Number</label>
+                <input type="text" class="form-control" style="flex-grow: 1;" v-model="newUser.number" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" @click="isAddUserModalOpen = false">Close</button>
+              <button class="btn btn-primary" @click="addUser">Add User</button>
+            </div>
+          </div>
         </div>
-        
-        <!-- Employee Number inline with label and input -->
-        <div class="mb-4 d-flex">
-          <label class="form-label me-3" style="width: 150px;">Employee Number</label>
-          <input type="text" class="form-control" style="flex-grow: 1;" v-model="newUser.number" />
-        </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" @click="isAddUserModalOpen = false">Close</button>
-        <button class="btn btn-primary" @click="addUser">Add User</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
 
     <!-- Modal -->
     <div v-if="isStep1ModalOpen" class="modal fade show d-block">
@@ -509,14 +505,12 @@ watch(isStatusDropdownOpen, (newVal) => {
           </div>
         </div>
 
-
         <!-- MODAL -->
 
         <!-- For Disposal Button -->
         <button class="btn btn-danger btn-sm">For Disposal</button>
 
       </div>
-
           <div class="modal-body modal-scrollable">
             <!-- User & Date Info -->
             <div class="row mb-3">
@@ -547,110 +541,108 @@ watch(isStatusDropdownOpen, (newVal) => {
             </div>
 
             <!-- Equipment Installed -->
-
             <div class="card p-3 mt-3">
-    <h6 class="fw-bold">Equipment Installed:</h6>
-    <div class="row">
-      <div v-for="(option, index) in equipmentOptions" :key="index" class="col-md-3">
-        <div class="form-check">
-          <input 
-            class="form-check-input" 
-            type="checkbox" 
-            :value="option" 
-            v-model="formData.equipmentInstalled"
-            @change="updateEquipmentStatus(option)" 
-          />
-          <label class="form-check-label">{{ option }}</label>
-        </div>
+            <h6 class="fw-bold">Equipment Installed:</h6>
+            <div class="row">
+              <div v-for="(option, index) in equipmentOptions" :key="index" class="col-md-3">
+                <div class="form-check">
+                  <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    :value="option" 
+                    v-model="formData.equipmentInstalled"
+                    @change="updateEquipmentStatus(option)" 
+                  />
+                  <label class="form-check-label">{{ option }}</label>
+                </div>
 
-        <!-- Input Field for 'Other' Equipment -->
-        <input 
-          v-if="option === 'Other' && formData.equipmentInstalled.includes('Other')" 
-          type="text" 
-          class="form-control mt-1 ms-3" 
-          v-model="formData.other_equip" 
-          placeholder="Specify Other Equipment">
-      </div>
-    </div>
-  </div>
-
+                <!-- Input Field for 'Other' Equipment -->
+                <input 
+                  v-if="option === 'Other' && formData.equipmentInstalled.includes('Other')" 
+                  type="text" 
+                  class="form-control mt-1 ms-3" 
+                  v-model="formData.other_equip" 
+                  placeholder="Specify Other Equipment">
+              </div>
+            </div>
+          </div>
 
              <!-- Operating System Installed -->
              <div class="card p-3 mt-3">
-    <h6 class="fw-bold">Operating System Installed:</h6>
+            <h6 class="fw-bold">Operating System Installed:</h6>
 
-    <div v-for="(option, index) in osOptions" :key="index" class="form-check">
-      <input 
-        type="radio" 
-        class="form-check-input" 
-        :value="option" 
-        v-model="formData.osInstalled"
-        @change="updateOsInstalled(option)" 
-      />
-      <label class="form-check-label">{{ option }}</label>
-    </div>
+            <div v-for="(option, index) in osOptions" :key="index" class="form-check">
+              <input 
+                type="radio" 
+                class="form-check-input" 
+                :value="option" 
+                v-model="formData.osInstalled"
+                @change="updateOsInstalled(option)" 
+              />
+              <label class="form-check-label">{{ option }}</label>
+            </div>
 
-    <!-- Input Field for 'Other' OS -->
-    <div v-if="formData.osInstalled === 'Other'" class="ms-3">
-      <input 
-        type="text" 
-        class="form-control mt-1" 
-        v-model="formData.other_os" 
-        placeholder="Specify Other OS"
-      />
-    </div>
+            <!-- Input Field for 'Other' OS -->
+            <div v-if="formData.osInstalled === 'Other'" class="ms-3">
+              <input 
+                type="text" 
+                class="form-control mt-1" 
+                v-model="formData.other_os" 
+                placeholder="Specify Other OS"
+              />
+            </div>
 
-    <!-- License selection (only for Windows 10 & 11) -->
-    <div v-if="formData.windows10 === 1 || formData.windows11 === 1" class="mt-2 ms-4">
-      <h6 class="fw-bold">License:</h6>
-      <div class="form-check">
-        <input 
-          type="radio" 
-          class="form-check-input" 
-          :value="1" 
-          v-model.number="formData.license"
-        />
-        <label class="form-check-label">Licensed</label>
-      </div>
-      <div class="form-check">
-        <input 
-          type="radio" 
-          class="form-check-input" 
-          :value="0" 
-          v-model.number="formData.license"
-        />
-        <label class="form-check-label">Not Licensed</label>
-      </div>
-    </div>
-  </div>
+            <!-- License selection (only for Windows 10 & 11) -->
+            <div v-if="formData.windows10 === 1 || formData.windows11 === 1" class="mt-2 ms-4">
+              <h6 class="fw-bold">License:</h6>
+              <div class="form-check">
+                <input 
+                  type="radio" 
+                  class="form-check-input" 
+                  :value="1" 
+                  v-model.number="formData.license"
+                />
+                <label class="form-check-label">Licensed</label>
+              </div>
+              <div class="form-check">
+                <input 
+                  type="radio" 
+                  class="form-check-input" 
+                  :value="0" 
+                  v-model.number="formData.license"
+                />
+                <label class="form-check-label">Not Licensed</label>
+              </div>
+            </div>
+          </div>
 
 
             <!-- Software Installed -->
             <div class="card p-3 mt-3">
-    <h6 class="fw-bold">Software Application Installed:</h6>
-    <div class="row">
-      <div v-for="(option, index) in softwareOptions" :key="index" class="col-md-3">
-        <div class="form-check">
-          <input 
-            class="form-check-input" 
-            type="checkbox" 
-            :value="option" 
-            v-model="formData.softwareInstalled"
-            @change="updateSoftwareStatus(option)" 
-          />
-          <label class="form-check-label">{{ option }}</label>
-        </div>
+            <h6 class="fw-bold">Software Application Installed:</h6>
+            <div class="row">
+              <div v-for="(option, index) in softwareOptions" :key="index" class="col-md-3">
+                <div class="form-check">
+                  <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    :value="option" 
+                    v-model="formData.softwareInstalled"
+                    @change="updateSoftwareStatus(option)" 
+                  />
+                  <label class="form-check-label">{{ option }}</label>
+                </div>
 
-        <!-- Input Field for 'Other' Software -->
-        <input 
-          v-if="option === 'Other' && formData.softwareInstalled.includes('Other')" 
-          type="text" 
-          class="form-control mt-1 ms-3" 
-          v-model="formData.other_sys" 
-          placeholder="Specify Other Software">
-      </div>
-    </div>
-  </div>
+                <!-- Input Field for 'Other' Software -->
+                <input 
+                  v-if="option === 'Other' && formData.softwareInstalled.includes('Other')" 
+                  type="text" 
+                  class="form-control mt-1 ms-3" 
+                  v-model="formData.other_sys" 
+                  placeholder="Specify Other Software">
+              </div>
+            </div>
+          </div>
 
             <!-- Desktop Specifications -->
 
@@ -703,58 +695,58 @@ watch(isStatusDropdownOpen, (newVal) => {
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
 
-              <!-- HERE IS THE CHECKLIST -->
-              <div class="modal-body">
-  <table class="table table-bordered">
-    <thead>
-      <tr>
-        <th>Item #</th>
-        <th>Task</th>
-        <th>Description</th>
-        <th class="text-center">OK</th>
-        <th class="text-center">Repair</th>
-        <th class="text-center">N/A</th>
-      </tr>
-    </thead>
-    <tbody>
-      <template v-for="(check, index) in checklist.items" :key="check.item">
-        <tr v-for="(desc, i) in check.details.split('\n')" :key="`${check.item}-${i}`">
-          <td v-if="i === 0" :rowspan="check.details.split('\n').length">{{ check.item }}</td>
-          <td v-if="i === 0" :rowspan="check.details.split('\n').length">{{ check.task }}</td>
-          <td>{{ desc }}</td>
-          
-          <!-- OK -->
-          <td class="text-center">
-            <input type="radio" :name="'status-' + check.item + '-' + i" 
-                   :value="1" v-model="checklist.items[index].status[i]"
-                   @change="updateStatus(index, i, 1)">
-          </td>
+            <!-- HERE IS THE CHECKLIST -->
+            <div class="modal-body">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Item #</th>
+                  <th>Task</th>
+                  <th>Description</th>
+                  <th class="text-center">OK</th>
+                  <th class="text-center">Repair</th>
+                  <th class="text-center">N/A</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-for="(check, index) in checklist.items" :key="check.item">
+                  <tr v-for="(desc, i) in check.details.split('\n')" :key="`${check.item}-${i}`">
+                    <td v-if="i === 0" :rowspan="check.details.split('\n').length">{{ check.item }}</td>
+                    <td v-if="i === 0" :rowspan="check.details.split('\n').length">{{ check.task }}</td>
+                    <td>{{ desc }}</td>
+                    
+                    <!-- OK -->
+                    <td class="text-center">
+                      <input type="radio" :name="'status-' + check.item + '-' + i" 
+                            :value="1" v-model="checklist.items[index].status[i]"
+                            @change="updateStatus(index, i, 1)">
+                    </td>
 
-          <!-- Repair -->
-          <td class="text-center">
-            <input type="radio" :name="'status-' + check.item + '-' + i" 
-                   :value="2" v-model="checklist.items[index].status[i]"
-                   @change="updateStatus(index, i, 2)">
-          </td>
+                    <!-- Repair -->
+                    <td class="text-center">
+                      <input type="radio" :name="'status-' + check.item + '-' + i" 
+                            :value="2" v-model="checklist.items[index].status[i]"
+                            @change="updateStatus(index, i, 2)">
+                    </td>
 
-          <!-- N/A -->
-          <td class="text-center">
-            <input type="radio" :name="'status-' + check.item + '-' + i" 
-                   :value="3" v-model="checklist.items[index].status[i]"
-                   @change="updateStatus(index, i, 3)">
-          </td>
-        </tr>
-      </template>
-    </tbody>
-  </table>
+                    <!-- N/A -->
+                    <td class="text-center">
+                      <input type="radio" :name="'status-' + check.item + '-' + i" 
+                            :value="3" v-model="checklist.items[index].status[i]"
+                            @change="updateStatus(index, i, 3)">
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
 
-  <!-- Comments Section -->
-  <div class="mt-3">
-    <label for="comments" class="fw-bold">Summary/Recommendation</label>
-    <textarea id="comments" v-model="checklist.Summary" class="form-control" rows="3"
-              placeholder="Enter any additional comments..."></textarea>
-  </div>
-</div>
+            <!-- Comments Section -->
+            <div class="mt-3">
+              <label for="comments" class="fw-bold">Summary/Recommendation</label>
+              <textarea id="comments" v-model="checklist.Summary" class="form-control" rows="3"
+                        placeholder="Enter any additional comments..."></textarea>
+            </div>
+          </div>
 
 
 

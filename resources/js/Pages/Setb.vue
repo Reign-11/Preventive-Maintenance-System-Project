@@ -2,8 +2,11 @@
 import { ref, computed, watch, onMounted, nextTick } from "vue";
 import MainLayout from '@/Layouts/MainLayout.vue';
 import axios from "axios";
+import { Link } from '@inertiajs/vue3';
 
-// ✅ Reactive properties
+
+
+//  Reactive properties
 const years = ref([]);
 const selectedYear = ref(new Date().getFullYear());
 const maintenancePlans = ref([]);
@@ -11,11 +14,11 @@ const selectedYearDescription = ref("");
 const isFetchingData = ref(false);
 const selectedYearName = ref("");
 const offices = ref([]); // Store the list of offices for the dropdown
-const selectedOffice= ref(null); // ✅ Holds selected value
-const selectedParentOffice = ref(null); // ✅ Define this to avoid ReferenceError
-const addedOffices = ref([]); // ✅ Fix: Declare addedOffices as a reactive array
+const selectedOffice= ref(null); //  Holds selected value
+const selectedParentOffice = ref(null); // Define this to avoid ReferenceError
+const addedOffices = ref([]); //  Fix: Declare addedOffices as a reactive array
 
-// ✅ External Scripts
+//  External Scripts
 const files = [
     '/script/jquery-3.5.1.min.js',  
     '/script/jquery.dataTables.min.js', 
@@ -27,7 +30,7 @@ const files = [
     '/script/moment.min.js'
 ];
 
-// ✅ Load external scripts dynamically
+//  Load external scripts dynamically
 const loadScripts = (fileList) => {
     fileList.forEach(file => {
         if (!document.querySelector(`script[src="${file}"]`)) {
@@ -39,7 +42,7 @@ const loadScripts = (fileList) => {
     });
 };
 
-// ✅ Open Modal
+//  Open Modal
 const openModal = () => {
   const modalElement = document.getElementById("addCollegeModal");
   if (modalElement) {
@@ -48,28 +51,12 @@ const openModal = () => {
   }
 };
 
-const closeModal = () => {
-  try {
-    const modalElement = document.getElementById("addCollegeModal");
-    if (!modalElement) {
-      console.error("Modal element not found");
-      return;
-    }
-
-    // Use the correct method to instantiate a modal in Bootstrap 5
-    const modalInstance = new bootstrap.Modal(modalElement);
-    modalInstance.hide();  // Close the modal
-  } catch (error) {
-    console.error("Error closing modal:", error);
-  }
-};
-
-// ✅ Fetch offices for the dropdown
+//  Fetch offices for the dropdown
 const fetchOffices = async () => {
   try {
     console.log("📡 Fetching offices...");
-    const response = await axios.get("/api/officesB");
-    console.log("✅ Response:", response.data);
+    const response = await axios.get("/api/offices");
+    console.log(" Response:", response.data);
 
     offices.value = response.data; // Ensure this is reactive
   } catch (error) {
@@ -77,17 +64,17 @@ const fetchOffices = async () => {
   }
 };
 
-// ✅ Fetch available years
+//  Fetch available years
 const fetchYears = async () => {
   try {
-    const response = await axios.get("/api/yearsB");
+    const response = await axios.get("/api/years");
     years.value = response.data;
   } catch (error) {
     console.error("Error fetching years:", error);
   }
 };
 
-// ✅ Fetch maintenance plans
+//  Fetch maintenance plans
 const fetchData = async () => {
   if (!selectedYear.value) {
     maintenancePlans.value = [];
@@ -97,7 +84,7 @@ const fetchData = async () => {
   isFetchingData.value = true;
 
   try {
-    const response = await axios.get(`/api/maintenance-plansB?YrId=${selectedYear.value}&CatId=2`);
+    const response = await axios.get(`/api/maintenance-plans?YrId=${selectedYear.value}&CatId=1`);
 
     console.log("📡 Fetching Data for YrId:", selectedYear.value);
     console.log("📦 Fetched Data:", response.data);
@@ -193,7 +180,7 @@ const saveOnEnter = async (plan) => {
 
     console.log("📩 Sending Data:", payload);
 
-    const response = await axios.post("/api/save-maintenance-planB", payload);
+    const response = await axios.post("/api/save-maintenance-plan", payload);
 
     console.log(" Maintenance plan saved successfully", response.data);
 
@@ -208,7 +195,6 @@ const saveOnEnter = async (plan) => {
     alert(error.response?.data?.error || "Failed to save data.");
   }
 };
-
 
 // Add College (POST Request to Laravel API)
 
@@ -233,13 +219,13 @@ const addOffice = async () => {
     OfficeName: selectedOfficeData.OfficeName,
     ParentOffId: selectedParentOffice?.value || null, // ✅ Ensure defined
     YrId: selectedYear.value,
-    CatId: 2, // ✅ Ensure CatId is always set to 2
+    CatId: 1,
   };
 
   console.log("📡 Sending request:", requestData);
 
   try {
-    const response = await axios.post("/api/add-collegesB", requestData);
+    const response = await axios.post("/api/add-colleges", requestData);
     console.log("✅ Response received:", response.data);
 
     alert("Office added successfully!");
@@ -264,8 +250,7 @@ const addOffice = async () => {
   }
 };
 
-
-// ✅ Watcher for updates
+//  Watcher for updates
 watch(maintenancePlans, (newValue) => {
   if (isFetchingData.value || !selectedYear.value || !newValue.length) return;
 
@@ -281,7 +266,7 @@ watch(maintenancePlans, (newValue) => {
 }, { deep: true });
 
 
-// ✅ Watcher for real-time updates (but skip if fetching data)
+//  Watcher for real-time updates (but skip if fetching data)
 watch(maintenancePlans, (newValue) => {
   if (isFetchingData.value || !selectedYear.value || !newValue.length) return;
 
@@ -337,6 +322,64 @@ const printTable = () => {
   window.print();
 };
 
+const deleteOffice = async (planId) => {
+  if (!planId) {
+    alert("Invalid Office ID.");
+    return;
+  }
+
+  if (!confirm("Are you sure you want to delete this office?")) {
+    return;
+  }
+
+  try {
+    console.log(`🗑 Deleting Office with Plan ID: ${planId}`);
+
+    // Make DELETE request to API
+    await axios.delete(`/api/delete-maintenance-plan/${planId}`);
+
+    //  Filter out deleted plan from `maintenancePlans`
+    maintenancePlans.value = maintenancePlans.value.filter(plan => plan.PlanId !== planId);
+
+    console.log(" Office deleted successfully.");
+    alert("Office deleted successfully!");
+  } catch (error) {
+    console.error(" Error deleting office:", error);
+    alert(error.response?.data?.message || "Failed to delete office.");
+  }
+};
+
+// Reactive variables for pagination
+const entriesPerPage = ref(10); // Default to 10 entries per page
+const currentPage = ref(1); // Start at page 1
+
+const paginatedPlans = computed(() => {
+  const start = (currentPage.value - 1) * entriesPerPage.value;
+  const end = start + entriesPerPage.value;
+  return maintenancePlans.value.slice(start, end);
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(maintenancePlans.value.length / entriesPerPage.value);
+});
+
+const goToPage = (page) => {
+  if (page < 1 || page > totalPages.value) return;
+  currentPage.value = page;
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
 </script>
 
 <template>
@@ -346,10 +389,8 @@ const printTable = () => {
         <!-- Header Section -->
         <div class="text-center">
           <h2 class="fw-bold">
-            {{ selectedYearName }} 
-            <span v-if="selectedYearDescription" style="color: black;"> - {{ selectedYearDescription }}</span>
-          </h2>
-
+  {{ selectedYearName }} {{ selectedYearDescription ? ` - ${selectedYearDescription}` : '' }}
+</h2>
           <!-- Legend -->
           <div class="mt-2">
             <strong>Legend:</strong>
@@ -359,7 +400,7 @@ const printTable = () => {
             <span class="badge bg-warning text-white">M</span> Monthly
           </div>
 
-          <div class="d-flex justify-content-center gap-3 mt- no-print">
+          <div class="d-flex justify-content-center gap-3 mt-2 no-print">
             <button class="btn btn-success"><i class="fas fa-save"></i> Save</button>
             <button class="btn btn-warning"><i class="fas fa-lock"></i> Lock</button>
             <button class="btn btn-info" @click="printTable">
@@ -381,29 +422,42 @@ const printTable = () => {
         <!-- "Set B" Title -->
         <div class="text-success fw-bold fs-3 text-center mt-2">Set B</div>
 
-        <!-- Table Section -->
-        <div class="card mt-2">
-          <div class="card-body">
-            <!-- Top Controls -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <!-- Add College Button -->
-              <button class="btn btn-success btn-lg fw-bold px-4 py-2 no-print" @click="openModal">
-                <i class="fas fa-file-signature"></i> Add College/Office
-              </button>
-            </div>
+       <!-- Table Section -->
+       <div class="card mt-2">
+       <div class="card-body">
+      <!-- Top Controls --> 
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <!-- Add College Button -->
+        <button class="btn btn-success btn-lg fw-bold px-4 py-2 no-print" @click="openModal">
+          <i class="fas fa-file-signature"></i> Add College/Office
+        </button>
 
-        <!-- Data Table -->
-        <div class="datatable text-center">
-          <table class="table table-bordered table-hover" width="100%" cellspacing="0">
-            <thead class="table-success">
-              <tr>
-                <th>Colleges</th>
-                <th v-for="month in months" :key="month">{{ month }}</th>
-                <th class="no-print">Actions</th>  <!-- Added Actions Column -->
-              </tr>
-            </thead>
-            <tbody>
-            <tr v-for="plan in maintenancePlans" :key="plan.PlanId">
+        <!-- Entries Dropdown -->
+        <div class="d-flex align-items-center">
+          <label for="entries" class="me-2">Show</label>
+          <select id="entries" class="form-select w-auto rounded" v-model="entriesPerPage">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+          </select>
+          <label for="entries" class="ms-2">entries</label>
+        </div>
+      </div>
+
+
+      <!-- Data Table -->
+      <div class="datatable text-center table-responsive">
+        <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+          <thead class="table-success">
+            <tr>
+              <th>Colleges</th>
+              <th v-for="month in months" :key="month">{{ month }}</th>
+              <th class="no-print">Actions</th> <!-- Added Actions Column -->
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="plan in paginatedPlans" :key="plan.PlanId">
               <td>{{ plan.OffName ?? 'N/A' }}</td>
               <td v-for="month in months" :key="month">
                 <input 
@@ -414,34 +468,47 @@ const printTable = () => {
                 <span v-if="plan.isSaving">Saving...</span>
               </td>
               <td class="no-print text-center">
-              <div class="d-flex justify-content-center gap-2">
-               <!-- View Button -->
-               <a :href="route('datacenter')" class="btn btn-sm btn-outline-primary d-flex align-items-center">
-                <i class="fas fa-eye me-1"></i> View
-              </a>
-                <!-- Delete Button -->
-                <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="deleteOffice(plan.PlanId)">
-                  <i class="fas fa-trash me-1"></i> Delete
-                </button>
-              </div>
-            </td>
+                <div class="d-flex justify-content-center gap-2">
+                  <!-- View Button -->
+                  <Link :href="route('datacenter', { officeId: plan?.OffId, YrId: selectedYear, PlanId: plan?.PlanId , CatId: plan?.CatId})"
+                    class="btn btn-sm btn-outline-primary d-flex align-items-center">
+                    <i class="fas fa-eye me-1"></i> View
+                  </Link>
+                  <!-- Delete Button -->
+                  <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="deleteOffice(plan.PlanId)">
+                    <i class="fas fa-trash me-1"></i> Delete
+                  </button>
+                </div>
+              </td>
             </tr>
           </tbody>
-          </table>
-        </div>
+        </table>
 
-            <!-- Navigation Buttons -->
-            <!-- <div class="pagination-buttons no-print">
-              <button class="btn btn-secondary btn-sm">
-                <i class="fas fa-arrow-left"></i> Previous
-              </button>
-              <button class="btn btn-primary btn-sm">
-                Next <i class="fas fa-arrow-right"></i>
-              </button>
-            </div> -->
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="dataTables_paginate paging_simple_numbers" id="dataTable_paginate">
+            <ul class="pagination justify-content-end">
+              <!-- Previous Button -->
+              <li class="paginate_button page-item previous" :class="{'disabled': currentPage === 1}">
+                <a href="#" @click.prevent="prevPage" class="page-link">Previous</a>
+              </li>
+
+              <!-- Page Numbers -->
+              <li class="paginate_button page-item" v-for="page in totalPages" :key="page">
+                <a href="#" @click.prevent="goToPage(page)" :class="{'active': currentPage === page}" class="page-link">{{ page }}</a>
+              </li>
+
+              <!-- Next Button -->
+              <li class="paginate_button page-item next" :class="{'disabled': currentPage === totalPages}">
+                <a href="#" @click.prevent="nextPage" class="page-link">Next</a>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+  </div>
 
     <!-- Bootstrap Modal -->
     <div class="modal fade" id="addCollegeModal" aria-labelledby="exampleModalLabel" tabindex="-1" aria-hidden="true">
@@ -454,13 +521,15 @@ const printTable = () => {
             </div>
 
             <div class="modal-body">
-              <!-- Year Dropdown -->
-              <div class="mb-3">
-                <label for="yearDropdown" class="form-label">Select Year:</label>
-                <select id="yearDropdown" v-model="selectedYear" class="form-control">
-                  <option v-for="year in years" :key="year.YrId" :value="year.YrId">{{ year.Name }}</option>
-                </select>
-              </div>
+            <!-- Year Dropdown -->
+            <div class="mb-3">
+              <label for="yearDropdown" class="form-label">Select Year:</label>
+              <select id="yearDropdown" v-model="selectedYear" class="form-control rounded-sm"> <!-- Add rounded-sm for small rounding -->
+                <option v-for="year in years" :key="year.YrId" :value="year.YrId">{{ year.Name }}</option>
+              </select>
+            </div>
+          </div>
+
 
               <!-- Office Name Dropdown -->
               <div class="mb-3">
@@ -480,7 +549,6 @@ const printTable = () => {
             </div>
           </div>
         </div>
-      </div>
     </main>
   </MainLayout>
 </template>
@@ -514,5 +582,11 @@ button {
     }
 }
 
+.table-responsive {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
 </style>
+
 
