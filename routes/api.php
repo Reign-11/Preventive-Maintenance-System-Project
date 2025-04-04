@@ -30,6 +30,8 @@ Route::get('/pmyear-latest', [MaintenancePlanController::class, 'latest']);
 
 Route::post('/employeeChecklist/{empoyeeId}', [MaintenancePlanController::class, 'employeeChecklist']);
 
+Route::post('/add-employee', [MaintenancePlanController::class, 'addEmployee']);
+
 // SET B
 
 // ✅ Get available years
@@ -46,6 +48,8 @@ Route::post('/add-collegesB', [MaintenancePlanControllerB::class, 'addCollegeB']
 Route::get('/officesB', [MaintenancePlanControllerB::class, 'getOfficeB']);
 
 Route::delete('/delete-maintenance-planB/{id}', [MaintenancePlanControllerB::class, 'destroyB']);
+
+
 
 // SET c
 

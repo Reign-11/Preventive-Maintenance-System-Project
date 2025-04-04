@@ -292,6 +292,140 @@ class MaintenancePlanController extends Controller
     }
 }
 
+
+// public function employeeChecklist(Request $request)
+// {
+//     try {
+//         $currentTimestamp = now();
+//         $day = $currentTimestamp->format('d');
+//         $month = $currentTimestamp->format('m');
+//         $year = $currentTimestamp->format('y');
+
+//         // Generate Ticket Number
+//         $submissionOrder = DB::table('tbl_preventive_maintainance')
+//             ->whereDate('date', $currentTimestamp->toDateString())
+//             ->count() + 1;
+
+//         $generatedTicketNumber = str_pad($submissionOrder, 2, '0', STR_PAD_LEFT) . $day . $month . $year;
+
+//         // Validate Request
+//         $validated = $request->validate([
+//             'employeeId' => 'required|integer',
+//             'pcName' => 'required|string|max:100',
+//             'dateAcquired' => 'required|date',
+//             'cpu_status' => 'required|integer',
+//             'keyboard_status' => 'required|integer',
+//             'printer_status' => 'required|integer',
+//             'monitor_status' => 'required|integer',
+//             'mouse_status' => 'required|integer',
+//             'ups_status' => 'required|integer',
+//             'avr_status' => 'required|integer',
+//             'windows10' => 'integer',
+//             'windows11' => 'integer',
+//             'license' => 'required|integer',
+//             'enrollment' => 'required|integer',
+//             'microsoft' => 'required|integer',
+//             'browser' => 'required|integer',
+//             'anti_virus' => 'required|integer',
+//             'other_equip' => 'nullable|string|max:255',
+//             'other_os' => 'nullable|string|max:255',
+//             'other_sys' => 'nullable|string|max:255',
+//             'processor_details' => 'nullable|string|max:255',
+//             'motherboard_details' => 'nullable|string|max:255',
+//             'memory_details' => 'nullable|string|max:255',
+//             'graphics_card_details' => 'nullable|string|max:255',
+//             'hard_disk_details' => 'nullable|string|max:255',
+//             'monitor_details' => 'nullable|string|max:255',
+//             'casing_details' => 'nullable|string|max:255',
+//             'power_supply_details' => 'nullable|string|max:255',
+//             'keyboard_details' => 'nullable|string|max:255',
+//             'mouse_details' => 'nullable|string|max:255',
+//             'avr_details' => 'nullable|string|max:255',
+//             'ups_details' => 'nullable|string|max:255',
+//             'printer_details' => 'nullable|string|max:255',
+//             'network_mac_ip_details' => 'nullable|string|max:255',
+//             'checklist' => 'required|array',
+//             'checklist.*.task' => 'required|string|max:255',
+//             'checklist.*.details' => 'required|string',
+//             'checklist.*.status' => 'required|array',
+//             'checklist.*.status.*' => 'integer|min:0|max:1',
+//         ]);
+
+//         // Convert checklist array to JSON
+//         $checklistJson = json_encode($validated['checklist']);
+
+//         // Call Stored Procedure
+//         DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)", [
+            
+//             $validated['employeeId'],
+//             $generatedTicketNumber,
+//             $validated['pcName'],
+//             $validated['dateAcquired'],
+//             $validated['cpu_status'],
+//             $validated['keyboard_status'],
+//             $validated['printer_status'],
+//             $validated['monitor_status'],
+//             $validated['mouse_status'],
+//             $validated['ups_status'],
+//             $validated['avr_status'],
+//             $validated['windows10'],
+//             $validated['windows11'],
+//             $validated['license'],
+//             $validated['enrollment'],
+//             $validated['microsoft'],
+//             $validated['browser'],
+//             $validated['anti_virus'],
+//             $validated['other_equip'],
+//             $validated['other_os'],
+//             $validated['other_sys'],
+//             $validated['processor_details'],
+//             $validated['motherboard_details'],
+//             $validated['memory_details'],
+//             $validated['graphics_card_details'],
+//             $validated['hard_disk_details'],
+//             $validated['monitor_details'],
+//             $validated['casing_details'],
+//             $validated['power_supply_details'],
+//             $validated['keyboard_details'],
+//             $validated['mouse_details'],
+//             $validated['avr_details'],
+//             $validated['ups_details'],
+//             $validated['printer_details'],
+//             $validated['network_mac_ip_details'],
+//             $checklistJson,  // Store checklist as JSON
+//         ]);
+// \Log::info('Parameters passed to stored procedure: ', $parameters);
+
+//         return response()->json(['message' => 'Checklist submitted successfully']);
+//     } catch (\Exception $e) {
+//         return response()->json(['error' => $e->getMessage()], 500);
+//     }
+// }
+
+
+public function addEmployee(Request $request)
+{
+    $validatedData = $request->validate([
+        'emp_name' => 'required|string|max:255',
+        'employee_number' => 'required|string|max:50',
+        'offId' => 'nullable|integer',
+        'deptId' => 'nullable|integer'
+    ]);
+
+    try {
+        DB::statement('CALL AddEmployee(?, ?, ?, ?)', [
+            $validatedData['emp_name'],
+            $validatedData['employee_number'],
+            $validatedData['offId'] ?? 0,
+            $validatedData['deptId'] ?? 0
+        ]);
+
+        return response()->json(['message' => 'Employee added successfully'], 201);
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Something went wrong', 'details' => $e->getMessage()], 500);
+    }
+} 
+
 public function employeeChecklist(Request $request)
 {
     try {
@@ -343,19 +477,10 @@ public function employeeChecklist(Request $request)
             'ups_details' => 'nullable|string|max:255',
             'printer_details' => 'nullable|string|max:255',
             'network_mac_ip_details' => 'nullable|string|max:255',
-            'checklist' => 'required|array',
-            'checklist.*.task' => 'required|string|max:255',
-            'checklist.*.details' => 'required|string',
-            'checklist.*.status' => 'required|array',
-            'checklist.*.status.*' => 'integer|min:0|max:1',
         ]);
 
-        // Convert checklist array to JSON
-        $checklistJson = json_encode($validated['checklist']);
-
-        // Call Stored Procedure
-        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)", [
-            
+        // Prepare parameters for the stored procedure
+        $parameters = [
             $validated['employeeId'],
             $generatedTicketNumber,
             $validated['pcName'],
@@ -391,9 +516,13 @@ public function employeeChecklist(Request $request)
             $validated['ups_details'],
             $validated['printer_details'],
             $validated['network_mac_ip_details'],
-            $checklistJson,  // Store checklist as JSON
-        ]);
-\Log::info('Parameters passed to stored procedure: ', $parameters);
+        ];
+
+        // Log the parameters
+        \Log::info('Parameters passed to stored procedure: ', $parameters);
+
+        // Call Stored Procedure
+        DB::statement("CALL InsertPreventiveMaintenanceChecklist(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
 
         return response()->json(['message' => 'Checklist submitted successfully']);
     } catch (\Exception $e) {
@@ -401,7 +530,6 @@ public function employeeChecklist(Request $request)
     }
 }
 }
-
     
 
 

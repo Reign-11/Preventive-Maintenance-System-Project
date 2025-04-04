@@ -1,6 +1,18 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount,defineProps} from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
+
+
+const props = defineProps({
+  departments: { type: Array, default: () => [] },  
+  pmYear: { type: Object, default: () => ({}) },
+  YrId: { type: [String, Number], default: null }, // Changed default to null
+  PlanId: { type: [String, Number], default: null }, // Changed default to null
+  office: { type: Object, default: () => ({}) },
+  deptId: { type: [String, Number], default: null },  // Changed default to null
+  categoryId: { type: [String, Number], default: null } // Changed default to null
+
+});
 
 const isStep1ModalOpen = ref(false);
 const editedItem = ref({}); 
@@ -97,19 +109,69 @@ const formData = ref({
     Speed: '',
     Ports_router: '',
     Ports_switch: '',
-    Wifi_freq: '',
     IP: '',
     Mac: '',
-    Subnet: '',
-    Gateway: '',
     DNS: '',
     DHCP: ''
   }
 });
 
 // Options
-const equipmentOptions = ['Router', 'Switch', 'Access Point', 'Mouse', 'Modem', 'Network Cable', 'Patch Panel', 'Other'];
+const equipmentOptions = ['Router', 'Switch', 'Access Point', 'Modem', 'Network Cable', 'Patch Panel', 'Other'];
 const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Client', 'Network Configuration Tool', 'Other'];
+
+const submitForm = async () => {
+  try {
+    // Check if required fields are filled
+    if (!formData.value.userOperator || !formData.value.officeUnit || !formData.value.department) {
+      console.error("Please fill in all required fields.");
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    // Create a data object for submission
+    const payload = {
+      userOperator: formData.value.userOperator,
+      officeUnit: formData.value.officeUnit,
+      department: formData.value.department,
+      dateAcquired: formData.value.dateAcquired,
+      pcName: formData.value.pcName,
+      equipmentInstalled: formData.value.equipmentInstalled,
+      otherEquipment: formData.value.otherEquipment,
+      osInstalled: formData.value.osInstalled,
+      otherOS: formData.value.otherOS,
+      osLicense: formData.value.osLicense,
+      softwareInstalled: formData.value.softwareInstalled,
+      otherSoftware: formData.value.otherSoftware,
+      desktopSpecs: { ...formData.value.desktopSpecs }
+    };
+
+    console.log("Submitting form data:", payload);
+
+    // Simulating an API request (Replace with your actual API call)
+    const response = await fetch('/api/submit-form', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      alert("Form submitted successfully!");
+      closeModal(); // Close modal on success
+    } else {
+      console.error("Submission failed:", result);
+      alert("Error submitting form.");
+    }
+  } catch (error) {
+    console.error("Error submitting form:", error);
+    alert("An unexpected error occurred.");
+  }
+};
+
 </script>
 
 <template>
@@ -127,8 +189,8 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, index) in displayedData" :key="index">
-            <td>{{ item.name }}</td>
+          <tr v-for="department in departments" :key="department.deptId">
+            <td>{{ department.department_name }}</td>
             <td class="text-center">
               <div class="d-flex justify-content-center">
               <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
@@ -136,8 +198,8 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
               <i class="fas fa-eye me-1"></i>View</button>
             </div>
             </td>
-            <td :class="{ 'clear-status': item.status === 'Clear', 'unclear-status': item.status === 'Unclear' }">
-              {{ item.status }}
+            <td :class="{ 'clear-status': 'Clear', 'unclear-status':'Unclear' }">
+              
             </td>
           </tr>
         </tbody>
@@ -200,13 +262,10 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
 
             
 
-          <div class="modal-body modal-scrollable">
+            <!-- Modal Body -->
+            <div class="modal-body modal-scrollable">
             <!-- User & Date Info -->
-            <div class="row mb-3">
-              <div class="col-md-2">
-                <label class="form-label">User/Operator</label>
-                <input type="text" class="form-control" v-model="formData.userOperator">
-              </div>
+            <div class="row">
               <div class="col-md-3">
                 <label class="form-label">Office/College/Unit</label>
                 <input type="text" class="form-control" v-model="formData.officeUnit">
@@ -215,13 +274,13 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
                 <label class="form-label">Department</label>
                 <input type="text" class="form-control" v-model="formData.department">
               </div>
-              <div class="col-md-2">
+              <div class="col-md-3">
                 <label class="form-label">Date Acquired</label>
                 <input type="date" class="form-control" v-model="formData.dateAcquired">
               </div>
-              <div class="col-md-2">
-                <label class="form-label">PC Name</label>
-                <input type="text" class="form-control" v-model="formData.pcName">
+              <div class="col-md-3">
+                <label class="form-label">Date</label>
+                <input type="text" class="form-control" v-model="formData.date">
               </div>
             </div>
 
@@ -273,6 +332,7 @@ const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Cl
           <!-- Modal Footer -->
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
+            <button type="button" class="btn btn-primary" @click="submitForm">Submit</button>
             <!-- <button type="button" class="btn btn-success" @click="openStep2Modal">
               <i class="fas fa-arrow-right"></i> Next
             </button> -->
