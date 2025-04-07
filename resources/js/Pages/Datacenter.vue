@@ -1,6 +1,44 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed,watchEffect,onMounted ,defineProps} from 'vue';
+
 import MainLayout from '@/Layouts/MainLayout.vue';
+
+const props = defineProps({
+  departments: { type: Array, default: () => [] },  
+  pmYear: { type: Object, default: () => ({}) },
+  YrId: { type: [String, Number], default: null }, // Changed default to null
+  PlanId: { type: [String, Number], default: null }, // Changed default to null
+  office: { type: Object, default: () => ({}) },
+  deptId: { type: [String, Number], default: null },  // Changed default to null
+  categoryId: { type: [String, Number], default: null } // Changed default to null
+
+});
+
+
+const selectedPmYear = computed(() => props.pmYear ?? {});
+const selectedOfficeId = ref(props.office?.OffId || '');
+const selectedYear = ref(props.YrId || '');
+const departments = ref(props.departments || []);
+const selectedPlan = ref(props.PlanId || '');
+const selectedDeptId = ref(props.deptId ?? null);
+const selectedCategoryId = ref(props.categoryId ?? 2); 
+
+watchEffect(() => {
+  if (!selectedDeptId.value && props.departments?.length > 0) {
+    selectedDeptId.value = props.departments[0].DeptId;
+  }
+  if (!selectedCategoryId.value && props.categories?.length > 0) {
+    selectedCategoryId.value = 2;
+  }
+});
+
+watchEffect(() => {
+  selectedPlan.value = props.PlanId || '';
+  console.log("Updated PlanId:", selectedPlan.value);
+});
+
+
+
 
 const isStep1ModalOpen = ref(false);
 const editedItem = ref({}); 
@@ -24,15 +62,8 @@ const enableBackgroundScroll = () => {
   document.body.style.overflow = '';
 };
 
-const officeData = ref([
-  { name: "College of Information Sciences and Computing", status: "Clear" },
-  { name: "College of Arts and Sciences", status: "Clear" },
-  { name: "Registrar Office", status: "Clear" },
-  { name: "Research Office", status: "Clear" },
-  { name: "Library", status: "Clear" },
-]);
 
-const displayedData = computed(() => officeData.value);
+
 
 // Checklist Data
 const checklist = ref([
@@ -124,40 +155,49 @@ const printDetails = (item) => {
 <template>
   <MainLayout>
     <div class="container">
-      <h2 class="text-center my-3">Preventive Maintenance 2025</h2> 
+      <h1> {{ selectedPmYear.Description }} {{ selectedPmYear.Name }}</h1>
 
       <table class="data-table">
-        <thead>
-          <tr>
-            <th>Office</th>
-            <th>Actions</th>
-            <th>Status</th>
-            <th>Print Details</th> <!-- No conditions needed -->
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(item, index) in displayedData" :key="index">
-            <td>{{ item.name }}</td>
-            <td class="text-center">
-              <div class="d-flex justify-content-center">
+      <thead>
+        <tr>
+          <th>Office</th>
+          <th>Actions</th>
+          <th>Status</th>
+          <th>Print Details</th> <!-- No conditions needed -->
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="department in departments" :key="department.deptId">
+          <td>{{ department.department_name }}</td>
+
+          <!-- Actions Column -->
+          <td class="text-center">
+            <div class="d-flex justify-content-center">
               <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-              @click="openStep1Modal(item)">
-              <i class="fas fa-eye me-1"></i>View</button>
+                @click="openStep1Modal(department.deptId)">
+                <i class="fas fa-eye me-1"></i> View
+              </button>
             </div>
-            </td>
-            <td :class="{ 'clear-status': item.status === 'Clear', 'unclear-status': item.status === 'Unclear' }">
-              {{ item.status }}
-            </td>
-            <td class="text-center">
-              <div class="d-flex justify-content-center">
+          </td>
+
+          <!-- Status Column -->
+          <td :class="{ 'clear-status': department.status === 'Clear', 'unclear-status': department.status === 'Unclear' }">
+            {{ department.status }}
+          </td>
+
+          <!-- Print Details Column -->
+          <td class="text-center">
+            <div class="d-flex justify-content-center">
               <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-              @click="printDetails(item)">
-              <i class="fas fa-eye me-1"></i>Print</button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                @click="printDetails(department)">
+                <i class="fas fa-eye me-1"></i> Print
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
 
     </div>
 

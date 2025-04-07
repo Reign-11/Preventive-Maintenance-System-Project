@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch,defineProps, reactive } from 'vue';
+import { ref, computed, watch,defineProps, reactive,nextTick} from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import axios from "axios";
 
@@ -20,20 +20,35 @@ const props = defineProps({
 const employee = ref(props.employee || []);
 
 console.log('employee:', props.employee);
+const selectedEmployee = ref(null);
 
+const newUser = ref({ name: "", number: "" });
 
       // API FORM 
-
-
 
 const isStep1ModalOpen = ref(false);
 const isStep2ModalOpen = ref(false);
 const selectedOption = ref("Office");
-const isModalOpen = ref(false);
-// const editedItem = ref({}); // Store selected user data
+const isModalOpen = ref(false);  
+const isLoading = ref(false);
 
-const openStep1Modal = () => {
+
+const openModal = () => {
+  isModalOpen.value = true;
+};
+
+// Function to close the modal
+const iscloseModal = () => {
+  isModalOpen.value = false;
+};
+
+
+const openStep1Modal = (employeeId) => {
   isStep1ModalOpen.value = true;
+  const employeeData = props.employee.find(emp => emp.employeeId === employeeId);
+  if (employeeData) {
+    selectedEmployee.value = employeeData;
+  }
 };
 
 const openStep2Modal = () => {
@@ -92,15 +107,13 @@ const formData = reactive({
 
 });
 
-watch(() => props.employee, (newVal) => {
-  if (Array.isArray(newVal) && newVal.length > 0) {
-    const employeeData = newVal[0];
-    formData.userOperator = employeeData.emp_name || "";
-    formData.officeUnit =    employeeData.OfficeName || "";
-    formData.department = employeeData.department_name || "";
+watch(selectedEmployee, (newVal) => {
+  if (newVal) {
+    formData.userOperator = newVal.emp_name || "";
+    formData.officeUnit = newVal.OfficeName || "";
+    formData.department = newVal.department_name || "";
   }
-}, { immediate: true });
-
+});
 
 // Options for checkboxes
 const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS', 'AVR', 'Other'];
@@ -124,15 +137,17 @@ const updateOsInstalled = (option) => {
 
 
 const updateEquipmentStatus = (option) => {
-  // Reset all statuses to "0"
-  formData.cpu_status = "0";
-  formData.keyboard_status = "0";
-  formData.printer_status = "0";
-  formData.monitor_status = "0";
-  formData.mouse_status = "0";
-  formData.ups_status = "0";
-  formData.avr_status = "0";
-  formData.other_equip = "";
+  if (formData.equipmentInstalled.includes(option)) {
+    if (option === "CPU") formData.cpu_status = "1";
+  if (option === "Keyboard") formData.keyboard_status = "1";
+  if (option === "Monitor") formData.monitor_status = "1";
+  if (option === "Mouse") formData.mouse_status = "1";
+  if (option === "Printer") formData.printer_status = "1";
+  if (option === "UPS") formData.ups_status = "1";
+  if (option === "AVR") formData.avr_status = "1";
+  if (option === "Other") formData.other_equip = ""; // Allow user input
+
+} else {
 
   // Set the selected option to "1"
   if (option === "CPU") formData.cpu_status = "1";
@@ -143,7 +158,9 @@ const updateEquipmentStatus = (option) => {
   if (option === "UPS") formData.ups_status = "1";
   if (option === "AVR") formData.avr_status = "1";
   if (option === "Other") formData.other_equip = ""; // Allow user input
+}
 };
+
 
 const updateSoftwareStatus = (option) => {
   if (formData.softwareInstalled.includes(option)) {
@@ -168,8 +185,6 @@ const updateSoftwareStatus = (option) => {
 
   }
 };
-
-
 
 const checklist = reactive({
   items: [
@@ -244,14 +259,7 @@ const submitForm = async () => {
       printer_details: formData.desktopSpecs.Printer,
       network_mac_ip_details: formData.desktopSpecs.NetWorkMacIp, 
       
-      // Send checklist with status as numbers
-      checklist: checklist.items.map(item => ({
-      item: item.item,
-      task: item.task,
-      details: item.details,
-      status: item.status.map(s => s)  // Send selected status values
-    })),
-    summary: checklist.Summary
+
   };
 
 
@@ -318,23 +326,40 @@ const updateYear = (year) => {
 // Add User Modal Control
 const isAddUserModalOpen = ref(false);
 
-
-
-
 // New User Data
-const newUser = ref({
-  name: '',
-  status: 'Clear'
-});
 
-// Function to Add User
-const addUser = () => {
-  if (newUser.value.name.trim() !== '') {
-    officeData.value.push({ name: newUser.value.name, status: newUser.value.status });
-    newUser.value = { name: '', status: 'Clear' }; // Reset input fields
-    isAddUserModalOpen.value = false; // Close modal
+const addUser = async () => {
+  if (!newUser.value.name.trim() || !newUser.value.number.trim()) {
+    alert("Please fill in all fields.");
+    return;
+  }
+
+  const firstEmployee = employee.value.length > 0 ? employee.value[0] : null;
+  const officeId = firstEmployee ? firstEmployee.OffId : null;
+  const departmentId = firstEmployee ? firstEmployee.DeptId : null;
+
+  try {
+    const response = await axios.post("/api/add-employee", {
+      emp_name: newUser.value.name,
+      employee_number: newUser.value.number,
+      offId: officeId ?? 0,
+      deptId: departmentId ?? 0
+    });
+
+    alert("Employee added successfully!");
+
+    // Add the new employee to the reactive array
+    employee.value.push(response.data);
+
+    // Reset the form
+    newUser.value = { name: "", number: "" };
+    isModalOpen.value = false;
+  } catch (error) {
+    console.error("❌ Error:", error.response?.data || error.message);
+    alert("An error occurred while adding the employee.");
   }
 };
+
 const isStatusDropdownOpen = ref(false);
 const searchStatus = ref("");
 const statusOptions = ref(["Clear", "Unclear", "Pending", "Completed"]); // Example statuses
@@ -369,17 +394,21 @@ watch(isStatusDropdownOpen, (newVal) => {
   }
 });
 
-
-
+const saveChecklist = () => {
+  console.log("Saved Checklist Data:", statuses.value);
+  alert("Checklist saved successfully!");
+  closeModal();
+};
 </script>
 
 <template>
   <MainLayout>
     <h2 class="d-flex justify-content-center my-3">Preventive Maintenance 2025</h2> 
-    <div class="d-flex justify-content-center mb-3">
-    <button class="btn btn-success" @click="isAddUserModalOpen = true">
-      <i class="fas fa-user-plus"></i> Add User
-    </button>
+<div class="d-flex justify-content-center mb-3">
+  <button class="btn btn-success" @click="openModal">
+    <i class="fas fa-user-plus"></i> Add User
+  </button>
+
     
     </div>
     <table class="data-table">
@@ -399,8 +428,9 @@ watch(isStatusDropdownOpen, (newVal) => {
 
         <td class="text-center">
           <div class="d-flex justify-content-center">
-          <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto"
-              @click="openStep1Modal(employeeId)">
+          <button 
+            class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto"
+            @click="openStep1Modal(employee.employeeId)">
             <i class="fas fa-eye me-1"></i> View
             </button>
           </div>
@@ -423,36 +453,33 @@ watch(isStatusDropdownOpen, (newVal) => {
     
    
 
-<!-- Add User Modal -->
-<div v-if="isAddUserModalOpen" class="modal fade show d-block" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
-        <button type="button" class="btn-close" @click="isAddUserModalOpen = false" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <!-- Employee Name inline with label and input -->
-        <div class="mb-3 d-flex">
-          <label class="form-label me-3" style="width: 150px;">Employee Name</label>
-          <input type="text" class="form-control" style="flex-grow: 1;" v-model="newUser.name" />
+      <!-- Add User Modal -->
+      <div v-if="isModalOpen" class="modal fade show d-block" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New User</h5>
+          <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
-        
-        <!-- Employee Number inline with label and input -->
-        <div class="mb-4 d-flex">
-          <label class="form-label me-3" style="width: 150px;">Employee Number</label>
-          <input type="text" class="form-control" style="flex-grow: 1;" v-model="newUser.number" />
+        <div class="modal-body">
+          <div class="mb-3 d-flex">
+            <label class="form-label me-3" style="width: 150px;">Employee Name</label>
+            <input type="text" class="form-control" v-model="newUser.name" />
+          </div>
+          <div class="mb-4 d-flex">
+            <label class="form-label me-3" style="width: 150px;">Employee Number</label>
+            <input type="text" class="form-control" v-model="newUser.number" />
+          </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" @click="isAddUserModalOpen = false">Close</button>
-        <button class="btn btn-primary" @click="addUser">Add User</button>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="iscloseModal">Close</button>
+          <button class="btn btn-primary" :disabled="isLoading" @click="addUser">
+            {{ isLoading ? 'Adding...' : 'Add User' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
-</div>
-
-
 
 
 
@@ -669,9 +696,7 @@ watch(isStatusDropdownOpen, (newVal) => {
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
-            <button type="button" class="btn btn-success" @click="openStep2Modal(employeeId)">
-              <i class="fas fa-arrow-right"></i> Next
-            </button>
+            <button type="button" class="btn btn-primary" @click="submitForm">Save</button>
           </div>
         </div>
       </div>

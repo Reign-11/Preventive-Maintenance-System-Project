@@ -57,7 +57,6 @@ Route::get('/preventive-maintenance', function () {
 })->middleware(['auth', 'verified'])->name('preventive-maintenance');
 
 
-
 Route::get('/officeuser/{officeId}', [MaintenancePlanController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('officeuser');
@@ -67,12 +66,14 @@ Route::get('/department-employees/{departmentId}', [MaintenancePlanController::c
     ->middleware(['auth', 'verified'])
     ->name('department-employees');
 
-    
-Route::get('/datacenter', function () {
-    return Inertia::render('Datacenter');
-})->middleware(['auth', 'verified'])->name('datacenter');
 
 
+Route::get('/datacenter/{officeId}', [MaintenancePlanControllerB::class, 'data'])
+    ->middleware(['auth', 'verified'])
+    ->name('datacenter');
 
+    Route::get('/prevoffice/{officeId}', [MaintenancePlanControllerC::class, 'prev'])
+    ->middleware(['auth', 'verified'])
+    ->name('prevoffice');;
 
 require __DIR__.'/auth.php';

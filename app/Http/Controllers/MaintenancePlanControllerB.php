@@ -180,4 +180,57 @@ class MaintenancePlanControllerB extends Controller
             ], 500);
         }
     }
+
+    public function data(Request $request, int $officeId)
+    {
+        try {
+            $yrId = $request->query('YrId');  
+            $deptId = $request->query('departmentId'); 
+            $PlanId  = $request->query('PlanId'); 
+            $categoryId = $request->query('CatId', 2); 
+
+
+            Log::info('Yrd Data:', ['data' => $yrId]);
+    
+            // Fetch office data (which contains the correct PlanId)
+            $office = DB::table('tbl_office')->where('OffId', $officeId)->first();
+            Log::info('Office Data:', ['data' => $office]);
+    
+            // Fetch departments using the stored procedure
+            $departmentData = DB::select("CALL GetDepartmentsByOffice2(?)", [$officeId]); 
+            Log::info("📢 Raw departments Data Before Filtering:", $departmentData  );
+
+            // Filter departments based on PlanId, YrId, and OfficeId
+
+            $departments = array_filter($departmentData, function ($dept) use ($PlanId, $yrId, $officeId,$categoryId) {
+                return $dept->PlanId == $PlanId && $dept->YrId == $yrId && $dept->OffId == $officeId  &&  ($dept->CatId == $categoryId || is_null($dept->CatId));
+            });
+    
+            // Re-index to ensure departments is a clean array (not an object)
+            $departments = array_values($departments);
+    
+
+    
+            // Fetch PM Year data if YrId is provided
+            $pmYear = $yrId ? DB::table('tbl_pmyear')->where('YrId', $yrId)->first() : null;
+            $pmYearData = $pmYear ? (array) $pmYear : ['Name' => '', 'Description' => ''];
+    
+            // Return to Inertia with the required data
+            return Inertia::render('Datacenter', [
+                'departments' => $departments,  
+                'pmYear' => $pmYearData,
+                'YrId' => $yrId ?? '',
+                'PlanId' => $PlanId ?? '', 
+                'office' => $office ?? [],
+                'deptId' => $deptId ?? '', 
+                'officeId' => $officeId ?? '',
+                'categoryId' => $categoryId ?? 2,  
+
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching office data: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Failed to fetch office data']);
+        }
+    }
+    
 }
