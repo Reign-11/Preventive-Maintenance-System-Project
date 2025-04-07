@@ -1,3 +1,4 @@
+
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from "vue";
 import MainLayout from '@/Layouts/MainLayout.vue';
@@ -422,18 +423,19 @@ const prevPage = () => {
         </div>
       </div>
 
-        <!-- Data Table -->
-        <div class="datatable text-center">
-          <table class="table table-bordered table-hover" width="100%" cellspacing="0">
-            <thead class="table-success">
-              <tr>
-                <th>Colleges</th>
-                <th v-for="month in months" :key="month">{{ month }}</th>
-                <th class="no-print">Actions</th>  <!-- Added Actions Column -->
-              </tr>
-            </thead>
-            <tbody>
-            <tr v-for="plan in maintenancePlans" :key="plan.PlanId">
+
+      <!-- Data Table -->
+      <div class="datatable text-center table-responsive">
+        <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+          <thead class="table-success">
+            <tr>
+              <th>Colleges</th>
+              <th v-for="month in months" :key="month">{{ month }}</th>
+              <th class="no-print">Actions</th> <!-- Added Actions Column -->
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="plan in paginatedPlans" :key="plan.PlanId">
               <td>{{ plan.OffName ?? 'N/A' }}</td>
               <td v-for="month in months" :key="month">
                 <input 
@@ -444,17 +446,18 @@ const prevPage = () => {
                 <span v-if="plan.isSaving">Saving...</span>
               </td>
               <td class="no-print text-center">
-              <div class="d-flex justify-content-center gap-2">
-               <!-- View Button -->
-               <a :href="route('datacenter')" class="btn btn-sm btn-outline-primary d-flex align-items-center">
-                <i class="fas fa-eye me-1"></i> View
-              </a>
-                <!-- Delete Button -->
-                <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="deleteOffice(plan.PlanId)">
-                  <i class="fas fa-trash me-1"></i> Delete
-                </button>
-              </div>
-            </td>
+                <div class="d-flex justify-content-center gap-2">
+                  <!-- View Button -->
+                  <Link :href="route('prevoffice', { officeId: plan?.OffId, YrId: selectedYear, PlanId: plan?.PlanId , CatId: plan?.CatId})"
+                    class="btn btn-sm btn-outline-primary d-flex align-items-center">
+                    <i class="fas fa-eye me-1"></i> View
+                  </Link>
+                  <!-- Delete Button -->
+                  <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="deleteOffice(plan.PlanId)">
+                    <i class="fas fa-trash me-1"></i> Delete
+                  </button>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -562,4 +565,3 @@ button {
   white-space: nowrap;
 }
 </style>
-
