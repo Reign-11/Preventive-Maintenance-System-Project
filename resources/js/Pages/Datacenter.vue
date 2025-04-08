@@ -163,7 +163,6 @@ const printDetails = (item) => {
           <th>Office</th>
           <th>Actions</th>
           <th>Status</th>
-          <th>Print Details</th> <!-- No conditions needed -->
         </tr>
       </thead>
       <tbody>
@@ -173,9 +172,13 @@ const printDetails = (item) => {
           <!-- Actions Column -->
           <td class="text-center">
             <div class="d-flex justify-content-center">
-              <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+              <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2" 
                 @click="openStep1Modal(department.deptId)">
                 <i class="fas fa-eye me-1"></i> View
+              </button>
+              <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+                @click="printDetails(department)">
+                <i class="fas fa-print me-1"></i> Print
               </button>
             </div>
           </td>
@@ -184,21 +187,9 @@ const printDetails = (item) => {
           <td :class="{ 'clear-status': department.status === 'Clear', 'unclear-status': department.status === 'Unclear' }">
             {{ department.status }}
           </td>
-
-          <!-- Print Details Column -->
-          <td class="text-center">
-            <div class="d-flex justify-content-center">
-              <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-                @click="printDetails(department)">
-                <i class="fas fa-eye me-1"></i> Print
-              </button>
-            </div>
-          </td>
         </tr>
       </tbody>
     </table>
-
-
     </div>
 
 

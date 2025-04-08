@@ -61,10 +61,18 @@ Route::get('/officeuser/{officeId}', [MaintenancePlanController::class, 'index']
     ->middleware(['auth', 'verified'])
     ->name('officeuser');
 
+    Route::get('/equipment/{departmentId}', [MaintenancePlanController::class, 'equipment'])
+    ->middleware(['auth', 'verified'])
+    ->name('equipment');
+
 
 Route::get('/department-employees/{departmentId}', [MaintenancePlanController::class, 'employee'])
     ->middleware(['auth', 'verified'])
     ->name('department-employees');
+
+Route::get('/employees/{employeeId}', [MaintenancePlanController::class, 'employees'])
+    ->middleware(['auth', 'verified'])
+    ->name('employees');
 
 
 

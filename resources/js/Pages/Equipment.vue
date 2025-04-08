@@ -26,19 +26,23 @@ const newUser = ref({ name: "", number: "" });
 
       // API FORM 
 
-const prev = ref([]);
+const employees = ref([]);
 
+// Fetch employee data
 const fetchChecklist = async () => {
   try {
-    const response = await axios.get('/api/getEmployeeWithTickets/checklist');
-    prev.value = response.data;
+    const response = await axios.get('/api/getEmployeeByEquipment');
+    employees.value = response.data;
   } catch (error) {
     console.error('Error fetching checklist:', error);
   }
 };
-// Fetch the checklist when the component is mounted
-onMounted(fetchChecklist);
 
+// Handle print details (you can expand this method)
+
+
+// Fetch data when the component is mounted
+onMounted(fetchChecklist);
 
       
 const isStep1ModalOpen = ref(false);
@@ -58,11 +62,13 @@ const iscloseModal = () => {
 };
 
 
-const openStep1Modal = (employeeId) => {
+const openStep1Modal = () => {
   isStep1ModalOpen.value = true;
-  const employeeData = props.employee.find(emp => emp.employeeId === employeeId);
+  const employeeData = props.employee[0]; // Access the first employee's data
   if (employeeData) {
     selectedEmployee.value = employeeData;
+    formData.officeUnit = employeeData.OfficeName || "";
+    formData.department = employeeData.department_name || "";
   }
 };
 
@@ -98,7 +104,6 @@ const enableBackgroundScroll = () => {
 const formData = reactive({
   ticketnumber: "",
   equipment:"",
-  userOperator: "",
   officeUnit: "",
   department: "",
   dateAcquired: "",
@@ -130,13 +135,14 @@ const formData = reactive({
 
 });
 
-watch(selectedEmployee, (newVal) => {
+watch(selectedEmployee  , (newVal) => {
+  console.log("selectedEmployee Changed:", newVal); // check data in console
   if (newVal) {
-    formData.userOperator = newVal.emp_name || "";
-    formData.officeUnit = newVal.OfficeName || "";
-    formData.department = newVal.department_name || "";
+    formData.officeUnit = newVal.OfficeName || ""; 
+    formData.department = newVal.department_name || ""; 
   }
 });
+
 
 // Options for checkboxes
 const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS', 'AVR', 'Other'];
@@ -273,7 +279,6 @@ const submitForm = async () => {
       employeeId,
       ticketnumber: formData.ticketnumber, 
       equipment : formData.equipment, 
-      pcName: formData.pcName,
       dateAcquired: formData.dateAcquired,
       cpu_status: formData.cpu_status,
       keyboard_status: formData.keyboard_status,
@@ -468,8 +473,9 @@ watch(isStatusDropdownOpen, (newVal) => {
   <MainLayout>
     <h2 class="d-flex justify-content-center my-3">Preventive Maintenance 2025</h2> 
 <div class="d-flex justify-content-center mb-3">
-  <button class="btn btn-success" @click="openModal">
-    <i class="fas fa-user-plus"></i> Add User
+ 
+    <button class="btn btn-success" @click="openStep1Modal">
+  <i class="fas fa-user-plus"></i> Add Form
   </button>
 
     
@@ -477,105 +483,38 @@ watch(isStatusDropdownOpen, (newVal) => {
     <table class="data-table">
   <thead>
     <tr>
-      <th>User</th>
-      <th>Action</th>
-      <th>Status</th>
-      <th>Show ticket</th>
+        <th>Equipment Number</th>
+        <th>Year Name</th>
+        <th class="text-center">Actions</th>
+        <th>Status</th>
     </tr>
   </thead>
   <tbody>
-    <tr v-for="employee in employee" :key="employee.employeeId">
-              <td>{{ employee.emp_name }}</td>
+    <tr v-for="employee in employees" :key="employee.mainId">
+        <!-- Display equipment number -->
+        <td>{{ employee.equipmentId }}</td>
+        
+        <!-- Display year name -->
+        <td>{{ employee.year_name }}</td>
 
-
+        <!-- Action button (e.g., print details) -->
         <td class="text-center">
-          <div class="d-flex justify-content-center">
-  <button 
-    class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
-    @click="openStep1Modal(employee.employeeId)">
-    <i class="fas fa-eye me-1"></i> Add Form
-  </button>
-
-  <button 
-    class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-    @click="printDetails(employee)">
-    <i class="fas fa-eye me-1"></i> Print
-  </button>
-  <!-- <Link :href="route"
-                    class="btn btn-sm btn-outline-primary d-flex align-items-center">
-                    <i class="fas fa-eye me-1"></i> View
-                  </Link> -->
-</div>
-
-         
+          <button 
+            class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+            @click="printDetails(employee)">
+            <i class="fas fa-eye me-1"></i>Print
+          </button>
         </td>
 
         <td :class="{ 'clear-status': employee.status === 'Clear', 'unclear-status': employee.status === 'Unclear' }">
           {{ employee.status }}
         </td>
-    
+     
           </tr>
-<td>
-  <Link 
-  :href="route('employees', {
-    employeeId:employee.employeeId,
-    YrId: employee.YrId,
-    PlanId: employee.PlanId,
-    officeId: employee.OffId,
-    DeptId: employee.DeptId,
-    CatId: 1
-  })"
-  class="btn btn-sm btn-outline-primary w-auto align-items-center"
->
-  <i class="fas fa-eye me-1"></i> View User
-</Link>
 
-</td>
-  <!-- Ticket numbers -->
-  <!-- <tr v-for="ticket in emp.tickets" :key="ticket.mainId">
-    <td> {{ ticket.ticketnumber }}</td>
-    <td class="text-center">
-          <div class="d-flex justify-content-center">
-          <button 
-            class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
-            @click="modal1(employee.employeeId)">
-            <i class="fas fa-eye me-1"></i> View
-            </button>
-            </div>
-            </td>
-            <td :class="{ 'clear-status': 'Clear', 'unclear-status':'Unclear' }">
-        </td>  
-      </tr> -->
   </tbody>
 </table>
 
-      <!-- Add User Modal -->
-      <div v-if="isModalOpen" class="modal fade show d-block" id="addUserModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Add New User</h5>
-          <button type="button" class="btn-close" @click="closeModal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3 d-flex">
-            <label class="form-label me-3" style="width: 150px;">Employee Name</label>
-            <input type="text" class="form-control" v-model="newUser.name" />
-          </div>
-          <div class="mb-4 d-flex">
-            <label class="form-label me-3" style="width: 150px;">Employee Number</label>
-            <input type="text" class="form-control" v-model="newUser.number" />
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="iscloseModal">Close</button>
-          <button class="btn btn-primary" :disabled="isLoading" @click="addUser">
-            {{ isLoading ? 'Adding...' : 'Add User' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
 <!-- Modal -->
 <div v-if="isStep1ModalOpen" class="modal fade show d-block">
@@ -630,11 +569,8 @@ watch(isStatusDropdownOpen, (newVal) => {
           <div class="modal-body modal-scrollable">
             <!-- User & Date Info -->
             <div class="row mb-3">
-              <div class="col-md-2">
-                <label class="form-label">User/Operator</label>
-                <input type="text" class="form-control" v-model="formData.userOperator ">
-              </div>
-              <div class="col-md-2">
+           
+              <div class="col-md-3">
                 <label class="form-label">Office/College/Unit</label>
                 <input type="text" class="form-control" v-model="formData.officeUnit">
               </div>
