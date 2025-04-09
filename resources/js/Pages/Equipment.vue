@@ -470,50 +470,50 @@ watch(isStatusDropdownOpen, (newVal) => {
 </script>
 
 <template>
-  <MainLayout>
-    <h2 class="d-flex justify-content-center my-3">Preventive Maintenance 2025</h2> 
-<div class="d-flex justify-content-center mb-3">
- 
-    <button class="btn btn-success" @click="openStep1Modal">
-  <i class="fas fa-user-plus"></i> Add Form
-  </button>
-
+      <MainLayout>
+        <h2 class="d-flex justify-content-center my-3">Preventive Maintenance 2025</h2> 
+    <div class="d-flex justify-content-center mb-3">
     
-    </div>
-    <table class="data-table">
-  <thead>
-    <tr>
-        <th>Equipment Number</th>
-        <th>Year Name</th>
-        <th class="text-center">Actions</th>
-        <th>Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr v-for="employee in employees" :key="employee.mainId">
-        <!-- Display equipment number -->
-        <td>{{ employee.equipmentId }}</td>
+        <button class="btn btn-success" @click="openStep1Modal">
+      <i class="fas fa-user-plus"></i> Add Form
+      </button>
+
         
-        <!-- Display year name -->
-        <td>{{ employee.year_name }}</td>
+        </div>
+        <table class="data-table">
+      <thead>
+        <tr>
+            <th>Equipment Number</th>
+            <th>Year Name</th>
+            <th class="text-center">Actions</th>
+            <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="employee in employees" :key="employee.mainId">
+            <!-- Display equipment number -->
+            <td>{{ employee.equipmentId }}</td>
+            
+            <!-- Display year name -->
+            <td>{{ employee.year_name }}</td>
 
-        <!-- Action button (e.g., print details) -->
-        <td class="text-center">
-          <button 
-            class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-            @click="printDetails(employee)">
-            <i class="fas fa-eye me-1"></i>Print
-          </button>
-        </td>
+            <!-- Action button (e.g., print details) -->
+            <td class="text-center">
+              <button 
+                class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+                @click="printDetails(employee)">
+                <i class="fas fa-eye me-1"></i>Print
+              </button>
+            </td>
 
-        <td :class="{ 'clear-status': employee.status === 'Clear', 'unclear-status': employee.status === 'Unclear' }">
-          {{ employee.status }}
-        </td>
-     
-          </tr>
+            <td :class="{ 'clear-status': employee.status === 'Clear', 'unclear-status': employee.status === 'Unclear' }">
+              {{ employee.status }}
+            </td>
+        
+              </tr>
 
-  </tbody>
-</table>
+      </tbody>
+    </table>
 
 
 <!-- Modal -->

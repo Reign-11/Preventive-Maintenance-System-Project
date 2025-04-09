@@ -35,7 +35,6 @@ Route::post('/add-employee', [MaintenancePlanController::class, 'addEmployee']);
 Route::get('/getEmployeeWithTickets/{employeeId}', [MaintenancePlanController::class, 'getEmployeeWithTickets']);
 Route::post('/submit-checklist', [MaintenancePlanController::class, 'submitChecklist']);
 
-Route::get('/getEmployeeByEquipment', [MaintenancePlanController::class, 'getEmployeeByEquipment']);
 
 
 // SET B

@@ -2,7 +2,7 @@
 import { ref, computed, watch,defineProps, reactive,onMounted} from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import axios from "axios";
-
+import { Link } from '@inertiajs/vue3';
 const props = defineProps({
   employee: { type: Array, default: () => [] },
   departmentId: { type: [String, Number], default: null },
@@ -474,63 +474,56 @@ watch(isStatusDropdownOpen, (newVal) => {
 
     
     </div>
-    <table class="data-table">
-  <thead>
-    <tr>
-      <th>User</th>
-      <th>Action</th>
-      <th>Status</th>
-      <th>Show ticket</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr v-for="employee in employee" :key="employee.employeeId">
-              <td>{{ employee.emp_name }}</td>
+      <table class="data-table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Action</th>
+        <th>Status</th>
+        <th>Show ticket</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="employee in employee" :key="employee.employeeId">
+  <td>{{ employee.emp_name }}</td>
 
+  <td class="text-center">
+    <div class="d-flex justify-content-center">
+      <button 
+        class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
+        @click="openStep1Modal(employee.employeeId)">
+        <i class="fas fa-eye me-1"></i> Add Form
+      </button>
 
-        <td class="text-center">
-          <div class="d-flex justify-content-center">
-  <button 
-    class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
-    @click="openStep1Modal(employee.employeeId)">
-    <i class="fas fa-eye me-1"></i> Add Form
-  </button>
+      <button 
+        class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+        @click="printDetails(employee)">
+        <i class="fas fa-eye me-1"></i> Print
+      </button>
+    </div>
+  </td>
 
-  <button 
-    class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-    @click="printDetails(employee)">
-    <i class="fas fa-eye me-1"></i> Print
-  </button>
-  <!-- <Link :href="route"
-                    class="btn btn-sm btn-outline-primary d-flex align-items-center">
-                    <i class="fas fa-eye me-1"></i> View
-                  </Link> -->
-</div>
+  <td :class="{ 'clear-status': employee.status === 'Clear', 'unclear-status': employee.status === 'Unclear' }">
+    {{ employee.status }}
+  </td>
 
-         
-        </td>
-
-        <td :class="{ 'clear-status': employee.status === 'Clear', 'unclear-status': employee.status === 'Unclear' }">
-          {{ employee.status }}
-        </td>
-    
-          </tr>
-<td>
-  <Link 
+  <td>
+    <Link 
   :href="route('employees', {
-    employeeId:employee.employeeId,
+    employeeId:employee.employeeId, 
     YrId: employee.YrId,
     PlanId: employee.PlanId,
     officeId: employee.OffId,
     DeptId: employee.DeptId,
-    CatId: 1
+    CatId: employee.CatId
   })"
   class="btn btn-sm btn-outline-primary w-auto align-items-center"
 >
   <i class="fas fa-eye me-1"></i> View User
 </Link>
 
-</td>
+  </td>
+</tr>
   <!-- Ticket numbers -->
   <!-- <tr v-for="ticket in emp.tickets" :key="ticket.mainId">
     <td> {{ ticket.ticketnumber }}</td>

@@ -71,10 +71,12 @@ Route::get('/department-employees/{departmentId}', [MaintenancePlanController::c
     ->name('department-employees');
 
 Route::get('/employees/{employeeId}', [MaintenancePlanController::class, 'employees'])
-    ->middleware(['auth', 'verified'])
-    ->name('employees');
+        ->middleware(['auth', 'verified'])
+        ->name('employees');
 
-
+Route::get('/equipment', [MaintenancePlanController::class, 'employees'])
+        ->middleware(['auth', 'verified'])
+        ->name('employees');;
 
 Route::get('/datacenter/{officeId}', [MaintenancePlanControllerB::class, 'data'])
     ->middleware(['auth', 'verified'])

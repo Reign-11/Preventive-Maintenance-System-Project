@@ -300,7 +300,7 @@ public function employees(Request $request, int $employeeId)
         $yrId = $request->query('YrId');  
         $PlanId = $request->query('PlanId'); 
         $officeId = $request->query('officeId'); 
-        $categoryId = $request->query('CatId', 1); 
+        $categoryId = $request->query('CatId', 1)   ; 
         $departmentId = $request->query('DeptId'); 
 
         // Fetch employees using the stored procedure
@@ -325,7 +325,7 @@ public function employees(Request $request, int $employeeId)
         $pmYearData = DB::table('tbl_pmyear')->where('YrId', $yrId)->first();
 
         return Inertia::render('Employees', [
-            'employee' => $employees,
+            'employees' => $employees,
             'officeId' => $officeId ?? '',
             'YrId' => $yrId ?? '',
             'employeeId' => $employeeId ?? '',
