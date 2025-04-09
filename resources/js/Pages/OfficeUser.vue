@@ -19,8 +19,6 @@ const isStep1ModalOpen = ref(false);
 
 const selectedOption = ref("Office");
 
-
-
 const selectedPmYear = computed(() => props.pmYear ?? {});
 const selectedOfficeId = ref(props.office?.OffId || '');
 const selectedYear = ref(props.YrId || '');
@@ -66,9 +64,6 @@ onMounted(() => {
 });
 
 
-
-
-
 // Computed properties
 const isUserSelected = computed(() => selectedOption.value === "Users");
 const isOfficeSelected = computed(() => selectedOption.value === "Office");
@@ -78,8 +73,6 @@ const openStep1Modal = () => {
   isStep1ModalOpen.value = true;
   document.body.style.overflow = 'hidden';
 };
-
-
 
 
 // Print modal content
@@ -111,52 +104,45 @@ const printDetails = (item) => {
   printWindow.print();
 };
 
-
 </script>
 
-
-
-
 <template>
-  <MainLayout>
+ <MainLayout>
     <div class="container">
       <div>
-    
     <h1> {{ selectedPmYear.Description }} {{ selectedPmYear.Name }}</h1>
-
   </div>
-
-      <div class="d-flex align-items-center justify-content-center gap-2 ">
-     
+      <div class="d-flex align-items-center justify-content-center gap-2 ">     
         <button class="btn btn-info d-flex align-items-center" v-if="!isUserSelected" @click="printTable">
           <i class="fas fa-print me-1"></i> Print
         </button>
       </div>
-
-
       <table class="data-table mt-2">
       <thead>
         <tr>
-          <th>User/Office</th>
+          <th>Office</th>
           <th v-if="isUserSelected || isOfficeSelected">Actions</th>
           <th>Status</th>
-          <th v-if="isUserSelected">Print Details</th> <!-- Show only for Users -->
         </tr>
       </thead>
       <tbody>
         <tr v-for="department in departments" :key="department.deptId">
           <td>{{ department.department_name }}</td>
-          <td v-if="isUserSelected || isOfficeSelected">
-            <button 
-              class="edit-btn" 
-              v-if="isUserSelected" 
-              @click="openStep1Modal(department)"
-            >
-              View
-            </button>
+          <td>
             <Link 
-      v-else
       :href="route('department-employees', { 
+    departmentId: department.DeptId , 
+       officeId: selectedOfficeId, 
+        YrId: selectedYear,
+        PlanId: selectedPlan
+      })"
+      class="btn btn-sm btn-outline-primary w-auto align-items-center mx-2"
+      @click.prevent="logParams(department.DeptId)">
+      <i class="fas fa-eye me-1 "></i> View User
+    </Link>
+    
+    <Link 
+      :href="route('equipment', { 
     departmentId: department.DeptId , 
        officeId: selectedOfficeId, 
         YrId: selectedYear,
@@ -164,7 +150,7 @@ const printDetails = (item) => {
       })"
       class="btn btn-sm btn-outline-primary w-auto align-items-center"
       @click.prevent="logParams(department.DeptId)">
-      <i class="fas fa-eye me-1"></i> View
+      <i class="fas fa-file alt"></i> Add Equipment 
     </Link>
           </td>
           <td class="status-column">N/A</td> 
@@ -177,7 +163,6 @@ const printDetails = (item) => {
     </div>
   </MainLayout>
 </template>
-
 
 <style scoped>
 /* Background & Container */

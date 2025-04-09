@@ -293,114 +293,55 @@ class MaintenancePlanController extends Controller
 }
 
 
-// public function employeeChecklist(Request $request)
-// {
-//     try {
-//         $currentTimestamp = now();
-//         $day = $currentTimestamp->format('d');
-//         $month = $currentTimestamp->format('m');
-//         $year = $currentTimestamp->format('y');
+public function equipment(Request $request, int $departmentId )
+{
+try {
+    // Use route parameter directly
+    $yrId = $request->query('YrId');  
+    $PlanId  = $request->query('PlanId'); 
+    $officeId  = $request->query('officeId'); 
+    $employeeId = $request->query('employeeId');  
+    $categoryId = $request->query('CatId', 1); 
 
-//         // Generate Ticket Number
-//         $submissionOrder = DB::table('tbl_preventive_maintainance')
-//             ->whereDate('date', $currentTimestamp->toDateString())
-//             ->count() + 1;
 
-//         $generatedTicketNumber = str_pad($submissionOrder, 2, '0', STR_PAD_LEFT) . $day . $month . $year;
+    $department = DB::table('tbl_department')->where('deptId', $departmentId)->first();
 
-//         // Validate Request
-//         $validated = $request->validate([
-//             'employeeId' => 'required|integer',
-//             'pcName' => 'required|string|max:100',
-//             'dateAcquired' => 'required|date',
-//             'cpu_status' => 'required|integer',
-//             'keyboard_status' => 'required|integer',
-//             'printer_status' => 'required|integer',
-//             'monitor_status' => 'required|integer',
-//             'mouse_status' => 'required|integer',
-//             'ups_status' => 'required|integer',
-//             'avr_status' => 'required|integer',
-//             'windows10' => 'integer',
-//             'windows11' => 'integer',
-//             'license' => 'required|integer',
-//             'enrollment' => 'required|integer',
-//             'microsoft' => 'required|integer',
-//             'browser' => 'required|integer',
-//             'anti_virus' => 'required|integer',
-//             'other_equip' => 'nullable|string|max:255',
-//             'other_os' => 'nullable|string|max:255',
-//             'other_sys' => 'nullable|string|max:255',
-//             'processor_details' => 'nullable|string|max:255',
-//             'motherboard_details' => 'nullable|string|max:255',
-//             'memory_details' => 'nullable|string|max:255',
-//             'graphics_card_details' => 'nullable|string|max:255',
-//             'hard_disk_details' => 'nullable|string|max:255',
-//             'monitor_details' => 'nullable|string|max:255',
-//             'casing_details' => 'nullable|string|max:255',
-//             'power_supply_details' => 'nullable|string|max:255',
-//             'keyboard_details' => 'nullable|string|max:255',
-//             'mouse_details' => 'nullable|string|max:255',
-//             'avr_details' => 'nullable|string|max:255',
-//             'ups_details' => 'nullable|string|max:255',
-//             'printer_details' => 'nullable|string|max:255',
-//             'network_mac_ip_details' => 'nullable|string|max:255',
-//             'checklist' => 'required|array',
-//             'checklist.*.task' => 'required|string|max:255',
-//             'checklist.*.details' => 'required|string',
-//             'checklist.*.status' => 'required|array',
-//             'checklist.*.status.*' => 'integer|min:0|max:1',
-//         ]);
+    // Fetch employees using the stored procedure
+    $employees = DB::select('CALL GetEmployeesByDepartment(?)', [$departmentId]);
+    Log::info("📢 Raw Employees Data Before Filtering:", $employees);
 
-//         // Convert checklist array to JSON
-//         $checklistJson = json_encode($validated['checklist']);
+        // Filter Employee based on PlanId, YrId, OfficeId, And Department
 
-//         // Call Stored Procedure
-//         DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)", [
-            
-//             $validated['employeeId'],
-//             $generatedTicketNumber,
-//             $validated['pcName'],
-//             $validated['dateAcquired'],
-//             $validated['cpu_status'],
-//             $validated['keyboard_status'],
-//             $validated['printer_status'],
-//             $validated['monitor_status'],
-//             $validated['mouse_status'],
-//             $validated['ups_status'],
-//             $validated['avr_status'],
-//             $validated['windows10'],
-//             $validated['windows11'],
-//             $validated['license'],
-//             $validated['enrollment'],
-//             $validated['microsoft'],
-//             $validated['browser'],
-//             $validated['anti_virus'],
-//             $validated['other_equip'],
-//             $validated['other_os'],
-//             $validated['other_sys'],
-//             $validated['processor_details'],
-//             $validated['motherboard_details'],
-//             $validated['memory_details'],
-//             $validated['graphics_card_details'],
-//             $validated['hard_disk_details'],
-//             $validated['monitor_details'],
-//             $validated['casing_details'],
-//             $validated['power_supply_details'],
-//             $validated['keyboard_details'],
-//             $validated['mouse_details'],
-//             $validated['avr_details'],
-//             $validated['ups_details'],
-//             $validated['printer_details'],
-//             $validated['network_mac_ip_details'],
-//             $checklistJson,  // Store checklist as JSON
-//         ]);
-// \Log::info('Parameters passed to stored procedure: ', $parameters);
+    $employee = array_filter($employees, function ($emp) use ($PlanId, $yrId, $officeId, $departmentId,$categoryId) {
+        return $emp-> PlanId == $PlanId && $emp-> YrId == $yrId && $emp-> OffId == $officeId && $emp-> DeptId == $departmentId &&  ($emp->CatId == $categoryId || is_null($emp->CatId));
+    });
 
-//         return response()->json(['message' => 'Checklist submitted successfully']);
-//     } catch (\Exception $e) {
-//         return response()->json(['error' => $e->getMessage()], 500);
-//     }
-// }
+    $employee = array_values($employee);
+    
+    Log::info("📢 Filtered Employees:", $employee);
+
+    // Fetch additional data (PM Year & Office Details)
+    $pmYearData = DB::table('tbl_pmyear')->where('YrId', $yrId)->first();
+
+    return Inertia::render('Equipment', [
+        'employee' => $employee,
+        'officeId' => $officeId ?? '',
+        'YrId' => $yrId ?? '',
+        'employeeId' => $employeeId ?? '',
+        'PlanId' => $PlanId ?? '', 
+        'departmentId ' => $departmentId ?? '', 
+        'department' => $department ?? [], 
+        'categoryId' => $categoryId ?? 1,  // Ensure categoryId is 1 if missing
+
+        'pmYear' => $pmYearData ? (array) $pmYearData : ['Name' => '', 'Description' => ''],
+    ]);
+
+
+} catch (\Exception $e) {
+    Log::error("❌ Error fetching employees:", ['error' => $e->getMessage()]);
+    return redirect()->back()->withErrors(['error' => 'Failed to fetch employee data']);
+}
+}
 
 
 public function addEmployee(Request $request)
@@ -529,6 +470,74 @@ public function employeeChecklist(Request $request)
         return response()->json(['error' => $e->getMessage()], 500);
     }
 }
+public function getEmployeeWithTickets()
+{
+    $data = DB::select('CALL GetEmployeeWithTickets()');
+
+    $result = [];
+    
+    foreach($data as $item) {
+        $result[$item->employeeId]['employeeId'] = $item->employeeId;
+        $result[$item->employeeId]['emp_name'] = $item->emp_name;
+        $result[$item->employeeId]['tickets'][] = [
+            'mainId' => $item->mainId,
+            'ticketnumber' => $item->ticketnumber
+        ];
+    }
+
+    return response()->json(array_values($result));
+}
+
+public function employees(Request $request, int $departmentId )
+{
+try {
+    // Use route parameter directly
+    $yrId = $request->query('YrId');  
+    $PlanId  = $request->query('PlanId'); 
+    $officeId  = $request->query('officeId'); 
+    $employeeId = $request->query('employeeId');  
+    $categoryId = $request->query('CatId', 1); 
+
+
+    $department = DB::table('tbl_department')->where('deptId', $departmentId)->first();
+
+    // Fetch employees using the stored procedure
+    $employees = DB::select('CALL GetEmployeesByDepartment(?)', [$departmentId]);
+    Log::info("📢 Raw Employees Data Before Filtering:", $employees);
+
+        // Filter Employee based on PlanId, YrId, OfficeId, And Department
+
+    $employee = array_filter($employees, function ($emp) use ($PlanId, $yrId, $officeId, $departmentId,$categoryId) {
+        return $emp-> PlanId == $PlanId && $emp-> YrId == $yrId && $emp-> OffId == $officeId && $emp-> DeptId == $departmentId &&  ($emp->CatId == $categoryId || is_null($emp->CatId));
+    });
+
+    $employee = array_values($employee);
+    
+    Log::info("📢 Filtered Employees:", $employee);
+
+    // Fetch additional data (PM Year & Office Details)
+    $pmYearData = DB::table('tbl_pmyear')->where('YrId', $yrId)->first();
+
+    return Inertia::render('Employees', [
+        'employee' => $employee,
+        'officeId' => $officeId ?? '',
+        'YrId' => $yrId ?? '',
+        'employeeId' => $employeeId ?? '',
+        'PlanId' => $PlanId ?? '', 
+        'departmentId ' => $departmentId ?? '', 
+        'department' => $department ?? [], 
+        'categoryId' => $categoryId ?? 1,  // Ensure categoryId is 1 if missing
+
+        'pmYear' => $pmYearData ? (array) $pmYearData : ['Name' => '', 'Description' => ''],
+    ]);
+
+
+} catch (\Exception $e) {
+    Log::error("❌ Error fetching employees:", ['error' => $e->getMessage()]);
+    return redirect()->back()->withErrors(['error' => 'Failed to fetch employee data']);
+}
+}
+
 }
     
 

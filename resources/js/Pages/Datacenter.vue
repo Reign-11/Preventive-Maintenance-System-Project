@@ -190,7 +190,7 @@ const printDetails = (item) => {
             <div class="d-flex justify-content-center">
               <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
                 @click="printDetails(department)">
-                <i class="fas fa-eye me-1"></i> Print
+                <i class="fas fa-print me-1"></i> Print
               </button>
             </div>
           </td>

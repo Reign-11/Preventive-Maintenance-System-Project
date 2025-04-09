@@ -429,127 +429,86 @@ watch(isStatusDropdownOpen, (newVal) => {
   <MainLayout>
     <h2 class="d-flex justify-content-center my-3">Preventive Maintenance 2025</h2> 
     <div class="d-flex justify-content-center mb-3">
-    <button class="btn btn-success mx-2" @click="openModal">
-      <i class="fas fa-user-plus"></i> Add User
-    </button>
-    
-    </div>
-    <table class="data-table">
-  <thead>
-    <tr>
-      <th>User</th>
-      <th>Action</th>
-      <th>Status</th>
-      <th>Details</th>
-    </tr>
-  </thead>
-  <tbody>
-    <template v-for="emp in prev" :key="emp.employeeId">
-      <!-- Employee Row -->
+      <button class="btn btn-success mx-2" @click="openModal">
+        <i class="fas fa-user-plus"></i> Add User
+      </button>
+        
+        </div>
+        <table class="data-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Action</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template v-for="emp in prev" :key="emp.employeeId">
       <tr>
-        <!-- User -->
         <td>{{ emp.emp_name }}</td>
 
-        <!-- Action Buttons -->
         <td class="text-center">
-          <div class="d-flex justify-content-center">
-            <button 
-              class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
-              @click="openStep1Modal(emp.employeeId)">
-              <i class="fas fa-file-alt me-1"></i> Add Form
-            </button>
-            <button 
-              class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-              @click="printDetails(emp.employeeId)">
-              <i class="fas fa-print me-1"></i> Print
-            </button>
-          </div>
-        </td>
+              <div class="d-flex justify-content-center">
+              <button 
+                class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
+                @click="openStep1Modal(emp.employeeId)">
+                <i class="fas fa-file alt"></i> Add Form
+                </button>
+                <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+              @click="printDetails(employee.employeeId)">
+              <i class="fas fa-print me-1"></i>Print</button>
+              </div>
+            </td>   
+            <td :class="{ 'clear-status': 'Clear', 'unclear-status':'Unclear' }">
+            </td>  
+          </tr>
 
-        <!-- Status -->
-        <td class="text-center">
-          <span :class="{ 'clear-status': emp.status === 'Clear', 'unclear-status': emp.status !== 'Clear' }">
-            {{ emp.status }}
-          </span>
-        </td>
-
-        <!-- ✅ Details (Next Button) -->
-        <td class="text-center">
-          <div class="d-flex justify-content-center">
-            <Link 
-              class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
-              :href="route('employees', { 
-                departmentId: emp.departmentId, 
-                officeId: selectedOfficeId, 
-                YrId: selectedYear,
-                PlanId: selectedPlan
-              })"
-            >
-              <i class="fas fa-forward me-1"></i> Next
-            </Link>
-          </div>
-        </td>
-        </tr>
-
-
-      <!-- Ticket Rows -->
+      <!-- Ticket numbers -->
       <tr v-for="ticket in emp.tickets" :key="ticket.mainId">
-        <!-- Ticket number -->
-        <td>{{ ticket.ticketnumber }}</td>
-
-        <!-- View Button -->
+        <td> {{ ticket.ticketnumber }}</td>
         <td class="text-center">
-          <div class="d-flex justify-content-center">
-            <button 
-              class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
-              @click="modal1(emp.employeeId)">
-              <i class="fas fa-eye me-1"></i> View
-            </button>
-          </div>
-        </td>
+              <div class="d-flex justify-content-center">
+              <button 
+                class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
+                @click="modal1(employee.employeeId)">
+                <i class="fas fa-eye me-1"></i> View
+                </button>
+                </div>
+                </td>
+                <td :class="{ 'clear-status': 'Clear', 'unclear-status':'Unclear' }">
+            </td>  
+          </tr>
+        </template>
+      </tbody>
+    </table>
 
-        <!-- Ticket Status -->
-        <td class="text-center">
-          <span :class="{ 'clear-status': ticket.status === 'Clear', 'unclear-status': ticket.status !== 'Clear' }">
-            {{ ticket.status }}
-          </span>
-        </td>
-
-        <!-- Empty Details column for ticket rows -->
-        <td></td>
-      </tr>
-    </template>
-  </tbody>
-</table>
-
-
-        <!-- Add User Modal -->
-        <div v-if="isModalOpen" class="modal fade show d-block" id="addUserModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Add New User</h5>
-            <button type="button" class="btn-close" @click="closeModal"></button>
+      <!-- Add User Modal -->
+      <div v-if="isModalOpen" class="modal fade show d-block" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New User</h5>
+          <button type="button" class="btn-close" @click="closeModal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3 d-flex">
+            <label class="form-label me-3" style="width: 150px;">Employee Name</label>
+            <input type="text" class="form-control" v-model="newUser.name" />
           </div>
-          <div class="modal-body">
-            <div class="mb-3 d-flex">
-              <label class="form-label me-3" style="width: 150px;">Employee Name</label>
-              <input type="text" class="form-control" v-model="newUser.name" />
-            </div>
-            <div class="mb-4 d-flex">
-              <label class="form-label me-3" style="width: 150px;">Employee Number</label>
-              <input type="text" class="form-control" v-model="newUser.number" />
-            </div>
+          <div class="mb-4 d-flex">
+            <label class="form-label me-3" style="width: 150px;">Employee Number</label>
+            <input type="text" class="form-control" v-model="newUser.number" />
           </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" @click="iscloseModal">Close</button>
-            <button class="btn btn-primary" :disabled="isLoading" @click="addUser">
-              {{ isLoading ? 'Adding...' : 'Add User' }}
-            </button>
-          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="iscloseModal">Close</button>
+          <button class="btn btn-primary" :disabled="isLoading" @click="addUser">
+            {{ isLoading ? 'Adding...' : 'Add User' }}
+          </button>
         </div>
       </div>
     </div>
+  </div>
 
     <!-- Modal -->
     <div v-if="isStep1ModalOpen" class="modal fade show d-block">
@@ -604,15 +563,11 @@ watch(isStatusDropdownOpen, (newVal) => {
           <div class="modal-body modal-scrollable">
             <!-- User & Date Info -->
             <div class="row mb-3">
-              <div class="col-md-2">
-                <label class="form-label">User/Operator</label>
-                <input type="text" class="form-control" v-model="formData.userOperator ">
-              </div>
-              <div class="col-md-2">
+              <div class="col-md-3">
                 <label class="form-label">Office/College/Unit</label>
                 <input type="text" class="form-control" v-model="formData.officeUnit">
               </div>
-              <div class="col-md-2">
+              <div class="col-md-3">
                 <label class="form-label">Department</label>
                 <input type="text" class="form-control" v-model="formData.department">
               </div>
@@ -745,6 +700,8 @@ watch(isStatusDropdownOpen, (newVal) => {
               </div>
             </div>
           </div>
+
+          
 
           <!-- Modal Footer -->
           <div class="modal-footer">

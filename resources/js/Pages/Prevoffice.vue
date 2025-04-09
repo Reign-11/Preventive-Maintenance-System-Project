@@ -3,7 +3,6 @@
 import { ref, computed, onMounted, onBeforeUnmount,defineProps} from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 
-
 const props = defineProps({
   departments: { type: Array, default: () => [] },  
   pmYear: { type: Object, default: () => ({}) },
@@ -102,25 +101,37 @@ const formData = ref({
   softwareInstalled: [],
   otherSoftware: '',
   desktopSpecs: {
-    Router: '',
-    Switch: '',
-    Access_point: '',
+    AccessPoint: '',
     Modem: '',
-    Firewall: '',
-    Speed: '',
-    Ports_router: '',
-    Ports_switch: '',
+    NumberOfPorts: '',
     IP: '',
     Mac: '',
     DNS: '',
+    DHCP: '',
+    Vlan: '',
+    WifiName: '',
+    Password: '',
+    Wifi: '',
+    Vlan: '',
     DHCP: ''
-  }
+  } 
+});
+
+// Function to format keys with spaces
+const formatKey = (key) => {
+  return key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+};
+
+const filteredSpecs = computed(() => {
+  const excluded = ['DHCP', 'IPv4', 'IPv6', 'Gateway'];
+  return Object.fromEntries(
+    Object.entries(formData.value.desktopSpecs).filter(([key]) => !excluded.includes(key))
+  );
 });
 
 // Options
 const equipmentOptions = ['Router', 'Switch', 'Access Point', 'Modem', 'Network Cable', 'Patch Panel', 'Other'];
-const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Client', 'Network Configuration Tool', 'Other'];
-
+const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Client', 'Network Configuration Tool', 'Manageable Software', 'Anti Virus', 'Other'];
 const submitForm = async () => {
   try {
     // Check if required fields are filled
@@ -172,7 +183,6 @@ const submitForm = async () => {
     alert("An unexpected error occurred.");
   }
 };
-
 </script>
 
 <template>
@@ -217,51 +227,45 @@ const submitForm = async () => {
             <!-- Inputs Group -->
             <div class="d-flex align-items-center gap-4 flex-wrap">
               
+                     <!-- Inputs Group -->
+                     <div class="d-flex align-items-center gap-3 flex-wrap">
+              
               <!-- Number Input -->
-              <div class="d-flex flex-column ms-auto">
-                <label class="form-label mb-0" style="font-size: 14px;"></label>
-                <input 
-                 type="text" 
-                 class="form-control form-control-sm" 
-                 @input="console.log('Ticket Number:', formData.ticketnumber)"
+              <div class="d-flex flex-column">
+              <label class="form-label mb-0" style="font-size: 14px;"></label>
+              <input 
+               type="text" 
+               class="form-control form-control-sm" 
+               @input="console.log('Ticket Number:', formData.ticketnumber)"
 
-                 v-model="formData.ticketnumber"
-                 placeholder="Number"
-                style="width: 150px; height: 30px; font-size: 14px; padding: 5px;"
-                  >
-                    </div>
-
-                <!-- Status Dropdown -->
-                <div class="dropdown status-dropdown position-relative">
-                  <i class="fas fa-search position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
-                  <input
-                    type="text"
-                    class="form-control form-control-sm"
-                    v-model="searchStatus"
-                    placeholder="Equipment Number"
-                    style="width: 200px; height: 30px; font-size: 14px; padding: 5px 10px;"
-                    @focus="isStatusDropdownOpen = true"
-                  />
-                  <ul v-if="isStatusDropdownOpen" class="dropdown-menu show" style="max-height: 150px; overflow-y: auto;">
-                    <li 
-                      v-for="status in filteredStatusOptions" 
-                      :key="status" 
-                      @click="selectStatus(status)"
-                      class="dropdown-item"
-                      style="font-size: 14px; padding: 5px 10px;"
-                    >
-                      {{ status }}
-                    </li>
-                  </ul>
-                </div>
-              </div>
-                <div class="d-flex align-items-center ms-auto">
-                <!-- <button class="btn btn-danger me-2" @click="markForDisposal">For Disposal</button> -->
-                <button type="button" class="btn-close" @click="isModalOpen = false"></button>
-                </div>
+               v-model="formData.ticketnumber"
+               placeholder="Number"
+              style="width: 150px; height: 30px; font-size: 14px; padding: 5px;"
+          >
             </div>
 
-            
+              <!-- Equipment Number Input -->
+              <div class="d-flex flex-column">
+              <label class="form-label mb-0" style="font-size: 14px;"></label>
+              <input 
+               type="text" 
+               class="form-control form-control-sm" 
+               @input="console.log('Equipment Number:', formData.equipment)"
+
+               v-model="formData.equipment"
+               placeholder="Equipment Number"
+              style="width: 150px; height: 30px; font-size: 14px; padding: 5px;"
+          >
+            </div>
+
+          </div>
+          </div>
+
+            <div class="d-flex align-items-center ms-auto">
+            <!-- <button class="btn btn-danger me-2" @click="markForDisposal">For Disposal</button> -->
+            <button type="button" class="btn-close" @click="isModalOpen = false"></button>
+            </div>
+            </div>
 
             <!-- Modal Body -->
             <div class="modal-body modal-scrollable">
@@ -320,15 +324,74 @@ const submitForm = async () => {
 
             <!-- Desktop Specifications -->
             <div class="card p-3 mt-3">
-              <h6 class="fw-bold">Desktop Specifications:</h6>
+              <h6 class="fw-bold">Specifications:</h6>
               <div class="row">
-                <div v-for="(value, key) in formData.desktopSpecs" :key="key" class="col-md-2">
-                  <label class="form-label">{{ key.replace(/([A-Z])/g, ' $1') }}</label>
+                <!-- Loop through and format keys with spaces -->
+                <div v-for="(value, key) in filteredSpecs" :key="key" class="col-md-2">
+                  <!-- Replace underscores with spaces for the label -->
+                  <label class="form-label">{{ formatKey(key) }}</label>
                   <input type="text" class="form-control" v-model="formData.desktopSpecs[key]">
+                </div>
+
+                <!-- DHCP Selector -->
+                <div class="col-md-2">
+                  <label class="form-label">DHCP</label>
+                  <select class="form-control" v-model="formData.desktopSpecs.DHCP">
+                    <option disabled value="">Select</option>
+                    <option>Yes</option>
+                    <option>No</option>
+                  </select>
+                </div>
+
+                <!-- Conditional Fields Based on DHCP -->
+                <div class="col-md-2" v-if="formData.desktopSpecs.DHCP === 'Yes'">
+                  <label class="form-label">IPv4</label>
+                  <input type="text" class="form-control" v-model="formData.desktopSpecs.IPv4">
+                </div>
+
+                <div class="col-md-2" v-if="formData.desktopSpecs.DHCP === 'Yes'">
+                  <label class="form-label">IPv6</label>
+                  <input type="text" class="form-control" v-model="formData.desktopSpecs.IPv6">
+                </div>
+
+                <div class="col-md-2" v-if="formData.desktopSpecs.DHCP === 'No'">
+                  <label class="form-label">Gateway</label>
+                  <input type="text" class="form-control" v-model="formData.desktopSpecs.Gateway">
+                </div>
+
+                <!-- Wifi Name Selector (Radio Buttons) -->
+                <div class="col-md-2">
+                  <label class="form-label">Wifi</label>
+                  <div>
+                    <input 
+                      type="radio" 
+                      id="wifi24" 
+                      value="2.4" 
+                      v-model="formData.desktopSpecs['Wifi']"
+                    >
+                    <label for="wifi25">2.4 GHz</label>
+                  </div>
+                  <div>
+                    <input 
+                      type="radio" 
+                      id="wifi5z" 
+                      value="5z" 
+                      v-model="formData.desktopSpecs['Wifi']"
+                    >
+                    <label for="wifi5z">5z</label>
+                  </div>
+                  <div>
+                    <input 
+                      type="radio" 
+                      id="wifimix" 
+                      value="Mix" 
+                      v-model="formData.desktopSpecs['Wifi']"
+                    >
+                    <label for="wifimix">Mix</label>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
           <!-- Modal Footer -->
           <div class="modal-footer">
@@ -341,7 +404,7 @@ const submitForm = async () => {
         </div>
       </div>
     </div>
-
+  </div>
   </MainLayout>
 </template>
 
@@ -418,12 +481,16 @@ const submitForm = async () => {
 
 /* Make modal larger */
 .modal-content {
-  width: 300%;
-  max-width: 1200px; /* Increase max width */
-  max-height: 95vh; /* Prevent it from going beyond the viewport */
+  width: 100%;
+  max-width: 95vw; /* Viewport width responsive */
+  height: auto;
+  max-height: 90vh; /* Prevent modal from going beyond screen */
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  border-radius: 10px;
 }
+
 
 /* Increase the height and make it scrollable */
 .modal-body {

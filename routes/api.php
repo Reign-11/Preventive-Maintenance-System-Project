@@ -28,9 +28,11 @@ Route::delete('/delete-maintenance-plan/{id}', [MaintenancePlanController::class
 
 Route::get('/pmyear-latest', [MaintenancePlanController::class, 'latest']);
 
-Route::post('/employeeChecklist/{empoyeeId}', [MaintenancePlanController::class, 'employeeChecklist']);
+Route::post('/employeeChecklist/{employeeId}', [MaintenancePlanController::class, 'employeeChecklist']);
 
 Route::post('/add-employee', [MaintenancePlanController::class, 'addEmployee']);
+
+Route::get('/getEmployeeWithTickets/{employeeId}', [MaintenancePlanController::class, 'getEmployeeWithTickets']);
 
 // SET B
 

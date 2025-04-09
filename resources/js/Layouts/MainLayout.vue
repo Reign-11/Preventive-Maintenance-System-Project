@@ -66,17 +66,17 @@ onMounted(() => {
                 <ul class="navbar-nav d-flex flex-column align-items-center nav-items-wrapper">
                     <li class="nav-item nav-item-spacing">
                         <NavLink :href="route('main')" :active="route().current('main')" class="nav-link-custom">
-                            <i data-feather="grid" style="margin-right: 8px;"></i> Set A
+                            <i data-feather="cpu" style="margin-right: 8px;"></i> Set A
                         </NavLink>
                     </li>
                     <li class="nav-item nav-item-spacing">
                         <NavLink :href="route('setb')" :active="route().current('setb')" class="nav-link-custom">
-                            <i data-feather="layers" style="margin-right: 8px;"></i> Set B
+                            <i data-feather="server" style="margin-right: 8px;"></i> Set B
                         </NavLink>
                     </li>
                     <li class="nav-item nav-item-spacing">
                         <NavLink :href="route('setc')" :active="route().current('setc')" class="nav-link-custom">
-                            <i data-feather="folder" style="margin-right: 8px;"></i> Set C
+                            <i data-feather="wifi" style="margin-right: 8px;"></i> Set C
                         </NavLink>
                     </li>
                 </ul>

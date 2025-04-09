@@ -454,11 +454,6 @@ watch(isStatusDropdownOpen, (newVal) => {
         <td class="text-center">
           <div class="d-flex justify-content-center">
             <button 
-              class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
-              @click="openStep1Modal(emp.employeeId)">
-              <i class="fas fa-file-alt me-1"></i> Add Form
-            </button>
-            <button 
               class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
               @click="printDetails(emp.employeeId)">
               <i class="fas fa-print me-1"></i> Print
@@ -472,26 +467,8 @@ watch(isStatusDropdownOpen, (newVal) => {
             {{ emp.status }}
           </span>
         </td>
-
-        <!-- ✅ Details (Next Button) -->
-        <td class="text-center">
-          <div class="d-flex justify-content-center">
-            <Link 
-              class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
-              :href="route('employees', { 
-                departmentId: emp.departmentId, 
-                officeId: selectedOfficeId, 
-                YrId: selectedYear,
-                PlanId: selectedPlan
-              })"
-            >
-              <i class="fas fa-forward me-1"></i> Next
-            </Link>
-          </div>
-        </td>
-        </tr>
-
-
+      </tr>
+      
       <!-- Ticket Rows -->
       <tr v-for="ticket in emp.tickets" :key="ticket.mainId">
         <!-- Ticket number -->
