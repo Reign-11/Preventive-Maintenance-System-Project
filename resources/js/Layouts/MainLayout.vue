@@ -6,12 +6,16 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 
 // Sidebar state
-const sidebarOpen = ref(false);
+// const sidebarOpen = ref(false);
 
 // Toggle function for sidebar
-const toggleSidebar = () => {
-    sidebarOpen.value = !sidebarOpen.value;
-};
+// const toggleSidebar = () => {
+//     sidebarOpen.value = !sidebarOpen.value;
+// };
+
+// Define sidebarOpen state
+const sidebarOpen = ref(false);  // Initially false (collapsed)
+
 
 const files = [
     '/script/jquery-3.5.1.min.js', 
@@ -62,21 +66,28 @@ onMounted(() => {
         <!-- Sidebar -->
         <div class="sidebar" :class="{ 'sidebar-collapsed': !sidebarOpen }">
             <nav class="sidenav shadow-right sidenav-light">
+
+
+                <!-- Logo Container -->
+                <div class="sidebar-logo my-1 d-flex justify-content-center">
+                    <img src="/assets/slogo.svg" alt="Logo">
+                </div>
+
                 <!-- Nav Items Wrapper (Push Down Set A) -->
                 <ul class="navbar-nav d-flex flex-column align-items-center nav-items-wrapper">
                     <li class="nav-item nav-item-spacing">
                         <NavLink :href="route('main')" :active="route().current('main')" class="nav-link-custom">
-                            <i data-feather="grid" style="margin-right: 8px;"></i> Set A
+                            <i data-feather="cpu" style="margin-right: 8px;"></i> Set A
                         </NavLink>
                     </li>
                     <li class="nav-item nav-item-spacing">
                         <NavLink :href="route('setb')" :active="route().current('setb')" class="nav-link-custom">
-                            <i data-feather="layers" style="margin-right: 8px;"></i> Set B
+                            <i data-feather="server" style="margin-right: 8px;"></i> Set B
                         </NavLink>
                     </li>
                     <li class="nav-item nav-item-spacing">
                         <NavLink :href="route('setc')" :active="route().current('setc')" class="nav-link-custom">
-                            <i data-feather="folder" style="margin-right: 8px;"></i> Set C
+                            <i data-feather="wifi" style="margin-right: 8px;"></i> Set C
                         </NavLink>
                     </li>
                 </ul>
@@ -129,11 +140,11 @@ onMounted(() => {
     background: linear-gradient(to bottom, #d4f8e8, #a4d4ae) !important;
 }
 
-/* Adjust margin above Set A */
 .nav-items-wrapper {
-    margin-top: 100px; /* Increase this value to lower the items */
+    margin-top: 10px; /* Adjust as needed */
     width: 100%;
 }
+
 
 /* Sidebar Navigation Items */
 .nav-item-spacing {
@@ -167,7 +178,7 @@ onMounted(() => {
 
 /* Hover Effect */
 .nav-link-custom:hover {
-    background-color: #007bff; /* Blue background */
+    background-color: #dad709; /* Blue background */
     color: white;
 }
 
@@ -201,30 +212,66 @@ onMounted(() => {
 }
 
 .sidebar-collapsed {
-    width: 60px; /* Collapsed Sidebar */
+    width: 90px; /* Collapsed Sidebar */
 }
 
+/* Sidebar Collapsed State */
 .sidebar-collapsed .nav-link-custom {
-    justify-content: center;
-    font-size: 0; /* Hide text */
+    justify-content: flex-start; /* Align text and icons properly */
+    font-size: 18px; /* Keep text visible */
+    padding-left: 8px; /* Add padding to balance layout */
 }
 
+/* Ensure icons are visible and aligned properly with the same size */
 .sidebar-collapsed .nav-link-custom i {
-    margin-right: 0; /* Remove spacing when collapsed */
+    margin-right: 10px; /* Keep space between icon and text */
+    font-size: 22px; /* Set icon size same as when expanded */
+}
+
+/* Keep text and icons visible even when the sidebar is collapsed */
+.sidebar-collapsed .nav-item-spacing {
+    width: 100%;
+    margin-bottom: 15px;
+    text-align: left; /* Align text to left */
 }
 
 /* Main Content */
 .main-content {
     flex-grow: 1;
-    margin-left: 250px;
+    margin-left: 250px; /* Sidebar width */
     transition: margin-left 0.3s ease-in-out;
-    width: calc(100% - 250px);
+    width: calc(100% - 250px); /* Full width minus the sidebar */
     background: linear-gradient(to bottom, #d4f8e8, #a4d4ae);
 }
 
+/* When sidebar is collapsed, adjust the width of the main content */
 .sidebar-collapsed + .main-content {
-    margin-left: 60px;
-    width: calc(100% - 60px);
+    margin-left: 90px; /* Adjust for the collapsed sidebar */
+    width: calc(100% - 90px); /* Full width minus the collapsed sidebar width */
+}
+
+/* Top navigation bar should span the full width */
+.topnav {
+    width: 100%;
+}
+
+/* Make sure the footer also spans the full width */
+footer {
+    width: 100%;
+}
+
+/* Adjust the sidebar when collapsed to make it more compact */
+.sidebar-collapsed {
+    width: 90px; /* Collapsed sidebar width */
+}
+
+/* Ensure the content doesn't overflow horizontally */
+.layout-wrapper {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #d4f8e8, #a4d4ae); /* Gradient Background */
 }
 
 .content-area {
@@ -247,7 +294,7 @@ onMounted(() => {
     
     .main-content {
         margin-left: 0 !important; /* Expand content to full width */
-        width: 100% !important;
+        width: 100% !important;     
         overflow: hidden !important; /* Prevent scrollbars */
     }
     
@@ -260,4 +307,7 @@ onMounted(() => {
         display: none;
     }
 }
+
+
+
 </style>

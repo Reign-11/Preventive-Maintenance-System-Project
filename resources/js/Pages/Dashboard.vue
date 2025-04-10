@@ -68,7 +68,7 @@ onMounted(() => {
                 
                 <!-- Right side logo -->
                 <div style="position: absolute; right: 5%; top: 50%; transform: translateY(-50%);">
-                    <img src="assets/cmu.png" alt="Company Logo Right" style="height: 120px;" />
+                    <img src="assets/slogo.svg" alt="Company Logo Right" style="height: 120px;" />
                 </div>
                 
                 <div class="container">

@@ -34,6 +34,7 @@ Route::post('/add-employee', [MaintenancePlanController::class, 'addEmployee']);
 
 Route::post('/submit-checklist', [MaintenancePlanController::class, 'submitChecklist']);
 
+Route::post('/departmentChecklist', [MaintenancePlanController::class, 'departmentChecklist']);
 
 
 // SET B

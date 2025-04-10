@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, defineProps, reactive } from 'vue'; 
+import { ref, computed, onMounted, onBeforeUnmount, defineProps, reactive, watch} from 'vue'; 
 import MainLayout from '@/Layouts/MainLayout.vue';
 
 const props = defineProps({
@@ -13,14 +13,28 @@ const props = defineProps({
   pmYear: { type: Object, default: ''}
 });
 
+const enableBackgroundScroll = () => {
+  document.body.style.overflow = "";
+};
+
 const employees = ref(props.employees || []);
+const selectedEmployee = ref(null);
+const isStep2ModalOpen = ref(false)
 
 const isStep1ModalOpen = ref(false);
-const openStep1Modal = (employeeId) => {
+
+const openStep1Modal = (mainId) => {
   isStep1ModalOpen.value = true;
-  const employeeData = props.employees.find(emp => emp.employeeId === employeeId); // Fixed typo from props.employee to props.employees
+  console.log("Main ID:", mainId);
+  console.log("Employees:", props.employees);
+
+  const employeeData = props.employees.find(emp => String(emp.mainId) === String(mainId));
+
   if (employeeData) {
+    console.log("Employee Data:", employeeData);  
     selectedEmployee.value = employeeData;
+  } else {
+    console.error("Employee not found with mainId:", mainId);
   }
 };
 
@@ -28,15 +42,16 @@ const openStep1Modal = (employeeId) => {
 const formData = reactive({
   ticketnumber: "",
   equipment: "",
+  pcName: "",
   userOperator: "",
   officeUnit: "",
   department: "",
   dateAcquired: "",
   date: "",
   equipmentInstalled: [],
-  windows10: "0",
-  windows11: "0",
-  license: null,
+  windows10: "",
+  windows11: "",
+  license: "",
   other_os: "",
   softwareInstalled: [],
   other_sys: "",
@@ -47,7 +62,6 @@ const formData = reactive({
     GraphicCard: "",
     UPS: "",
     HardDisk: "",
-    OpticalDrive: "",
     Monitor: "",
     Casing: "",
     Printer: "",
@@ -59,6 +73,140 @@ const formData = reactive({
   },
 });
 
+watch(selectedEmployee, (newVal) => {
+  if (newVal) {
+    console.log(newVal); // Check the new value of selectedEmployee
+
+    // Basic Info
+    formData.userOperator = newVal.emp_name || "";
+    formData.officeUnit = newVal.OfficeName || "";
+    formData.pcName = newVal.pcName || "";
+    formData.department = newVal.department_name || "";
+    formData.ticketnumber = newVal.ticketnumber || "";
+    formData.equipment = newVal.equipmentId || "";
+    formData.dateAcquired = newVal.date_acquired || "";
+    formData.date = newVal.date || "";
+
+    // Equipment Installed
+    formData.equipmentInstalled = [];
+    if (newVal.cpu === 1) formData.equipmentInstalled.push("CPU");
+    if (newVal.monitor_status === 1) formData.equipmentInstalled.push("Monitor");
+    if (newVal.mouse_status === 1) formData.equipmentInstalled.push("Mouse");
+    if (newVal.keyboard_status === 1) formData.equipmentInstalled.push("Keyboard");
+    if (newVal.printer_status === 1) formData.equipmentInstalled.push("Printer");
+    if (newVal.ups_status === 1) formData.equipmentInstalled.push("UPS");
+    if (newVal.avr_status === 1) formData.equipmentInstalled.push("AVR");
+    if (newVal.other_equip) formData.equipmentInstalled.push("Other");
+    formData.other_equip = newVal.other_equip || "";
+
+    // Operating System
+    if (newVal.windows10 === 1) {
+      formData.osInstalled = "Windows 10";
+    } else if (newVal.windows11 === 1) {
+      formData.osInstalled = "Windows 11";
+    } else {
+      formData.osInstalled = "Other";
+    }
+    formData.license = newVal.license || "";
+    formData.other_os = newVal.other_os || "";
+
+    // Software Installed
+    formData.softwareInstalled = [];
+    if (newVal.enrollment === 1) formData.softwareInstalled.push("Enrollment System");
+    if (newVal.anti_virus === 1) formData.softwareInstalled.push("Anti-Virus");
+    if (newVal.browser === 1) formData.softwareInstalled.push("Browser");
+    if (newVal.microsoft === 1) formData.softwareInstalled.push("Microsoft");
+    if (newVal.adobe_reader === 1) formData.softwareInstalled.push("Adobe Reader");
+    if (newVal.word_processor === 1) formData.softwareInstalled.push("Word Processor");
+    if (newVal.media_player === 1) formData.softwareInstalled.push("Media Player");
+
+    if (newVal.other_sys) formData.softwareInstalled.push("Other");
+
+    formData.other_sys = newVal.other_sys || "";
+
+    // Desktop Specs
+    formData.desktopSpecs.Processor = newVal.processor_details || "";
+    formData.desktopSpecs.Motherboard = newVal.motherboard_details || "";
+    formData.desktopSpecs.Memory = newVal.memory_details || "";
+    formData.desktopSpecs.GraphicCard = newVal.graphics_card_details || "";
+    formData.desktopSpecs.Monitor = newVal.monitor_details || "";
+    formData.desktopSpecs.HardDisk = newVal.hard_disk_details || "";
+    formData.desktopSpecs.Casing = newVal.casing_details || "";
+    formData.desktopSpecs.PowerSupply = newVal.power_supply_details || "";
+    formData.desktopSpecs.Keyboard = newVal.keyboard_details || "";
+    formData.desktopSpecs.Mouse = newVal.mouse_details || "";
+    formData.desktopSpecs.AVR = newVal.avr_details || "";
+    formData.desktopSpecs.UPS = newVal.ups_details || "";
+    formData.desktopSpecs.Printer = newVal.printer_details || "";
+    formData.desktopSpecs.NetWorkMacIp = newVal.network_mac_ip_details || "";
+  }
+});
+
+const updateEquipmentStatus = (option) => {
+  if (formData.equipmentInstalled.includes(option)) {
+  if (option === "CPU") formData.cpu_status = "1";
+  if (option === "Keyboard") formData.keyboard_status = "1";
+  if (option === "Monitor") formData.monitor_status = "1";
+  if (option === "Mouse") formData.mouse_status = "1";
+  if (option === "Printer") formData.printer_status = "1";
+  if (option === "UPS") formData.ups_status = "1";
+  if (option === "AVR") formData.avr_status = "1";
+  if (option === "Other") formData.other_equip = ""; // Allow user input
+
+} else {
+
+  // Set the selected option to "1"
+  if (option === "CPU") formData.cpu_status = "1";
+  if (option === "Keyboard") formData.keyboard_status = "1";
+  if (option === "Monitor") formData.monitor_status = "1";
+  if (option === "Mouse") formData.mouse_status = "1";
+  if (option === "Printer") formData.printer_status = "1";
+  if (option === "UPS") formData.ups_status = "1";
+  if (option === "AVR") formData.avr_status = "1";
+  if (option === "Other") formData.other_equip = ""; // Allow user input
+}
+};
+
+
+const updateSoftwareStatus = (option) => {
+  if (formData.softwareInstalled.includes(option)) {
+    if (option === "Enrollment System") formData.enrollment = "1";
+    if (option === "Adobe Reader") formData.adobe_reader = "1";
+    if (option === "Word Processor") formData.word_processor = "1";
+    if (option === "Media Player") formData.media_player = "1";
+    if (option === "Anti-Virus") formData.anti_virus = "1";
+    if (option === "Browser") formData.browser = "1";
+    if (option === "Microsoft") formData.microsoft = "1";
+    if (option === "Other") formData.other_sys = ""; // Allow user input
+
+  } else {
+    if (option === "Enrollment System") formData.enrollment = "0";
+    if (option === "Adobe Reader") formData.adobe_reader = "0";
+    if (option === "Word Processor") formData.word_processor = "0";
+    if (option === "Media Player") formData.media_player = "0";
+    if (option === "Anti-Virus") formData.anti_virus = "0";
+    if (option === "Browser") formData.browser = "0";
+    if (option === "Microsoft") formData.microsoft = "0";
+    if (option === "Other") formData.other_sys = ""; // Allow user input
+
+  }
+};
+const updateOsInstalled = (option) => {
+  // Reset values to 0
+  formData.windows10 = 0;
+  formData.windows11 = 0;
+  formData.other_os = "";
+  formData.license = ""; // Reset license when switching OS
+
+  // Assign value when Windows 10 or 11 is selected
+  if (option === "Windows 10") {
+    formData.windows10 = 1;
+  } else if (option === "Windows 11") {
+    formData.windows11 = 1;
+  }
+};
+
+
 // Options for checkboxes
 const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS', 'AVR', 'Other'];
 const osOptions = ['Windows 10', 'Windows 11', 'Other'];
@@ -69,6 +217,7 @@ const closeModal = () => {
   isStep2ModalOpen.value = false;
   enableBackgroundScroll();
 };
+
 
 </script>
 
@@ -88,13 +237,13 @@ const closeModal = () => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="employees in employees" :key="employees.mainId">
-  <td>{{employees.ticketnumber }}</td>
+          <tr v-for="employees in employees" :key="employees.employeeId">
+  <td>{{employees.emp_name }}</td>
 
             <td class="text-center">
               <div class="d-flex justify-content-center">
               <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-              @click="openStep1Modal(item)">
+              @click="openStep1Modal(employees.mainId)">
               <i class="fas fa-eye me-1"></i>View</button>
             </div>
             </td>
@@ -125,7 +274,7 @@ const closeModal = () => {
                 <input 
                  type="text" 
                  class="form-control form-control-sm" 
-                 @input="console.log('Ticket Number:', formData.ticketnumber)"
+                 @input="console.log('Ticket Number:', formData.ticketnumber)"disabled
 
                  v-model="formData.ticketnumber"
                  placeholder="Number"
@@ -139,7 +288,7 @@ const closeModal = () => {
                 <input 
                  type="text" 
                  class="form-control form-control-sm" 
-                 @input="console.log('Equipment Number:', formData.equipment)"
+                 @input="console.log('Equipment Number:', formData.equipment)"disabled
 
                  v-model="formData.equipment"
                  placeholder="Equipment Number"
@@ -160,19 +309,19 @@ const closeModal = () => {
             <div class="row mb-3">
               <div class="col-md-2">
                 <label class="form-label">User/Operator</label>
-                <input type="text" class="form-control" v-model="formData.userOperator ">
+                <input type="text" class="form-control" v-model="formData.userOperator "disabled>
               </div>
               <div class="col-md-2">
                 <label class="form-label">Office/College/Unit</label>
-                <input type="text" class="form-control" v-model="formData.officeUnit">
+                <input type="text" class="form-control" v-model="formData.officeUnit"disabled>
               </div>
               <div class="col-md-2">
                 <label class="form-label">Department</label>
-                <input type="text" class="form-control" v-model="formData.department">
+                <input type="text" class="form-control" v-model="formData.department"disabled>
               </div>
               <div class="col-md-2">
                 <label class="form-label">Date Acquired</label>
-                <input type="text" class="form-control" v-model="formData.dateAcquired">
+                <input type="text" class="form-control" v-model="formData.dateAcquired"disabled>
               </div>
 
               <!-- <div class="col-md-2">
@@ -182,11 +331,11 @@ const closeModal = () => {
 
               <div class="col-md-2">
                 <label class="form-label">Date</label>
-                <input type="text" class="form-control" v-model="formData.date">
+                <input type="text" class="form-control" v-model="formData.date" disabled>
               </div>
               <div class="col-md-2">
                 <label class="form-label">PC Name</label>
-                <input type="text" class="form-control" v-model="formData.pcName">
+                <input type="text" class="form-control" v-model="formData.pcName"disabled>
               </div>
             </div>
 
@@ -201,9 +350,9 @@ const closeModal = () => {
                   type="checkbox" 
                   :value="option" 
                   v-model="formData.equipmentInstalled"
-                  @change="updateEquipmentStatus(option)" 
+                  @change="updateEquipmentStatus(option) " disabled
                 />
-                <label class="form-check-label">{{ option }}</label>
+                <label class="form-check-label">{{ option }} </label>
               </div>
 
               <!-- Input Field for 'Other' Equipment -->
@@ -213,7 +362,7 @@ const closeModal = () => {
                 class="form-control mt-1 ms-3" 
                 v-model="formData.other_equip" 
                 placeholder="Specify Other Equipment"
-              />
+                disabled/>
             </div>
           </div>
         </div>
@@ -227,7 +376,7 @@ const closeModal = () => {
               class="form-check-input" 
               :value="option" 
               v-model="formData.osInstalled"
-              @change="updateOsInstalled(option)" 
+              @change="updateOsInstalled(option) " disabled
             />
             <label class="form-check-label">{{ option }}</label>
           </div>
@@ -238,19 +387,19 @@ const closeModal = () => {
               type="text" 
               class="form-control mt-1" 
               v-model="formData.other_os" 
-              placeholder="Specify Other OS"
+              placeholder="Specify Other OS"disabled
             />
           </div>
 
           <!-- License selection (only for Windows 10 & 11) -->
-          <div v-if="formData.windows10 === 1 || formData.windows11 === 1" class="mt-2 ms-4">
+          <div  class="mt-2 ms-4">
             <h6 class="fw-bold text-start">License:</h6>
             <div class="form-check text-start">
               <input 
                 type="radio" 
                 class="form-check-input" 
                 :value="1" 
-                v-model.number="formData.license"
+                v-model.number="formData.license"disabled
               />
               <label class="form-check-label">Licensed</label>
             </div>
@@ -259,7 +408,7 @@ const closeModal = () => {
                 type="radio" 
                 class="form-check-input" 
                 :value="0" 
-                v-model.number="formData.license"
+                v-model.number="formData.license"disabled
               />
               <label class="form-check-label">Not Licensed</label>
             </div>
@@ -277,7 +426,7 @@ const closeModal = () => {
                   type="checkbox" 
                   :value="option" 
                   v-model="formData.softwareInstalled"
-                  @change="updateSoftwareStatus(option)" 
+                  @change="updateSoftwareStatus(option)" disabled
                 />
                 <label class="form-check-label">{{ option }}</label>
               </div>
@@ -288,7 +437,7 @@ const closeModal = () => {
                 type="text" 
                 class="form-control mt-1 ms-3" 
                 v-model="formData.other_sys" 
-                placeholder="Specify Other Software"
+                placeholder="Specify Other Software"disabled
               />
             </div>
           </div>
@@ -301,7 +450,7 @@ const closeModal = () => {
               <div class="row">
                 <div v-for="(value, key) in formData.desktopSpecs" :key="key" class="col-md-2">
                   <label class="form-label">{{ key.replace(/([A-Z])/g, ' $1') }}</label>
-                  <input type="text" class="form-control" v-model="formData.desktopSpecs[key]">
+                  <input type="text" class="form-control" v-model="formData.desktopSpecs[key]"disabled>
                 </div>
               </div>
             </div>

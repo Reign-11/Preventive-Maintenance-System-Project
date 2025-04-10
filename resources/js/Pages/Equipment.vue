@@ -4,45 +4,22 @@ import MainLayout from '@/Layouts/MainLayout.vue';
 import axios from "axios";
 
 const props = defineProps({
-  employee: { type: Array, default: () => [] },
-  departmentId: { type: [String, Number], default: null },
-  officeId: { type: [String, Number], default: null },
-  YrId: { type: [String, Number], default: null },
-  PlanId: { type: [String, Number], default: null },
-  employeeId: { type: [String, Number], default: null },
-  office: { type: Object, default: () => ({}) }, 
+  departments: { type: Array, default: () => [] },  
   pmYear: { type: Object, default: () => ({}) },
+  YrId: { type: [String, Number], default: null }, 
+  PlanId: { type: [String, Number], default: null },
+  office: { type: Object, default: () => ({}) },
+  deptId: { type: [String, Number], default: null },  
   categoryId: { type: [String, Number], default: null } 
 
 });
 
 
-const employee = ref(props.employee || []);
+const department = ref(props.departments || []);
 
-console.log('employee:', props.employee);
-const selectedEmployee = ref(null);
-
-const newUser = ref({ name: "", number: "" });
-
-      // API FORM 
-
-const employees = ref([]);
-
-// Fetch employee data
-const fetchChecklist = async () => {
-  try {
-    const response = await axios.get('/api/getEmployeeByEquipment');
-    employees.value = response.data;
-  } catch (error) {
-    console.error('Error fetching checklist:', error);
-  }
-};
-
-// Handle print details (you can expand this method)
+const selectedDepartments = ref(null);
 
 
-// Fetch data when the component is mounted
-onMounted(fetchChecklist);
 
       
 const isStep1ModalOpen = ref(false);
@@ -64,11 +41,10 @@ const iscloseModal = () => {
 
 const openStep1Modal = () => {
   isStep1ModalOpen.value = true;
-  const employeeData = props.employee[0]; // Access the first employee's data
-  if (employeeData) {
-    selectedEmployee.value = employeeData;
-    formData.officeUnit = employeeData.OfficeName || "";
-    formData.department = employeeData.department_name || "";
+  const departmentData = props.departments[0]; // Access the first employee's data
+  if (departmentData) {
+    formData.officeUnit = departmentData.OfficeName || "";
+    formData.department = departmentData.department_name || "";
   }
 };
 
@@ -102,6 +78,7 @@ const enableBackgroundScroll = () => {
 
 // Form Data
 const formData = reactive({
+  pcName: "",
   ticketnumber: "",
   equipment:"",
   officeUnit: "",
@@ -135,13 +112,6 @@ const formData = reactive({
 
 });
 
-watch(selectedEmployee  , (newVal) => {
-  console.log("selectedEmployee Changed:", newVal); // check data in console
-  if (newVal) {
-    formData.officeUnit = newVal.OfficeName || ""; 
-    formData.department = newVal.department_name || ""; 
-  }
-});
 
 
 // Options for checkboxes
@@ -217,16 +187,16 @@ const updateSoftwareStatus = (option) => {
 
 const checklist = reactive({
   items: [
-    { task: "System Boot", details: "Boot system from a cold start", status: [3] },  
-    { task: "System Log-in", details: "Monitor for errors and speed of entire boot process", status: [3] },
-    { task: "Network Settings", details: "Monitor login script.\nTCP/IP and IPX settings are correct.\nDomain Name\nSecurity Settings\nClient Configurations\nComputer Name", status: Array(6).fill(3) },
-    { task: "Computer Hardware Settings", details: "Verify Device Manager settings\nBIOS up-to-date\nHard Disk\nDVD/CD-RW firmware up-to-date\nMemory is O.K.\nFor Laptop battery run-time is norm", status: Array(6).fill(3) },
-    { task: "Browser/Proxy Settings", details: "Verify proper settings and operation.", status: [3] },
-    { task: "Proper Software Loads", details: "Required software is installed and operating.", status: [3] },
-    { task: "Viruses and Malware", details: "Anti-virus installed\nVirus scan done", status: Array(2).fill(3) },
-    { task: "Clearance", details: "Unused software removed\nTemporary files removed\nRecycle bin and caches emptied\nPeripheral devices clean", status: Array(4).fill(3) },
-    { task: "Interiors and Cleaning", details: "Dust removed\nNo loose parts\nAirflow is O.K.\nCables unplugged and re-plugged\nFans are operating", status: Array(5).fill(3) },
-    { task: "Peripheral Devices", details: "Mouse\nKeyboard\nMonitor\nUPS\nPrinter\nTelephone extension\nFax", status: Array(7).fill(3) }
+    { item: 1, task: "System Boot", details: "Boot system from a cold start", status: [3] },  
+    { item: 2, task: "System Log-in", details: "Monitor for errors and speed of entire boot process", status: [3] },
+    { item: 3, task: "Network Settings", details: "Monitor login script.\nTCP/IP and IPX settings are correct.\nDomain Name\nSecurity Settings\nClient Configurations\nComputer Name", status: Array(6).fill(3) },
+    { item: 4, task: "Computer Hardware Settings", details: "Verify Device Manager settings\nBIOS up-to-date\nHard Disk\nDVD/CD-RW firmware up-to-date\nMemory is O.K.\nFor Laptop battery run-time is norm", status: Array(6).fill(3) },
+    { item: 5, task: "Browser/Proxy Settings", details: "Verify proper settings and operation.", status: [3] },
+    { item: 6, task: "Proper Software Loads", details: "Required software is installed and operating.", status: [3] },
+    { item: 7, task: "Viruses and Malware", details: "Anti-virus installed\nVirus scan done", status: Array(2).fill(3) },
+    { item: 8, task: "Clearance", details: "Unused software removed\nTemporary files removed\nRecycle bin and caches emptied\nPeripheral devices clean", status: Array(4).fill(3) },
+    { item: 9, task: "Interiors and Cleaning", details: "Dust removed\nNo loose parts\nAirflow is O.K.\nCables unplugged and re-plugged\nFans are operating", status: Array(5).fill(3) },
+    { item: 10, task: "Peripheral Devices", details: "Mouse\nKeyboard\nMonitor\nUPS\nPrinter\nTelephone extension\nFax", status: Array(7).fill(3) }
   ],
   Summary: ""
 });
@@ -259,26 +229,18 @@ const updateStatus = (index, i, value) => {
 
 const submitForm = async () => {
   try {
-    if (!props.employee || props.employee.length === 0) {
-      console.error("Employee data is missing");
-      return;
-    }
-
-    // Assuming you're selecting the employee dynamically, ensure 'selectedEmployeeId' is defined
-    const employeeId = selectedEmployee.value.employeeId; // Use the employeeId of the selected employee
-
-    if (!employeeId) {
-      console.error("Employee ID is not selected");
-      return;
-    }
-
     console.log("Submitting Form Data:", formData, checklist);
+
+    // Get deptId from props.departments
+    const deptId = selectedDepartments.value ;
 
     // Construct request payload
     const payload = {
-      employeeId,
-      ticketnumber: formData.ticketnumber, 
-      equipment : formData.equipment, 
+      employeeId: null,
+      deptId,
+      pcName: formData.pcName,
+      ticketnumber: formData.ticketnumber,
+      equipment: formData.equipment,
       dateAcquired: formData.dateAcquired,
       cpu_status: formData.cpu_status,
       keyboard_status: formData.keyboard_status,
@@ -294,6 +256,9 @@ const submitForm = async () => {
       microsoft: formData.microsoft,
       browser: formData.browser,
       anti_virus: formData.anti_virus,
+      word_processor: formData.word_processor,
+      adobe_reader: formData.adobe_reader,
+      media_player: formData.media_player,
       other_equip: formData.other_equip,
       other_os: formData.other_os,
       other_sys: formData.other_sys,
@@ -310,36 +275,40 @@ const submitForm = async () => {
       avr_details: formData.desktopSpecs.AVR,
       ups_details: formData.desktopSpecs.UPS,
       printer_details: formData.desktopSpecs.Printer,
-      network_mac_ip_details: formData.desktopSpecs.NetWorkMacIp, 
+      network_mac_ip_details: formData.desktopSpecs.NetWorkMacIp,
     };
 
-    // Send the data to the Laravel backend
-    const response = await axios.post(`/api/employeeChecklist/${employeeId}`, payload);
+    console.log("Payload:", payload);
+
+    const response = await axios.post(`/api/departmentChecklist`, payload);
 
     console.log("Response:", response.data);
 
-    // Close the modal after successful submission
     closeModal();
   } catch (error) {
     console.error("Error submitting form:", error.response?.data || error.message);
   }
 };
 
-const submitdata = async () => {
-  try {
-    const payload = {
-      mainId: props.employee.employeeId,
-      YrId: props.pmYear.yearId,
-      summary: checklist.Summary,
-      checklist: transformChecklist()
-    };
 
-    const response = await axios.post('http://127.0.0.1:8000/api/submit-checklist', payload);
-    console.log('Checklist submitted:', response.data);
-  } catch (error) {
-    console.error('Error submitting checklist:', error);
-  }
-};
+
+
+
+// const submitdata = async () => {
+//   try {
+//     const payload = {
+//       mainId: props.employee.employeeId,
+//       YrId: props.pmYear.yearId,
+//       summary: checklist.Summary,
+//       checklist: transformChecklist()
+//     };
+
+//     const response = await axios.post('http://127.0.0.1:8000/api/submit-checklist', payload);
+//     console.log('Checklist submitted:', response.data);
+//   } catch (error) {
+//     console.error('Error submitting checklist:', error);
+//   }
+// };
 
 
 
@@ -397,37 +366,7 @@ const isAddUserModalOpen = ref(false);
 
 // New User Data
 
-const addUser = async () => {
-  if (!newUser.value.name.trim() || !newUser.value.number.trim()) {
-    alert("Please fill in all fields.");
-    return;
-  }
 
-  const firstEmployee = employee.value.length > 0 ? employee.value[0] : null;
-  const officeId = firstEmployee ? firstEmployee.OffId : null;
-  const departmentId = firstEmployee ? firstEmployee.DeptId : null;
-
-  try {
-    const response = await axios.post("/api/add-employee", {
-      emp_name: newUser.value.name,
-      employee_number: newUser.value.number,
-      offId: officeId ?? 0,
-      deptId: departmentId ?? 0
-    });
-
-    alert("Employee added successfully!");
-
-    // Add the new employee to the reactive array
-    employee.value.push(response.data);
-
-    // Reset the form
-    newUser.value = { name: "", number: "" };
-    isModalOpen.value = false;
-  } catch (error) {
-    console.error("❌ Error:", error.response?.data || error.message);
-    alert("An error occurred while adding the employee.");
-  }
-};
 
 const isStatusDropdownOpen = ref(false);
 const searchStatus = ref("");
@@ -490,7 +429,7 @@ watch(isStatusDropdownOpen, (newVal) => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="employee in employees" :key="employee.mainId">
+        <tr v-for="employee in department" :key="employee.mainId">
             <!-- Display equipment number -->
             <td>{{ employee.equipmentId }}</td>
             
@@ -499,15 +438,11 @@ watch(isStatusDropdownOpen, (newVal) => {
 
             <!-- Action button (e.g., print details) -->
             <td class="text-center">
-              <button 
-                class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-                @click="printDetails(employee)">
-                <i class="fas fa-eye me-1"></i>Print
-              </button>
+           
             </td>
 
             <td :class="{ 'clear-status': employee.status === 'Clear', 'unclear-status': employee.status === 'Unclear' }">
-              {{ employee.status }}
+              
             </td>
         
               </tr>
@@ -696,6 +631,7 @@ watch(isStatusDropdownOpen, (newVal) => {
     </div>
   </div>
 
+
             <!-- Desktop Specifications -->
             <div class="card p-3 mt-3">
               <h6 class="fw-bold">Desktop Specifications:</h6>
@@ -706,14 +642,15 @@ watch(isStatusDropdownOpen, (newVal) => {
                 </div>
               </div>
             </div>
-          </div>
-
-          <!-- Modal Footer -->
+                     <!-- Modal Footer -->
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
             <button type="button" class="btn btn-primary" @click="submitForm">Save</button>
             <button type="button" class="btn btn-secondary" @click="openStep2Modal">Next  </button>
           </div>
+          </div>
+
+ 
         </div>
       </div>
     </div>

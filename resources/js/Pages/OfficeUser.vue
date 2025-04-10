@@ -156,7 +156,7 @@ const printDetails = (item) => {
         YrId: selectedYear,
         PlanId: selectedPlan
       })"
-      class="btn btn-sm btn-outline-primary w-auto align-items-center"
+      class="btn btn-sm btn-outline-primary w-auto align-items-center mx-2"
       @click.prevent="logParams(department.DeptId)">
       <i class="fas fa-eye me-1"></i> View User
     </Link>

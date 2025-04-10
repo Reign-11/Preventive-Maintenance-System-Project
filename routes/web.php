@@ -61,10 +61,12 @@ Route::get('/preventive-maintenance', function () {
 Route::get('/officeuser/{officeId}', [MaintenancePlanController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('officeuser');
+    
 
-Route::get('/equipment/{departmentId}', [MaintenancePlanController::class, 'equipment'])
+Route::get('/equipment/{departmentId}', [MaintenancePlanController::class, 'department'])
     ->middleware(['auth', 'verified'])
     ->name('equipment');
+
 
 
 Route::get('/department-employees/{departmentId}', [MaintenancePlanController::class, 'employee'])
@@ -74,10 +76,6 @@ Route::get('/department-employees/{departmentId}', [MaintenancePlanController::c
 Route::get('/employees/{employeeId}', [MaintenancePlanController::class, 'employees'])
     ->middleware(['auth', 'verified'])
     ->name('employees');
-
-// Route::get('/equipment', [MaintenancePlanController::class, 'employees'])
-//         ->middleware(['auth', 'verified'])
-//         ->name('equipment');
 
 Route::get('/datacenter/{officeId}', [MaintenancePlanControllerB::class, 'data'])
     ->middleware(['auth', 'verified'])

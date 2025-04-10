@@ -16,6 +16,7 @@ const props = defineProps({
 
 });
 
+const mainId = ref (0)
 const employee = ref(props.employee || []);
 
 console.log('employee:', props.employee);
@@ -25,18 +26,8 @@ const newUser = ref({ name: "", number: "" });
 
       // API FORM 
 
-const prev = ref([]);
 
-const fetchChecklist = async () => {
-  try {
-    const response = await axios.get('/api/getEmployeeWithTickets/checklist');
-    prev.value = response.data;
-  } catch (error) {
-    console.error('Error fetching checklist:', error);
-  }
-};
-// Fetch the checklist when the component is mounted
-onMounted(fetchChecklist);
+
       
 const isStep1ModalOpen = ref(false);
 const isStep2ModalOpen = ref(false);
@@ -104,7 +95,7 @@ const formData = reactive({
   windows10: "0",
   windows11: "0",
   license : null,
-  other_os: "",
+  other_os: null,
   softwareInstalled: [],
   other_sys: "",
   desktopSpecs: {
@@ -208,16 +199,16 @@ const updateSoftwareStatus = (option) => {
 
 const checklist = reactive({
   items: [
-    { task: "System Boot", details: "Boot system from a cold start", status: [3] },  
-    { task: "System Log-in", details: "Monitor for errors and speed of entire boot process", status: [3] },
-    { task: "Network Settings", details: "Monitor login script.\nTCP/IP and IPX settings are correct.\nDomain Name\nSecurity Settings\nClient Configurations\nComputer Name", status: Array(6).fill(3) },
-    { task: "Computer Hardware Settings", details: "Verify Device Manager settings\nBIOS up-to-date\nHard Disk\nDVD/CD-RW firmware up-to-date\nMemory is O.K.\nFor Laptop battery run-time is norm", status: Array(6).fill(3) },
-    { task: "Browser/Proxy Settings", details: "Verify proper settings and operation.", status: [3] },
-    { task: "Proper Software Loads", details: "Required software is installed and operating.", status: [3] },
-    { task: "Viruses and Malware", details: "Anti-virus installed\nVirus scan done", status: Array(2).fill(3) },
-    { task: "Clearance", details: "Unused software removed\nTemporary files removed\nRecycle bin and caches emptied\nPeripheral devices clean", status: Array(4).fill(3) },
-    { task: "Interiors and Cleaning", details: "Dust removed\nNo loose parts\nAirflow is O.K.\nCables unplugged and re-plugged\nFans are operating", status: Array(5).fill(3) },
-    { task: "Peripheral Devices", details: "Mouse\nKeyboard\nMonitor\nUPS\nPrinter\nTelephone extension\nFax", status: Array(7).fill(3) }
+    { item: 1, task: "System Boot", details: "Boot system from a cold start", status: [3] },  
+    { item: 2, task: "System Log-in", details: "Monitor for errors and speed of entire boot process", status: [3] },
+    { item: 3, task: "Network Settings", details: "Monitor login script.\nTCP/IP and IPX settings are correct.\nDomain Name\nSecurity Settings\nClient Configurations\nComputer Name", status: Array(6).fill(3) },
+    { item: 4, task: "Computer Hardware Settings", details: "Verify Device Manager settings\nBIOS up-to-date\nHard Disk\nDVD/CD-RW firmware up-to-date\nMemory is O.K.\nFor Laptop battery run-time is norm", status: Array(6).fill(3) },
+    { item: 5, task: "Browser/Proxy Settings", details: "Verify proper settings and operation.", status: [3] },
+    { item: 6, task: "Proper Software Loads", details: "Required software is installed and operating.", status: [3] },
+    { item: 7, task: "Viruses and Malware", details: "Anti-virus installed\nVirus scan done", status: Array(2).fill(3) },
+    { item: 8, task: "Clearance", details: "Unused software removed\nTemporary files removed\nRecycle bin and caches emptied\nPeripheral devices clean", status: Array(4).fill(3) },
+    { item: 9, task: "Interiors and Cleaning", details: "Dust removed\nNo loose parts\nAirflow is O.K.\nCables unplugged and re-plugged\nFans are operating", status: Array(5).fill(3) },
+    { item: 10, task: "Peripheral Devices", details: "Mouse\nKeyboard\nMonitor\nUPS\nPrinter\nTelephone extension\nFax", status: Array(7).fill(3) }
   ],
   Summary: ""
 });
@@ -286,6 +277,9 @@ const submitForm = async () => {
       microsoft: formData.microsoft,
       browser: formData.browser,
       anti_virus: formData.anti_virus,
+      word_processor:formData.word_processor,
+      adobe_reader:formData.adobe_reader,
+      media_player:formData.media_player,
       other_equip: formData.other_equip,
       other_os: formData.other_os,
       other_sys: formData.other_sys,
@@ -307,9 +301,9 @@ const submitForm = async () => {
 
     // Send the data to the Laravel backend
     const response = await axios.post(`/api/employeeChecklist/${employeeId}`, payload);
-
+    mainId.value = response.data.data.mainId
     console.log("Response:", response.data);
-
+    console.log (response.data.mainId)
     // Close the modal after successful submission
     closeModal();
   } catch (error) {
@@ -319,15 +313,23 @@ const submitForm = async () => {
 
 const submitdata = async () => {
   try {
-    const payload = {
-      mainId: props.employee.employeeId,
-      YrId: props.pmYear.yearId,
-      summary: checklist.Summary,
-      checklist: transformChecklist()
-    };
+    console.log(mainId.value);
 
-    const response = await axios.post('http://127.0.0.1:8000/api/submit-checklist', payload);
-    console.log('Checklist submitted:', response.data);
+    for (const item of checklist.items) {
+      const payload = {
+        mainId: mainId.value,
+        YrId: selectedEmployee.value.YrId,
+        summary: checklist.Summary,
+        task: item.task,
+        details: item.details,
+        status: item.status[0]  // or handle multiple statuses if needed
+      };
+
+      const response = await axios.post('http://127.0.0.1:8000/api/submit-checklist', payload);
+      console.log('Submitted item:', response.data);
+    }
+
+    console.log('Checklist submitted successfully.');
   } catch (error) {
     console.error('Error submitting checklist:', error);
   }
@@ -513,21 +515,7 @@ watch(isStatusDropdownOpen, (newVal) => {
 
   </td>
 </tr>
-  <!-- Ticket numbers -->
-  <!-- <tr v-for="ticket in emp.tickets" :key="ticket.mainId">
-    <td> {{ ticket.ticketnumber }}</td>
-    <td class="text-center">
-          <div class="d-flex justify-content-center">
-          <button 
-            class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
-            @click="modal1(employee.employeeId)">
-            <i class="fas fa-eye me-1"></i> View
-            </button>
-            </div>
-            </td>
-            <td :class="{ 'clear-status': 'Clear', 'unclear-status':'Unclear' }">
-        </td>  
-      </tr> -->
+
   </tbody>
 </table>
 
@@ -742,8 +730,8 @@ watch(isStatusDropdownOpen, (newVal) => {
     </div>
   </div>
 
-            <!-- Desktop Specifications -->
-            <div class="card p-3 mt-3">
+              <!-- Desktop Specifications -->
+                       <div class="card p-3 mt-3">
               <h6 class="fw-bold">Desktop Specifications:</h6>
               <div class="row">
                 <div v-for="(value, key) in formData.desktopSpecs" :key="key" class="col-md-2">
@@ -752,14 +740,15 @@ watch(isStatusDropdownOpen, (newVal) => {
                 </div>
               </div>
             </div>
-          </div>
-
-          <!-- Modal Footer -->
+                     <!-- Modal Footer -->
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
             <button type="button" class="btn btn-primary" @click="submitForm">Save</button>
-            <button type="button" class="btn btn-secondary" @click="openStep2Modal">Next  </button>
+            <button type="button" class="btn btn-secondary" @click="openStep2Modal()">Next  </button>
           </div>
+          </div>
+
+ 
         </div>
       </div>
     </div>
@@ -844,7 +833,7 @@ watch(isStatusDropdownOpen, (newVal) => {
 
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
-        <button type="button" class="btn btn-primary" @click="submitForm">Submit</button>
+        <button type="button" class="btn btn-primary" @click="submitdata">Submit</button>
       </div>
 
         </div>
@@ -971,6 +960,7 @@ select {
   max-height: 70vh; /* Adjust height for better visibility */
   overflow-y: auto; /* Enable scrolling */
   padding-right: 10px;
+  overflow-x: hidden; /* Prevent horizontal scrollbar */
   
 }
 
