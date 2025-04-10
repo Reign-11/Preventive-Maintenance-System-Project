@@ -46,6 +46,7 @@ Route::get('/setc', function () {
 })->middleware(['auth', 'verified'])->name('setc');
 
 
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -61,7 +62,7 @@ Route::get('/officeuser/{officeId}', [MaintenancePlanController::class, 'index']
     ->middleware(['auth', 'verified'])
     ->name('officeuser');
 
-    Route::get('/equipment/{departmentId}', [MaintenancePlanController::class, 'equipment'])
+Route::get('/equipment/{departmentId}', [MaintenancePlanController::class, 'equipment'])
     ->middleware(['auth', 'verified'])
     ->name('equipment');
 
@@ -71,18 +72,18 @@ Route::get('/department-employees/{departmentId}', [MaintenancePlanController::c
     ->name('department-employees');
 
 Route::get('/employees/{employeeId}', [MaintenancePlanController::class, 'employees'])
-        ->middleware(['auth', 'verified'])
-        ->name('employees');
+    ->middleware(['auth', 'verified'])
+    ->name('employees');
 
-Route::get('/equipment', [MaintenancePlanController::class, 'employees'])
-        ->middleware(['auth', 'verified'])
-        ->name('employees');;
+// Route::get('/equipment', [MaintenancePlanController::class, 'employees'])
+//         ->middleware(['auth', 'verified'])
+//         ->name('equipment');
 
 Route::get('/datacenter/{officeId}', [MaintenancePlanControllerB::class, 'data'])
     ->middleware(['auth', 'verified'])
     ->name('datacenter');
 
-    Route::get('/prevoffice/{officeId}', [MaintenancePlanControllerC::class, 'prev'])
+Route::get('/prevoffice/{officeId}', [MaintenancePlanControllerC::class, 'prev'])
     ->middleware(['auth', 'verified'])
     ->name('prevoffice');;
 

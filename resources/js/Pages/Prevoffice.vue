@@ -111,7 +111,6 @@ const formData = ref({
     Vlan: '',
     WifiName: '',
     Password: '',
-    Wifi: '',
     Vlan: '',
     DHCP: ''
   } 
@@ -322,7 +321,7 @@ const submitForm = async () => {
               </div>
             </div>
 
-            <!-- Desktop Specifications -->
+            <!-- Network Specifications -->
             <div class="card p-3 mt-3">
               <h6 class="fw-bold">Specifications:</h6>
               <div class="row">
@@ -333,6 +332,18 @@ const submitForm = async () => {
                   <input type="text" class="form-control" v-model="formData.desktopSpecs[key]">
                 </div>
 
+
+                <!-- Wifi -->
+                <div class="col-md-2">
+                  <label class="form-label">Wifi</label>
+                  <select class="form-control" v-model="formData.desktopSpecs.DHCP">
+                    <option disabled value="">Select</option>
+                    <option>2.4 GHz</option>
+                    <option>5z</option>
+                    <option>Mix</option>
+                  </select>
+                </div>
+                
                 <!-- DHCP Selector -->
                 <div class="col-md-2">
                   <label class="form-label">DHCP</label>
@@ -359,37 +370,7 @@ const submitForm = async () => {
                   <input type="text" class="form-control" v-model="formData.desktopSpecs.Gateway">
                 </div>
 
-                <!-- Wifi Name Selector (Radio Buttons) -->
-                <div class="col-md-2">
-                  <label class="form-label">Wifi</label>
-                  <div>
-                    <input 
-                      type="radio" 
-                      id="wifi24" 
-                      value="2.4" 
-                      v-model="formData.desktopSpecs['Wifi']"
-                    >
-                    <label for="wifi25">2.4 GHz</label>
-                  </div>
-                  <div>
-                    <input 
-                      type="radio" 
-                      id="wifi5z" 
-                      value="5z" 
-                      v-model="formData.desktopSpecs['Wifi']"
-                    >
-                    <label for="wifi5z">5z</label>
-                  </div>
-                  <div>
-                    <input 
-                      type="radio" 
-                      id="wifimix" 
-                      value="Mix" 
-                      v-model="formData.desktopSpecs['Wifi']"
-                    >
-                    <label for="wifimix">Mix</label>
-                  </div>
-                </div>
+                
               </div>
             </div>
 

@@ -16,7 +16,6 @@ const props = defineProps({
 
 });
 
-
 const employee = ref(props.employee || []);
 
 console.log('employee:', props.employee);
@@ -38,8 +37,6 @@ const fetchChecklist = async () => {
 };
 // Fetch the checklist when the component is mounted
 onMounted(fetchChecklist);
-
-
       
 const isStep1ModalOpen = ref(false);
 const isStep2ModalOpen = ref(false);
@@ -336,10 +333,6 @@ const submitdata = async () => {
   }
 };
 
-
-
-
-
   // BUTTON PRINT 
 const printDetails = (item) => {
 
@@ -449,6 +442,7 @@ const handleClickOutside = (event) => {
   }
 };
 
+
 // Attach event listener when dropdown opens
 watch(isStatusDropdownOpen, (newVal) => {
   if (newVal) {
@@ -457,10 +451,6 @@ watch(isStatusDropdownOpen, (newVal) => {
     document.removeEventListener("click", handleClickOutside);
   }
 });
-
-
-
-
 
 </script>
 
@@ -472,7 +462,6 @@ watch(isStatusDropdownOpen, (newVal) => {
     <i class="fas fa-user-plus"></i> Add User
   </button>
 
-    
     </div>
       <table class="data-table">
     <thead>
@@ -982,6 +971,7 @@ select {
   max-height: 70vh; /* Adjust height for better visibility */
   overflow-y: auto; /* Enable scrolling */
   padding-right: 10px;
+  
 }
 
 /* Ensure modal stays centered */

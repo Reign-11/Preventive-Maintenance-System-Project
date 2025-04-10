@@ -239,9 +239,6 @@ const closeModal = () => {
             </tbody>
             </table>
 
-
-  
-
             <!-- Save Button -->
             <div class="text-center mt-3">
                 <button class="btn btn-success" @click="closeModal">
