@@ -386,23 +386,23 @@ public function employeeChecklist(Request $request)
             'pcName' => 'required|string|max:100',
             'equipment' => 'required|string|max:50',
             'dateAcquired' => 'required|date',
-            'cpu_status' => 'integer',
-            'keyboard_status' => 'integer',
-            'printer_status' => 'integer',
-            'monitor_status' => 'integer',
-            'mouse_status' => 'integer',
-            'ups_status' => 'integer',
-            'avr_status' => 'integer',
+            'cpu_status' => 'nullable|integer',
+            'keyboard_status' => 'nullable|integer',
+            'printer_status' => 'nullable|integer',
+            'monitor_status' => 'nullable|integer',
+            'mouse_status' => 'nullable|integer',
+            'ups_status' => 'nullable|integer',
+            'avr_status' => 'nullable|integer',
             'windows10' => 'integer',
             'windows11' => 'integer',
             'license' => 'nullable|integer',
-            'enrollment' => 'integer',
-            'microsoft' => 'integer',
-            'browser' => 'integer',
-            'anti_virus' => 'integer',
-            'word_processor' =>'integer',
-            'adobe_reader'  => 'integer',
-            'media_player' => 'integer',
+            'enrollment' => 'nullable|integer',
+            'microsoft' => 'nullable|integer',
+            'browser' => 'nullable|integer',
+            'anti_virus' => 'nullable|integer',
+            'word_processor' =>'nullable|integer',
+            'adobe_reader'  => 'nullable|integer',
+            'media_player' => 'nullable|integer',
             'other_equip' => 'nullable|max:255',
             'other_os' => 'nullable|max:255',
             'other_sys' => 'nullable|max:255',
@@ -548,7 +548,7 @@ try {
         return $depart-> PlanId == $PlanId 
         && $depart-> YrId == $yrId
         && $depart-> OffId == $officeId
-        && $depart-> DeptId == $departmentId
+        && $depart-> deptId == $departmentId
         &&  ($depart->CatId == $categoryId || is_null($depart->CatId));
     });
 
@@ -589,7 +589,7 @@ public function departmentChecklist(Request $request)
         // Validate Request
         $validated = $request->validate([
             'employeeId' => 'nullable|integer',
-            'deptId' => 'required|integer', // <-- Added deptId validation
+            'deptId' => 'required|integer', 
             'pcName' => 'required|string|max:100',
             'equipment' => 'required|string|max:50',
             'dateAcquired' => 'required|date',
@@ -632,7 +632,7 @@ public function departmentChecklist(Request $request)
         // Prepare parameters for the stored procedure
         $parameters = [
             $validated['employeeId'] ?? null,
-            $validated['deptId'],  // <-- Added deptId as second parameter
+            $validated['deptId'], 
             $generatedTicketNumber,
             $validated['equipment'],
             $validated['pcName'],
@@ -679,13 +679,20 @@ public function departmentChecklist(Request $request)
         // Call the Stored Procedure
         DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
 
-        return response()->json(['message' => 'Checklist submitted successfully']);
+        $savedData = DB::table('tbl_preventive_maintainance')
+        ->where('ticketnumber', $generatedTicketNumber)
+        ->first();
+
+    return response()->json([
+        'message' => 'Checklist submitted successfully',
+        'data' => $savedData
+    ]);
     } catch (\Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
 }
 
-
-
 }
+
+
 

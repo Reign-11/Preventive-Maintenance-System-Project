@@ -17,6 +17,7 @@ const enableBackgroundScroll = () => {
   document.body.style.overflow = "";
 };
 
+
 const employees = ref(props.employees || []);
 const selectedEmployee = ref(null);
 const isStep2ModalOpen = ref(false)
@@ -64,8 +65,7 @@ const formData = reactive({
     HardDisk: "",
     Monitor: "",
     Casing: "",
-    Printer: "",
-    PowerSupply: "",
+    Printer: "", 
     Keyboard: "",
     Mouse: "",
     AVR: "",
@@ -225,20 +225,31 @@ const closeModal = () => {
 <template>
   <MainLayout>
     <div class="container">
-      <h2 class="text-center my-3">Preventive Maintenance Offices</h2> 
+      <h2 class="text-center my-3">Preventive Maintenance Offices</h2>
+      <h3 class="text-center my-2" v-if="employees.length > 0">
+  {{ employees[0].department_name }}
+</h3>
+
+
 
       <table class="data-table">
         <thead>
           <tr>
-            <th>Office</th>
+            <th>Employee Name </th>
+            <th>PC Name </th>
+            <th>Equipment Number  </th>
             <th>Actions</th>
             <th>Status</th>
-            <!-- <th>Print Details</th> -->
+    
           </tr>
         </thead>
         <tbody>
           <tr v-for="employees in employees" :key="employees.employeeId">
-  <td>{{employees.emp_name }}</td>
+          <td>{{employees.emp_name }}</td>
+          <td>{{employees.pcName }}</td>
+          <td>{{employees.equipmentId }}</td>
+
+
 
             <td class="text-center">
               <div class="d-flex justify-content-center">

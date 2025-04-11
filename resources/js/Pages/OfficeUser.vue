@@ -19,8 +19,6 @@ const isStep1ModalOpen = ref(false);
 
 const selectedOption = ref("Office");
 
-
-
 const selectedPmYear = computed(() => props.pmYear ?? {});
 const selectedOfficeId = ref(props.office?.OffId || '');
 const selectedYear = ref(props.YrId || '');
@@ -140,7 +138,6 @@ const printDetails = (item) => {
           <th>User/Office</th>
           <th v-if="isUserSelected || isOfficeSelected">Actions</th>
           <th>Status</th>
-          <th v-if="isUserSelected">Print Details</th> <!-- Show only for Users -->
         </tr>
       </thead>
       <tbody>
@@ -149,7 +146,7 @@ const printDetails = (item) => {
           <td v-if="isUserSelected || isOfficeSelected">
      
         
-            <Link 
+    <Link 
       :href="route('department-employees', { 
     departmentId: department.DeptId , 
        officeId: selectedOfficeId, 

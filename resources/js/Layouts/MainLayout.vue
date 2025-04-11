@@ -77,17 +77,17 @@ onMounted(() => {
                 <ul class="navbar-nav d-flex flex-column align-items-center nav-items-wrapper">
                     <li class="nav-item nav-item-spacing">
                         <NavLink :href="route('main')" :active="route().current('main')" class="nav-link-custom">
-                            <i data-feather="cpu" style="margin-right: 8px;"></i> Set A
+                            <i data-feather="cpu" style="width: 25px; height: 25px; font-size: 8px; margin-right: 8px;"></i> Set A
                         </NavLink>
                     </li>
                     <li class="nav-item nav-item-spacing">
                         <NavLink :href="route('setb')" :active="route().current('setb')" class="nav-link-custom">
-                            <i data-feather="server" style="margin-right: 8px;"></i> Set B
+                            <i data-feather="database" style="width: 25px; height: 25px; font-size: 8px; margin-right: 8px;"></i> Set B
                         </NavLink>
                     </li>
                     <li class="nav-item nav-item-spacing">
                         <NavLink :href="route('setc')" :active="route().current('setc')" class="nav-link-custom">
-                            <i data-feather="wifi" style="margin-right: 8px;"></i> Set C
+                            <i data-feather="server" style="width: 25px; height: 25px; font-size: 8px; margin-right: 8px;"></i> Set C
                         </NavLink>
                     </li>
                 </ul>
@@ -98,9 +98,9 @@ onMounted(() => {
         <div class="main-content">
             <nav class="topnav navbar navbar-expand shadow justify-content-between navbar-light bg-white">
                 <!-- Sidebar Toggle Button -->
-                <button class="btn btn-icon btn-transparent-dark order-1 order-lg-0" @click="toggleSidebar">
+                <!-- <button class="btn btn-icon btn-transparent-dark order-1 order-lg-0" @click="toggleSidebar">
                     <i data-feather="menu"></i>
-                </button>
+                </button> -->
 
                 <!-- User Dropdown -->
                 <ul class="navbar-nav align-items-center ml-auto">

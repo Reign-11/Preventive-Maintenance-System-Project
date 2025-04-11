@@ -3,6 +3,7 @@ import { ref, computed, watch,defineProps, reactive,onMounted} from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import axios from "axios";
 import { Link } from '@inertiajs/vue3';
+
 const props = defineProps({
   employee: { type: Array, default: () => [] },
   departmentId: { type: [String, Number], default: null },
@@ -92,11 +93,26 @@ const formData = reactive({
   dateAcquired: "",
   date: "",
   equipmentInstalled: [],
+  cpu_status: "0",
+  keyboard_status: "0",
+  monitor_status: "0",
+  mouse_status: "0",
+  printer_status: "0",
+  ups_status: "0",
+  avr_status: "0",
+  other_equip: "",
   windows10: "0",
   windows11: "0",
   license : null,
   other_os: null,
   softwareInstalled: [],
+  enrollment: "1",
+  adobe_reader: "1",
+  word_processor: "1",
+  media_player: "1",
+  anti_virus: "1",
+  browser: "1",
+  microsoft: "1",
   other_sys: "",
   desktopSpecs: {
     Processor: "",
@@ -148,43 +164,34 @@ const updateOsInstalled = (option) => {
 
 
 const updateEquipmentStatus = (option) => {
+  // If option is CHECKED, set to 1
   if (formData.equipmentInstalled.includes(option)) {
     if (option === "CPU") formData.cpu_status = "1";
-  if (option === "Keyboard") formData.keyboard_status = "1";
-  if (option === "Monitor") formData.monitor_status = "1";
-  if (option === "Mouse") formData.mouse_status = "1";
-  if (option === "Printer") formData.printer_status = "1";
-  if (option === "UPS") formData.ups_status = "1";
-  if (option === "AVR") formData.avr_status = "1";
-  if (option === "Other") formData.other_equip = ""; // Allow user input
-
-} else {
-
-  // Set the selected option to "1"
-  if (option === "CPU") formData.cpu_status = "1";
-  if (option === "Keyboard") formData.keyboard_status = "1";
-  if (option === "Monitor") formData.monitor_status = "1";
-  if (option === "Mouse") formData.mouse_status = "1";
-  if (option === "Printer") formData.printer_status = "1";
-  if (option === "UPS") formData.ups_status = "1";
-  if (option === "AVR") formData.avr_status = "1";
-  if (option === "Other") formData.other_equip = ""; // Allow user input
-}
+    if (option === "Keyboard") formData.keyboard_status = "1";
+    if (option === "Monitor") formData.monitor_status = "1";
+    if (option === "Mouse") formData.mouse_status = "1";
+    if (option === "Printer") formData.printer_status = "1";
+    if (option === "UPS") formData.ups_status = "1";
+    if (option === "AVR") formData.avr_status = "1";
+    if (option === "Other") formData.other_equip = ""; // Keep for input
+  } else {
+    // If UNCHECKED, set to 0
+    if (option === "CPU") formData.cpu_status = "0";
+    if (option === "Keyboard") formData.keyboard_status = "0";
+    if (option === "Monitor") formData.monitor_status = "0";
+    if (option === "Mouse") formData.mouse_status = "0";
+    if (option === "Printer") formData.printer_status = "0";
+    if (option === "UPS") formData.ups_status = "0";
+    if (option === "AVR") formData.avr_status = "0";
+    if (option === "Other") formData.other_equip = ""; // Optional: clear
+  }
 };
+
 
 
 const updateSoftwareStatus = (option) => {
   if (formData.softwareInstalled.includes(option)) {
-    if (option === "Enrollment System") formData.enrollment = "1";
-    if (option === "Adobe Reader") formData.adobe_reader = "1";
-    if (option === "Word Processor") formData.word_processor = "1";
-    if (option === "Media Player") formData.media_player = "1";
-    if (option === "Anti-Virus") formData.anti_virus = "1";
-    if (option === "Browser") formData.browser = "1";
-    if (option === "Microsoft") formData.microsoft = "1";
-    if (option === "Other") formData.other_sys = ""; // Allow user input
-
-  } else {
+    // If checked, mark status as "0"
     if (option === "Enrollment System") formData.enrollment = "0";
     if (option === "Adobe Reader") formData.adobe_reader = "0";
     if (option === "Word Processor") formData.word_processor = "0";
@@ -192,10 +199,20 @@ const updateSoftwareStatus = (option) => {
     if (option === "Anti-Virus") formData.anti_virus = "0";
     if (option === "Browser") formData.browser = "0";
     if (option === "Microsoft") formData.microsoft = "0";
-    if (option === "Other") formData.other_sys = ""; // Allow user input
-
+    if (option === "Other") formData.other_sys = ""; // Keep user input empty
+  } else {
+    // If unchecked, mark status as "1"
+    if (option === "Enrollment System") formData.enrollment = "1";
+    if (option === "Adobe Reader") formData.adobe_reader = "1";
+    if (option === "Word Processor") formData.word_processor = "1";
+    if (option === "Media Player") formData.media_player = "1";
+    if (option === "Anti-Virus") formData.anti_virus = "1";
+    if (option === "Browser") formData.browser = "1";
+    if (option === "Microsoft") formData.microsoft = "1";
+    if (option === "Other") formData.other_sys = ""; // Still allow input
   }
 };
+
 
 const checklist = reactive({
   items: [
@@ -213,22 +230,7 @@ const checklist = reactive({
   Summary: ""
 });
 
-const transformChecklist = () => {
-  const result = [];
 
-  checklist.items.forEach(item => {
-    const lines = item.details.split('\n');
-    lines.forEach((line, idx) => {
-      result.push({
-        task: item.task,
-        details: [line], // wrap single detail in array
-        status: [item.status[idx]] // match with corresponding status
-      });
-    });
-  });
-
-  return result;
-};
 
 
 const updateStatus = (index, i, value) => {
@@ -313,20 +315,23 @@ const submitForm = async () => {
 
 const submitdata = async () => {
   try {
-    console.log(mainId.value);
-
     for (const item of checklist.items) {
-      const payload = {
-        mainId: mainId.value,
-        YrId: selectedEmployee.value.YrId,
-        summary: checklist.Summary,
-        task: item.task,
-        details: item.details,
-        status: item.status[0]  // or handle multiple statuses if needed
-      };
+      const detailLines = item.details.split('\n');
 
-      const response = await axios.post('http://127.0.0.1:8000/api/submit-checklist', payload);
-      console.log('Submitted item:', response.data);
+      // Loop through each line in the details
+      for (let i = 0; i < detailLines.length; i++) {
+        const payload = {
+          mainId: mainId.value,
+          YrId: selectedEmployee.value.YrId,
+          summary: checklist.Summary,
+          task: item.task,
+          details: detailLines[i] || item.details, // fallback to full details if it's a single-line
+          status: item.status[i] !== undefined ? item.status[i] : item.status[0], // use i-th if available, else first
+        };
+
+        const response = await axios.post('http://127.0.0.1:8000/api/submit-checklist', payload);
+        console.log('Submitted item:', response.data);
+      }
     }
 
     console.log('Checklist submitted successfully.');
@@ -500,8 +505,9 @@ watch(isStatusDropdownOpen, (newVal) => {
 
   <td>
     <Link 
+  v-if="employee.employeeId"
   :href="route('employees', {
-    employeeId:employee.employeeId, 
+    employeeId: employee.employeeId, 
     YrId: employee.YrId,
     PlanId: employee.PlanId,
     officeId: employee.OffId,
@@ -512,6 +518,7 @@ watch(isStatusDropdownOpen, (newVal) => {
 >
   <i class="fas fa-eye me-1"></i> View User
 </Link>
+
 
   </td>
 </tr>

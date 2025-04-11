@@ -16,9 +16,8 @@ const props = defineProps({
 
 
 const department = ref(props.departments || []);
-
+const mainId = ref (0)
 const selectedDepartments = ref(null);
-
 
 
       
@@ -47,6 +46,7 @@ const openStep1Modal = () => {
     formData.department = departmentData.department_name || "";
   }
 };
+
 
 const modal1 = () => {
 
@@ -232,7 +232,9 @@ const submitForm = async () => {
     console.log("Submitting Form Data:", formData, checklist);
 
     // Get deptId from props.departments
-    const deptId = selectedDepartments.value ;
+    const deptId =
+  selectedDepartments.value || (props.departments.length > 0 ? props.departments[0].deptId : null);
+
 
     // Construct request payload
     const payload = {
@@ -282,7 +284,9 @@ const submitForm = async () => {
 
     const response = await axios.post(`/api/departmentChecklist`, payload);
 
+    mainId.value = response.data.data.mainId
     console.log("Response:", response.data);
+    console.log (response.data.mainId)
 
     closeModal();
   } catch (error) {
@@ -290,27 +294,32 @@ const submitForm = async () => {
   }
 };
 
+const submitdata = async () => {
+  try {
+    for (const item of checklist.items) {
+      const detailLines = item.details.split('\n');
 
+      // Loop through each line in the details
+      for (let i = 0; i < detailLines.length; i++) {
+        const payload = {
+          mainId: mainId.value,
+          YrId: selectedDepartments.value?.YrId || props.YrId,
+          summary: checklist.Summary,
+          task: item.task,
+          details: detailLines[i] || item.details, // fallback to full details if it's a single-line
+          status: item.status[i] !== undefined ? item.status[i] : item.status[0], // use i-th if available, else first
+        };
 
+        const response = await axios.post('http://127.0.0.1:8000/api/submit-checklist', payload);
+        console.log('Submitted item:', response.data);
+      }
+    }
 
-
-// const submitdata = async () => {
-//   try {
-//     const payload = {
-//       mainId: props.employee.employeeId,
-//       YrId: props.pmYear.yearId,
-//       summary: checklist.Summary,
-//       checklist: transformChecklist()
-//     };
-
-//     const response = await axios.post('http://127.0.0.1:8000/api/submit-checklist', payload);
-//     console.log('Checklist submitted:', response.data);
-//   } catch (error) {
-//     console.error('Error submitting checklist:', error);
-//   }
-// };
-
-
+    console.log('Checklist submitted successfully.');
+  } catch (error) {
+    console.error('Error submitting checklist:', error);
+  }
+};
 
 
 
@@ -423,7 +432,6 @@ watch(isStatusDropdownOpen, (newVal) => {
       <thead>
         <tr>
             <th>Equipment Number</th>
-            <th>Year Name</th>
             <th class="text-center">Actions</th>
             <th>Status</th>
         </tr>
@@ -433,17 +441,23 @@ watch(isStatusDropdownOpen, (newVal) => {
             <!-- Display equipment number -->
             <td>{{ employee.equipmentId }}</td>
             
-            <!-- Display year name -->
-            <td>{{ employee.year_name }}</td>
+            <td class="text-center">
+            <div class="d-flex justify-content-center">
+              
+
+              <button 
+                class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+                @click="printDetails(employee)">
+                <i class="fas fa-eye me-1"></i> Print
+              </button>
+            </div>
+          </td>       
 
             <!-- Action button (e.g., print details) -->
             <td class="text-center">
            
             </td>
-
-            <td :class="{ 'clear-status': employee.status === 'Clear', 'unclear-status': employee.status === 'Unclear' }">
-              
-            </td>
+            
         
               </tr>
 
@@ -735,7 +749,7 @@ watch(isStatusDropdownOpen, (newVal) => {
 
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
-        <button type="button" class="btn btn-primary" @click="submitForm">Submit</button>
+        <button type="button" class="btn btn-primary" @click="submitdata">Submit</button>
       </div>
 
         </div>
