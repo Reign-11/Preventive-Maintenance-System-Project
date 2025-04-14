@@ -528,6 +528,126 @@ public function submitChecklist(Request $request)
     }
 }
 
+public function insertChecklist(Request $request)
+{
+    // Validate inputs
+    $validated = $request->validate([
+        'mainId' => 'required|integer',
+        'YrId' => 'required|integer',
+
+        // System Settings
+        'System_Boot' => 'required|integer',
+        'System_Log' => 'required|integer',
+
+        // Network Settings
+        'Network_Settings1' => 'required|integer',
+        'Network_Settings2' => 'required|integer',
+        'Network_Settings3' => 'required|integer',
+        'Network_Settings4' => 'required|integer',
+        'Network_Settings5' => 'required|integer',
+        'Network_Settings6' => 'required|integer',
+
+        // Computer Hardware Settings
+        'Computer_Hardware_Settings1' => 'required|integer',
+        'Computer_Hardware_Settings2' => 'required|integer',
+        'Computer_Hardware_Settings3' => 'required|integer',
+        'Computer_Hardware_Settings4' => 'required|integer',
+        'Computer_Hardware_Settings5' => 'required|integer',
+        'Computer_Hardware_Settings6' => 'required|integer',
+
+        // Software Checks
+        'Browser_Settings' => 'required|integer',
+        'Proper_Software_Loads' => 'required|integer',
+
+        // Virus/Malware Scanning
+        'Viruses_Malware1' => 'required|integer',
+        'Viruses_Malware2' => 'required|integer',
+
+        // Clearance
+        'Clearance1' => 'required|integer',
+        'Clearance2' => 'required|integer',
+        'Clearance3' => 'required|integer',
+        'Clearance4' => 'required|integer',
+
+        // Interior Cleaning
+        'Interiors_Cleaning1' => 'required|integer',
+        'Interiors_Cleaning2' => 'required|integer',
+        'Interiors_Cleaning3' => 'required|integer',
+        'Interiors_Cleaning4' => 'required|integer',
+        'Interiors_Cleaning5' => 'required|integer',
+
+        // Peripherals
+        'Peripheral_Devices1' => 'required|integer',
+        'Peripheral_Devices2' => 'required|integer',
+        'Peripheral_Devices3' => 'required|integer',
+        'Peripheral_Devices4' => 'required|integer',
+        'Peripheral_Devices5' => 'required|integer',
+        'Peripheral_Devices6' => 'required|integer',
+        'Peripheral_Devices7' => 'required|integer',
+
+        // Summary (String)
+        'Summary' => 'required|string',
+    ]);
+
+    try {
+        DB::statement('CALL InsertPreventiveChecklist2(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,? )', [
+            $validated['mainId'],
+            $validated['YrId'],
+
+            $validated['System_Boot'],
+            $validated['System_Log'],
+
+            $validated['Network_Settings1'],
+            $validated['Network_Settings2'],
+            $validated['Network_Settings3'],
+            $validated['Network_Settings4'],
+            $validated['Network_Settings5'],
+            $validated['Network_Settings6'],
+
+            $validated['Computer_Hardware_Settings1'],
+            $validated['Computer_Hardware_Settings2'],
+            $validated['Computer_Hardware_Settings3'],
+            $validated['Computer_Hardware_Settings4'],
+            $validated['Computer_Hardware_Settings5'],
+            $validated['Computer_Hardware_Settings6'],
+
+            $validated['Browser_Settings'],
+
+            $validated['Proper_Software_Loads'],
+
+            $validated['Viruses_Malware1'],
+            $validated['Viruses_Malware2'],
+
+            $validated['Clearance1'],
+            $validated['Clearance2'],
+            $validated['Clearance3'],
+            $validated['Clearance4'],
+
+            $validated['Interiors_Cleaning1'],
+            $validated['Interiors_Cleaning2'],
+            $validated['Interiors_Cleaning3'],
+            $validated['Interiors_Cleaning4'],
+            $validated['Interiors_Cleaning5'],
+
+            $validated['Peripheral_Devices1'],
+            $validated['Peripheral_Devices2'],
+            $validated['Peripheral_Devices3'],
+            $validated['Peripheral_Devices4'],
+            $validated['Peripheral_Devices5'],
+            $validated['Peripheral_Devices6'],
+            $validated['Peripheral_Devices7'],
+            
+            $validated['Summary'],
+        ]);
+
+        return response()->json(['message' => 'Checklist inserted successfully.'], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Failed to insert checklist.',
+            'details' => $e->getMessage()
+        ], 500);
+    }
+}
 
 
 
