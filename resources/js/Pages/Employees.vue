@@ -230,8 +230,6 @@ const closeModal = () => {
   {{ employees[0].department_name }}
 </h3>
 
-
-
       <table class="data-table">
         <thead>
           <tr>
@@ -457,7 +455,7 @@ const closeModal = () => {
 
             <!-- Desktop Specifications -->
             <div class="card p-3 mt-3">
-              <h6 class="fw-bold">Desktop Specifications:</h6>
+              <h6 class="fw-bold text-start">Desktop Specifications:</h6>
               <div class="row">
                 <div v-for="(value, key) in formData.desktopSpecs" :key="key" class="col-md-2">
                   <label class="form-label">{{ key.replace(/([A-Z])/g, ' $1') }}</label>

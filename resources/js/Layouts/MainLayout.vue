@@ -178,7 +178,7 @@ onMounted(() => {
 
 /* Hover Effect */
 .nav-link-custom:hover {
-    background-color: #dad709; /* Blue background */
+    background-color: #09dada; /* Blue background */
     color: white;
 }
 

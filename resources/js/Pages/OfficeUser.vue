@@ -135,7 +135,7 @@ const printDetails = (item) => {
       <table class="data-table mt-2">
       <thead>
         <tr>
-          <th>User/Office</th>
+          <th>Office</th>
           <th v-if="isUserSelected || isOfficeSelected">Actions</th>
           <th>Status</th>
         </tr>

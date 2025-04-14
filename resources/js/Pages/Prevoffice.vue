@@ -88,7 +88,6 @@ const officeData = ref([
 const displayedData = computed(() => officeData.value);
 
 const formData = ref({
-  userOperator: '',
   officeUnit: '',
   department: '',
   dateAcquired: '',

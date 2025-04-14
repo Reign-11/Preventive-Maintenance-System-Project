@@ -270,7 +270,7 @@ class MaintenancePlanController extends Controller
         Log::info("📢 Filtered Employees:", $employee);
 
         // Fetch additional data (PM Year & Office Details)
-        $pmYearData = DB::table('tbl_pmyear')->where('YrId', $yrId)->first();
+        $pmYearData = DB::table('tbl_pmyear')->get();
 
         return Inertia::render('Usertable', [
             'employee' => $employee,
@@ -281,8 +281,9 @@ class MaintenancePlanController extends Controller
             'departmentId ' => $departmentId ?? '', 
             'department' => $department ?? [], 
             'categoryId' => $categoryId ?? 1,  // Ensure categoryId is 1 if missing
+            'pmYearList' => $pmYearData, // Send array of all years
 
-            'pmYear' => $pmYearData ? (array) $pmYearData : ['Name' => '', 'Description' => ''],
+    'pmYear' => $pmYearData->first() ? (array) $pmYearData->first() : ['Name' => '', 'Description' => ''],
         ]);
 
     
@@ -809,6 +810,25 @@ public function departmentChecklist(Request $request)
     ]);
     } catch (\Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
+
+
+public function getChecklistByYrId($YrId)
+{
+    try {
+        $results = DB::select('CALL GetChecklistByYrId(?)', [$YrId]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $results
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error retrieving checklist.',
+            'error' => $e->getMessage()
+        ], 500);
     }
 }
 
