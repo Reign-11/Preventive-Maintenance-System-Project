@@ -160,8 +160,11 @@ const enableBackgroundScroll = () => {
   document.body.style.overflow = '';
 };
 
+
 // Form Data
 const formData = reactive({
+  disposal: "", 
+  pcName:"",
   ticketnumber: "",
   equipment:"",
   userOperator: "",
@@ -218,6 +221,42 @@ watch(selectedEmployee, (newVal) => {
     formData.department = newVal.department_name || "";
   }
 });
+
+const isLocked = ref(false);
+
+const setForDisposal = () => {
+  formData.disposal = "1";
+
+  // Lock equipment statuses
+  formData.equipmentInstalled = [];
+  formData.cpu_status = "0";
+  formData.keyboard_status = "0";
+  formData.monitor_status = "0";
+  formData.mouse_status = "0";
+  formData.printer_status = "0";
+  formData.ups_status = "0";
+  formData.avr_status = "0";
+  formData.other_equip = "";
+
+  // Lock OS
+  formData.windows10 = "0";
+  formData.windows11 = "0";
+  formData.other_os = null;
+  formData.license = null;
+
+  // Lock software
+  formData.softwareInstalled = [];
+  formData.enrollment = "1";
+  formData.adobe_reader = "1";
+  formData.word_processor = "1";
+  formData.media_player = "1";
+  formData.anti_virus = "1";
+  formData.browser = "1";
+  formData.microsoft = "1";
+  formData.other_sys = "";
+
+  isLocked.value = true; // Set UI to readonly/disabled
+};
 
 
 // Options for checkboxes
@@ -368,6 +407,7 @@ const submitForm = async () => {
 
     // Construct request payload
     const payload = {
+      disposal: String(formData.disposal),
       employeeId,
       YrId: selectedEmployee.value.YrId,
       ticketnumber: formData.ticketnumber, 
@@ -738,7 +778,7 @@ watch(isStatusDropdownOpen, (newVal) => {
         <!-- MODAL -->
 
         <!-- For Disposal Button -->
-        <button class="btn btn-danger btn-sm">For Disposal</button>
+        <button class="btn btn-danger btn-sm" @click="setForDisposal">For Disposal</button>
 
       </div>
 
@@ -767,7 +807,7 @@ watch(isStatusDropdownOpen, (newVal) => {
               </div>
               <div class="col-md-2">
                 <label class="form-label">PC Name</label>
-                <input type="text" class="form-control" v-model="formData.pcName">
+                <input type="text" class="form-control" v-model="formData.pcName" :disabled="isLocked">
               </div>
             </div>
 
@@ -782,7 +822,7 @@ watch(isStatusDropdownOpen, (newVal) => {
                     class="form-check-input" 
                     type="checkbox" 
                     :value="option" 
-                    v-model="formData.equipmentInstalled"
+                    v-model="formData.equipmentInstalled":disabled="isLocked"
                     @change="updateEquipmentStatus(option)" 
                   />
                   <label class="form-check-label">{{ option }}</label>
@@ -793,7 +833,7 @@ watch(isStatusDropdownOpen, (newVal) => {
                   v-if="option === 'Other' && formData.equipmentInstalled.includes('Other')" 
                   type="text" 
                   class="form-control mt-1 ms-3" 
-                  v-model="formData.other_equip" 
+                  v-model="formData.other_equip":disabled="isLocked" 
                   placeholder="Specify Other Equipment">
               </div>
             </div>
@@ -808,7 +848,7 @@ watch(isStatusDropdownOpen, (newVal) => {
             type="radio" 
             class="form-check-input" 
             :value="option" 
-            v-model="formData.osInstalled"
+            v-model="formData.osInstalled" :disabled="isLocked"
             @change="updateOsInstalled(option)" 
           />
           <label class="form-check-label">{{ option }}</label>
@@ -819,7 +859,7 @@ watch(isStatusDropdownOpen, (newVal) => {
           <input 
             type="text" 
             class="form-control mt-1" 
-            v-model="formData.other_os" 
+            v-model="formData.other_os" :disabled="isLocked"
             placeholder="Specify Other OS"
           />
         </div>
@@ -832,7 +872,7 @@ watch(isStatusDropdownOpen, (newVal) => {
               type="radio" 
               class="form-check-input" 
               :value="1" 
-              v-model.number="formData.license"
+              v-model.number="formData.license":disabled="isLocked"
             />
             <label class="form-check-label">Licensed</label>
           </div>
@@ -841,7 +881,7 @@ watch(isStatusDropdownOpen, (newVal) => {
               type="radio" 
               class="form-check-input" 
               :value="0" 
-              v-model.number="formData.license"
+              v-model.number="formData.license":disabled="isLocked"
             />
             <label class="form-check-label">Not Licensed</label>
           </div>
@@ -858,7 +898,7 @@ watch(isStatusDropdownOpen, (newVal) => {
             class="form-check-input" 
             type="checkbox" 
             :value="option" 
-            v-model="formData.softwareInstalled"
+            v-model="formData.softwareInstalled" :disabled="isLocked"
             @change="updateSoftwareStatus(option)" 
           />
           <label class="form-check-label">{{ option }}</label>
@@ -869,7 +909,7 @@ watch(isStatusDropdownOpen, (newVal) => {
           v-if="option === 'Other' && formData.softwareInstalled.includes('Other')" 
           type="text" 
           class="form-control mt-1 ms-3" 
-          v-model="formData.other_sys" 
+          v-model="formData.other_sys" :disabled="isLocked"
           placeholder="Specify Other Software">
       </div>
     </div>

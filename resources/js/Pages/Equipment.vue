@@ -15,6 +15,7 @@ const props = defineProps({
 
 });
 
+const currentMainId = ref(null);
 
 const department = ref(props.departments || []);
 const mainId = ref (0)
@@ -119,6 +120,7 @@ const openStep1Modal = () => {
 };
 
 
+
 const modal1 = () => {
 
   isStep1ModalOpen.value = false;
@@ -131,9 +133,9 @@ const openStepModal = (mainId) => {
   currentMainId.value = mainId;
   console.log("MainId: " + currentMainId.value);
 
-  const employeeData = props.employees.find(emp => String(emp.mainId) === String(mainId));
+  const employeeData = props.departments.find(emp => String(emp.mainId) === String(mainId));
   if (employeeData) {
-    selectedEmployee.value = employeeData;
+    selectedDepartments.value = employeeData;
   } else {
     console.error("Employee not found with mainId:", mainId);
   }
@@ -148,9 +150,9 @@ const openStep2Modal = (mainId = currentMainId.value) => {
     return;
   }
 
-  const employeeData = props.employees.find(emp => String(emp.mainId) === String(mainId));
+  const employeeData = props.departments.find(emp => String(emp.mainId) === String(mainId));
   if (employeeData) {
-    selectedEmployee.value = employeeData;
+    selectedDepartments.value = employeeData;
     isStep1ModalOpen.value = false;
     isStep2ModalOpen.value = true;
   } else {
@@ -176,7 +178,6 @@ const enableBackgroundScroll = () => {
 
 // Form Data
 const formData = reactive({
-  pcName: "",
   ticketnumber: "",
   equipment:"",
   officeUnit: "",
@@ -209,7 +210,73 @@ const formData = reactive({
   },
 
 });
+watch(selectedDepartments, (newVal) => {
+  if (newVal) {
+    console.log(newVal); // Check the new value of selectedEmployee
 
+    // Basic Info
+    formData.officeUnit = newVal.OfficeName || "";
+    formData.pcName = newVal.pcName || "";
+    formData.department = newVal.department_name || "";
+    formData.ticketnumber = newVal.ticketnumber || "";
+    formData.equipment = newVal.equipmentId || "";
+    formData.dateAcquired = newVal.date_acquired || "";
+    formData.date = newVal.date || "";
+
+    // Equipment Installed
+    formData.equipmentInstalled = [];
+    if (newVal.cpu === 1) formData.equipmentInstalled.push("CPU");
+    if (newVal.monitor_status === 1) formData.equipmentInstalled.push("Monitor");
+    if (newVal.mouse_status === 1) formData.equipmentInstalled.push("Mouse");
+    if (newVal.keyboard_status === 1) formData.equipmentInstalled.push("Keyboard");
+    if (newVal.printer_status === 1) formData.equipmentInstalled.push("Printer");
+    if (newVal.ups_status === 1) formData.equipmentInstalled.push("UPS");
+    if (newVal.avr_status === 1) formData.equipmentInstalled.push("AVR");
+    if (newVal.other_equip) formData.equipmentInstalled.push("Other");
+    formData.other_equip = newVal.other_equip || "";
+
+    // Operating System
+    if (newVal.windows10 === 1) {
+      formData.osInstalled = "Windows 10";
+    } else if (newVal.windows11 === 1) {
+      formData.osInstalled = "Windows 11";
+    } else {
+      formData.osInstalled = "Other";
+    }
+    formData.license = newVal.license || "";
+    formData.other_os = newVal.other_os || "";
+
+    // Software Installed
+    formData.softwareInstalled = [];
+    if (newVal.enrollment === 1) formData.softwareInstalled.push("Enrollment System");
+    if (newVal.anti_virus === 1) formData.softwareInstalled.push("Anti-Virus");
+    if (newVal.browser === 1) formData.softwareInstalled.push("Browser");
+    if (newVal.microsoft === 1) formData.softwareInstalled.push("Microsoft");
+    if (newVal.adobe_reader === 1) formData.softwareInstalled.push("Adobe Reader");
+    if (newVal.word_processor === 1) formData.softwareInstalled.push("Word Processor");
+    if (newVal.media_player === 1) formData.softwareInstalled.push("Media Player");
+
+    if (newVal.other_sys) formData.softwareInstalled.push("Other");
+
+    formData.other_sys = newVal.other_sys || "";
+
+    // Desktop Specs
+    formData.desktopSpecs.Processor = newVal.processor_details || "";
+    formData.desktopSpecs.Motherboard = newVal.motherboard_details || "";
+    formData.desktopSpecs.Memory = newVal.memory_details || "";
+    formData.desktopSpecs.GraphicCard = newVal.graphics_card_details || "";
+    formData.desktopSpecs.Monitor = newVal.monitor_details || "";
+    formData.desktopSpecs.HardDisk = newVal.hard_disk_details || "";
+    formData.desktopSpecs.Casing = newVal.casing_details || "";
+    formData.desktopSpecs.PowerSupply = newVal.power_supply_details || "";
+    formData.desktopSpecs.Keyboard = newVal.keyboard_details || "";
+    formData.desktopSpecs.Mouse = newVal.mouse_details || "";
+    formData.desktopSpecs.AVR = newVal.avr_details || "";
+    formData.desktopSpecs.UPS = newVal.ups_details || "";
+    formData.desktopSpecs.Printer = newVal.printer_details || "";
+    formData.desktopSpecs.NetWorkMacIp = newVal.network_mac_ip_details || "";
+  }
+});
 
 
 // Options for checkboxes
@@ -431,6 +498,60 @@ const checklist = reactive({
   Peripheral_Devices7: "",
 
   Summary: ""
+});
+
+watch(selectedDepartments, (newVal) => {
+  console.log("Selected Employee Data:", newVal); // Check the data structure
+  if (newVal) {
+    for (const key in checklist) {
+      checklist[key] = newVal[key] || ""; // Update checklist for all matching keys
+    }
+
+    // If the keys don't match exactly, you can manually map the specific keys as needed
+    checklist.System_Boot = newVal.System_Boot || "";
+    checklist.System_Log = newVal.System_Log || "";
+
+    checklist.Network_Settings1 = newVal.Network_Settings1 || "";
+    checklist.Network_Settings2 = newVal.Network_Settings2 || "";
+    checklist.Network_Settings3 = newVal.Network_Settings3 || "";
+    checklist.Network_Settings4 = newVal.Network_Settings4 || "";
+    checklist.Network_Settings5 = newVal.Network_Settings5 || "";
+    checklist.Network_Settings6 = newVal.Network_Settings6 || "";
+
+    checklist.Computer_Hardware_Settings1 = newVal.Computer_Hardware_Settings1 || "";
+    checklist.Computer_Hardware_Settings2 = newVal.Computer_Hardware_Settings2 || "";
+    checklist.Computer_Hardware_Settings3 = newVal.Computer_Hardware_Settings3 || "";
+    checklist.Computer_Hardware_Settings4 = newVal.Computer_Hardware_Settings4 || "";
+    checklist.Computer_Hardware_Settings5 = newVal.Computer_Hardware_Settings5 || "";
+    checklist.Computer_Hardware_Settings6 = newVal.Computer_Hardware_Settings6 || "";
+
+    checklist.Browser_Settings = newVal.Browser_Settings || "";
+    checklist.Proper_Software_Loads = newVal.Proper_Software_Loads || "";
+
+    checklist.Viruses_Malware1 = newVal.Viruses_Malware1 || "";
+    checklist.Viruses_Malware2 = newVal.Viruses_Malware2 || "";
+
+    checklist.Clearance1 = newVal.Clearance1 || "";
+    checklist.Clearance2 = newVal.Clearance2 || "";
+    checklist.Clearance3 = newVal.Clearance3 || "";
+    checklist.Clearance4 = newVal.Clearance4 || "";
+
+    checklist.Interiors_Cleaning1 = newVal.Interiors_Cleaning1 || "";
+    checklist.Interiors_Cleaning2 = newVal.Interiors_Cleaning2 || "";
+    checklist.Interiors_Cleaning3 = newVal.Interiors_Cleaning3 || "";
+    checklist.Interiors_Cleaning4 = newVal.Interiors_Cleaning4 || "";
+    checklist.Interiors_Cleaning5 = newVal.Interiors_Cleaning5 || "";
+
+    checklist.Peripheral_Devices1 = newVal.Peripheral_Devices1 || "";
+    checklist.Peripheral_Devices2 = newVal.Peripheral_Devices2 || "";
+    checklist.Peripheral_Devices3 = newVal.Peripheral_Devices3 || "";
+    checklist.Peripheral_Devices4 = newVal.Peripheral_Devices4 || "";
+    checklist.Peripheral_Devices5 = newVal.Peripheral_Devices5 || "";
+    checklist.Peripheral_Devices6 = newVal.Peripheral_Devices6 || "";
+    checklist.Peripheral_Devices7 = newVal.Peripheral_Devices7 || "";
+
+    checklist.Summary = newVal.Summary || "";
+  }
 });
 
 
@@ -830,7 +951,7 @@ watch(isStatusDropdownOpen, (newVal) => {
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
             <button type="button" class="btn btn-primary" @click="submitForm">Save</button>
-            <button type="button" class="btn btn-secondary" @click="openStep2Modal">Next  </button>
+            <button type="button" class="btn btn-secondary" @click="openStep2Modal(currentMainId.value)">Next  </button>
           </div>
           </div>
 
@@ -889,6 +1010,7 @@ watch(isStatusDropdownOpen, (newVal) => {
       <label class="form-check-label" :for="'Boot_' + opt.value"> </label> </div>
     </td>
       </tr>
+
 
       <!-- Item 2 -->
       <tr>

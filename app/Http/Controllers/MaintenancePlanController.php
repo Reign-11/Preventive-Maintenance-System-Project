@@ -384,7 +384,7 @@ public function employeeChecklist(Request $request)
         $validated = $request->validate([
             'employeeId' => 'required|integer',
             'YrId' => 'required|integer',
-            'pcName' => 'required|string|max:100',
+            'pcName' => 'nullable|string|max:100',
             'equipment' => 'required|string|max:50',
             'dateAcquired' => 'required|date',
             'cpu_status' => 'nullable|integer',
@@ -407,20 +407,23 @@ public function employeeChecklist(Request $request)
             'other_equip' => 'nullable|max:255',
             'other_os' => 'nullable|max:255',
             'other_sys' => 'nullable|max:255',
-            'processor_details' => 'string|max:255',
-            'motherboard_details' => 'string|max:255',
-            'memory_details' => 'string|max:255',
-            'graphics_card_details' => 'string|max:255',
-            'hard_disk_details' => 'string|max:255',
-            'monitor_details' => 'string|max:255',
-            'casing_details' => 'string|max:255',
-            'power_supply_details' => 'string|max:255',
-            'keyboard_details' => 'string|max:255',
-            'mouse_details' => 'string|max:255',
-            'avr_details' => 'string|max:255',
-            'ups_details' => 'string|max:255',
-            'printer_details' => 'string|max:255',
-            'network_mac_ip_details' => 'string|max:255',
+            'processor_details' => 'nullable|string|max:255',
+            'motherboard_details' => 'nullable|string|max:255',
+            'memory_details' => 'nullable|string|max:255',
+            'graphics_card_details' => 'nullable|string|max:255',
+            'hard_disk_details' => 'nullable|string|max:255',
+            'monitor_details' => 'nullable|string|max:255',
+            'casing_details' => 'nullable|string|max:255',
+            'power_supply_details' => 'nullable|string|max:255',
+            'keyboard_details' => 'nullable|string|max:255',
+            'mouse_details' => 'nullable|string|max:255',
+            'avr_details' => 'nullable|string|max:255',
+            'ups_details' => 'nullable|string|max:255',
+            'printer_details' => 'nullable|string|max:255',
+            'network_mac_ip_details' => 'nullable|string|max:255',
+            'disposal' => 'nullable|string|max:255',
+
+            
         ]);
 
         // Prepare parameters for the stored procedure
@@ -465,13 +468,15 @@ public function employeeChecklist(Request $request)
             $validated['ups_details'],
             $validated['printer_details'],
             $validated['network_mac_ip_details'],
+            $validated['disposal'] , 
+
         ];
 
         // Log the parameters
         \Log::info('Parameters passed to stored procedure: ', $parameters);
 
         // Call Stored Procedure
-        DB::statement("CALL InsertPreventiveMaintenanceChecklist(?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)", $parameters);
+        DB::statement("CALL InsertPreventiveMaintenanceChecklist(?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)", $parameters);
 
         // Get the saved record using the ticket number
         $savedData = DB::table('tbl_preventive_maintainance')
