@@ -282,8 +282,7 @@ class MaintenancePlanController extends Controller
             'department' => $department ?? [], 
             'categoryId' => $categoryId ?? 1,  // Ensure categoryId is 1 if missing
             'pmYearList' => $pmYearData, // Send array of all years
-
-    'pmYear' => $pmYearData->first() ? (array) $pmYearData->first() : ['Name' => '', 'Description' => ''],
+            'pmYear' => $pmYearData->first() ? (array) $pmYearData->first() : ['Name' => '', 'Description' => ''],
         ]);
 
     
@@ -384,6 +383,7 @@ public function employeeChecklist(Request $request)
         // Validate Request
         $validated = $request->validate([
             'employeeId' => 'required|integer',
+            'YrId' => 'required|integer',
             'pcName' => 'required|string|max:100',
             'equipment' => 'required|string|max:50',
             'dateAcquired' => 'required|date',
@@ -426,6 +426,7 @@ public function employeeChecklist(Request $request)
         // Prepare parameters for the stored procedure
         $parameters = [
             $validated['employeeId'],
+            $validated['YrId'],
             $generatedTicketNumber,
             $validated['equipment'],
             $validated['pcName'],
@@ -470,7 +471,7 @@ public function employeeChecklist(Request $request)
         \Log::info('Parameters passed to stored procedure: ', $parameters);
 
         // Call Stored Procedure
-        DB::statement("CALL InsertPreventiveMaintenanceChecklist(?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
+        DB::statement("CALL InsertPreventiveMaintenanceChecklist(?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)", $parameters);
 
         // Get the saved record using the ticket number
         $savedData = DB::table('tbl_preventive_maintainance')
@@ -676,12 +677,18 @@ try {
 
     $depts = array_values ($depts);
 
+    $pmYearData = DB::table('tbl_pmyear')->get();
+
+
     return Inertia::render('Equipment', [
         'departments' => $depts,
         'YrId' => $yrId ?? '',
         'PlanId' => $PlanId ?? '',
         'officeId' => $officeId ?? '',
         'CatId' => $categoryId ?? 1,
+        'pmYearList' => $pmYearData, 
+        'pmYear' => $pmYearData->first() ? (array) $pmYearData->first() : ['Name' => '', 'Description' => ''],
+
     ]);
 
 } catch (\Exception $e) {
@@ -711,6 +718,7 @@ public function departmentChecklist(Request $request)
         $validated = $request->validate([
             'employeeId' => 'nullable|integer',
             'deptId' => 'required|integer', 
+            'YrId' => 'required|integer',
             'pcName' => 'required|string|max:100',
             'equipment' => 'required|string|max:50',
             'dateAcquired' => 'required|date',
@@ -754,6 +762,7 @@ public function departmentChecklist(Request $request)
         $parameters = [
             $validated['employeeId'] ?? null,
             $validated['deptId'], 
+            $validated['YrId'],
             $generatedTicketNumber,
             $validated['equipment'],
             $validated['pcName'],
@@ -798,7 +807,7 @@ public function departmentChecklist(Request $request)
         \Log::info('Parameters passed to stored procedure: ', $parameters);
 
         // Call the Stored Procedure
-        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
+        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)", $parameters);
 
         $savedData = DB::table('tbl_preventive_maintainance')
         ->where('ticketnumber', $generatedTicketNumber)

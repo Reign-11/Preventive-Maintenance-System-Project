@@ -347,12 +347,6 @@ const checklist = reactive({
 
 
 
-const updateStatus = (index, i, value) => {
-  if (!checklist.items[index].status[i]) {
-    checklist.items[index].status[i] = 3; // Default to N/A
-  }
-  checklist.items[index].status[i] = value;
-};
 
 
 const submitForm = async () => {
@@ -375,6 +369,7 @@ const submitForm = async () => {
     // Construct request payload
     const payload = {
       employeeId,
+      YrId: selectedEmployee.value.YrId,
       ticketnumber: formData.ticketnumber, 
       equipment : formData.equipment, 
       pcName: formData.pcName,

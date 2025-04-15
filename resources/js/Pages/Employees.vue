@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, defineProps, reactive, watch} from 'vue'; 
+import { ref, computed, onMounted, onBeforeUnmount, defineProps, reactive, watch,inject} from 'vue'; 
 import MainLayout from '@/Layouts/MainLayout.vue';
 
 const props = defineProps({
@@ -12,32 +12,64 @@ const props = defineProps({
   categoryId: { type: [String, Number], default: 1 },
   pmYear: { type: Object, default: ''}
 });
+const currentMainId = ref(null);
 
 const enableBackgroundScroll = () => {
   document.body.style.overflow = "";
 };
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
 
 const employees = ref(props.employees || []);
+console.log('Initial employees:', employees.value);
 const selectedEmployee = ref(null);
 const isStep2ModalOpen = ref(false)
+
 
 const isStep1ModalOpen = ref(false);
 
 const openStep1Modal = (mainId) => {
   isStep1ModalOpen.value = true;
-  console.log("Main ID:", mainId);
-  console.log("Employees:", props.employees);
+  currentMainId.value = mainId;
+  console.log("MainId: " + currentMainId.value);
 
   const employeeData = props.employees.find(emp => String(emp.mainId) === String(mainId));
-
   if (employeeData) {
-    console.log("Employee Data:", employeeData);  
     selectedEmployee.value = employeeData;
   } else {
     console.error("Employee not found with mainId:", mainId);
   }
 };
+
+
+const openStep2Modal = (mainId = currentMainId.value) => {
+  console.log("mainId passed to Step 2:", mainId);
+
+  if (!mainId) {
+    console.error("Step 2 called without a valid mainId");
+    return;
+  }
+
+  const employeeData = props.employees.find(emp => String(emp.mainId) === String(mainId));
+  if (employeeData) {
+    selectedEmployee.value = employeeData;
+    isStep1ModalOpen.value = false;
+    isStep2ModalOpen.value = true;
+  } else {
+    console.error("Employee not found with mainId:", mainId);
+  }
+};
+
+
+
+
 
 // Form Data
 const formData = reactive({
@@ -207,6 +239,7 @@ const updateOsInstalled = (option) => {
 };
 
 
+
 // Options for checkboxes
 const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS', 'AVR', 'Other'];
 const osOptions = ['Windows 10', 'Windows 11', 'Other'];
@@ -217,6 +250,113 @@ const closeModal = () => {
   isStep2ModalOpen.value = false;
   enableBackgroundScroll();
 };
+
+const options = [
+  {  value: '1' },
+  {  value: '2' },
+  {  value: '3' }
+];
+
+const checklist = reactive({
+  System_Boot: "",
+  System_Log: "",
+
+  Network_Settings1: "",
+  Network_Settings2: "",
+  Network_Settings3: "",
+  Network_Settings4: "",
+  Network_Settings5: "",
+  Network_Settings6: "",
+
+  Computer_Hardware_Settings1: "",
+  Computer_Hardware_Settings2: "",
+  Computer_Hardware_Settings3: "",
+  Computer_Hardware_Settings4: "",
+  Computer_Hardware_Settings5: "",
+  Computer_Hardware_Settings6: "",
+
+  Browser_Settings: "",
+  Proper_Software_Loads: "",
+
+  Viruses_Malware1: "",
+  Viruses_Malware2: "",
+
+  Clearance1: "",
+  Clearance2: "",
+  Clearance3: "",
+  Clearance4: "",
+
+  Interiors_Cleaning1: "",
+  Interiors_Cleaning2: "",
+  Interiors_Cleaning3: "",
+  Interiors_Cleaning4: "",
+  Interiors_Cleaning5: "",
+
+  Peripheral_Devices1: "",
+  Peripheral_Devices2: "",
+  Peripheral_Devices3: "",
+  Peripheral_Devices4: "",
+  Peripheral_Devices5: "",
+  Peripheral_Devices6: "",
+  Peripheral_Devices7: "",
+
+  Summary: ""
+});
+
+
+watch(selectedEmployee, (newVal) => {
+  console.log("Selected Employee Data:", newVal); // Check the data structure
+  if (newVal) {
+    for (const key in checklist) {
+      checklist[key] = newVal[key] || ""; // Update checklist for all matching keys
+    }
+
+    // If the keys don't match exactly, you can manually map the specific keys as needed
+    checklist.System_Boot = newVal.System_Boot || "";
+    checklist.System_Log = newVal.System_Log || "";
+
+    checklist.Network_Settings1 = newVal.Network_Settings1 || "";
+    checklist.Network_Settings2 = newVal.Network_Settings2 || "";
+    checklist.Network_Settings3 = newVal.Network_Settings3 || "";
+    checklist.Network_Settings4 = newVal.Network_Settings4 || "";
+    checklist.Network_Settings5 = newVal.Network_Settings5 || "";
+    checklist.Network_Settings6 = newVal.Network_Settings6 || "";
+
+    checklist.Computer_Hardware_Settings1 = newVal.Computer_Hardware_Settings1 || "";
+    checklist.Computer_Hardware_Settings2 = newVal.Computer_Hardware_Settings2 || "";
+    checklist.Computer_Hardware_Settings3 = newVal.Computer_Hardware_Settings3 || "";
+    checklist.Computer_Hardware_Settings4 = newVal.Computer_Hardware_Settings4 || "";
+    checklist.Computer_Hardware_Settings5 = newVal.Computer_Hardware_Settings5 || "";
+    checklist.Computer_Hardware_Settings6 = newVal.Computer_Hardware_Settings6 || "";
+
+    checklist.Browser_Settings = newVal.Browser_Settings || "";
+    checklist.Proper_Software_Loads = newVal.Proper_Software_Loads || "";
+
+    checklist.Viruses_Malware1 = newVal.Viruses_Malware1 || "";
+    checklist.Viruses_Malware2 = newVal.Viruses_Malware2 || "";
+
+    checklist.Clearance1 = newVal.Clearance1 || "";
+    checklist.Clearance2 = newVal.Clearance2 || "";
+    checklist.Clearance3 = newVal.Clearance3 || "";
+    checklist.Clearance4 = newVal.Clearance4 || "";
+
+    checklist.Interiors_Cleaning1 = newVal.Interiors_Cleaning1 || "";
+    checklist.Interiors_Cleaning2 = newVal.Interiors_Cleaning2 || "";
+    checklist.Interiors_Cleaning3 = newVal.Interiors_Cleaning3 || "";
+    checklist.Interiors_Cleaning4 = newVal.Interiors_Cleaning4 || "";
+    checklist.Interiors_Cleaning5 = newVal.Interiors_Cleaning5 || "";
+
+    checklist.Peripheral_Devices1 = newVal.Peripheral_Devices1 || "";
+    checklist.Peripheral_Devices2 = newVal.Peripheral_Devices2 || "";
+    checklist.Peripheral_Devices3 = newVal.Peripheral_Devices3 || "";
+    checklist.Peripheral_Devices4 = newVal.Peripheral_Devices4 || "";
+    checklist.Peripheral_Devices5 = newVal.Peripheral_Devices5 || "";
+    checklist.Peripheral_Devices6 = newVal.Peripheral_Devices6 || "";
+    checklist.Peripheral_Devices7 = newVal.Peripheral_Devices7 || "";
+
+    checklist.Summary = newVal.Summary || "";
+  }
+});
 
 
 </script>
@@ -238,28 +378,29 @@ const closeModal = () => {
             <th>Equipment Number  </th>
             <th>Actions</th>
             <th>Status</th>
+            <th>DATE</th>
     
           </tr>
         </thead>
         <tbody>
-          <tr v-for="employees in employees" :key="employees.employeeId">
-          <td>{{employees.emp_name }}</td>
-          <td>{{employees.pcName }}</td>
-          <td>{{employees.equipmentId }}</td>
+          <tr v-for="emp in employees" :key="emp.employeeId">
+  <td>{{ emp.emp_name }}</td>
+  <td>{{ emp.pcName }}</td>
+  <td>{{ emp.equipmentId }}</td>
 
+  <td class="text-center">
+    <div class="d-flex justify-content-center">
+      <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+              @click="openStep1Modal(emp.mainId)">
+        <i class="fas fa-eye me-1"></i> View
+      </button>
+    </div>
+  </td>
 
+  <td :class="{ 'clear-status': 'Clear', 'unclear-status': 'Unclear' }"></td>
+  <td>{{ formatDate(emp.date) }}</td>
+</tr>
 
-            <td class="text-center">
-              <div class="d-flex justify-content-center">
-              <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-              @click="openStep1Modal(employees.mainId)">
-              <i class="fas fa-eye me-1"></i>View</button>
-            </div>
-            </td>
-            <td :class="{ 'clear-status': 'Clear', 'unclear-status':'Unclear' }">
-              
-            </td>
-          </tr>
         </tbody>
       </table>
 
@@ -466,14 +607,355 @@ const closeModal = () => {
         <!-- Modal Footer -->
         <div class="modal-footer justify-content-end">
           <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
+          <button type="button" class="btn btn-secondary" @click="openStep2Modal(currentMainId.value)">Next  </button>
         </div>
+        
           </div>
+          
         </div>
+        
       </div>
     </div>
+    
 </div>
-    </div>
 
+    </div>
+    <div v-if="isStep2ModalOpen" class="modal fade show d-block">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header d-flex justify-content-between align-items-center">
+            <h4 class="modal-title fw-bold">ITEM CHECKLIST</h4>
+
+         
+            <button type="button" class="btn-close" @click="closeModal"></button>
+          </div>
+
+        <!-- HERE IS THE CHECKLIST -->
+          <div class="modal-body">
+            <table class="table-auto w-full border">
+    <thead>
+      <tr>
+        <th class="border px-4 py-2">Item #</th>
+        <th class="border px-4 py-2">Task</th>
+        <th class="border px-4 py-2">Description</th>
+        <th class="border px-4 py-2 text-center">OK</th>
+        <th class="border px-4 py-2 text-center">Repair</th>
+        <th class="border px-4 py-2 text-center">N/A</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Item 1 -->
+      <tr>
+        <td class="border px-4 py-2 ">1</td>
+        <td class="border px-4 py-2">System Boot</td>
+        <td class="border px-4 py-2">Boot system from a cold start</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Boot_' + opt.value" :value="opt.value" v-model="checklist.System_Boot" />
+      <label class="form-check-label" :for="'Boot_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+
+      <!-- Item 2 -->
+      <tr>
+        <td class="border px-4 py-2">2</td>
+        <td class="border px-4 py-2">System Log-in</td>
+        <td class="border px-4 py-2">Monitor for errors and speed of entire boot process</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Log_' + opt.value" :value="opt.value" v-model="checklist.System_Log" />
+      <label class="form-check-label" :for="'Log_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+
+      <!-- Item 3 - Network Settings -->
+      <tr>
+        <td class="border px-4 py-2" rowspan="6">3</td>
+        <td class="border px-4 py-2" rowspan="6">Network Settings</td>
+        <td class="border px-4 py-2">Monitor login script</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Network1_' + opt.value" :value="opt.value" v-model="checklist.Network_Settings1" />
+      <label class="form-check-label" :for="'Network1_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+      <tr>
+        <td class="border px-4 py-2">TCP/IP and IPX settings are correct</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Network2_' + opt.value" :value="opt.value" v-model="checklist.Network_Settings2" />
+      <label class="form-check-label" :for="'Network2_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+      <tr>
+        <td class="border px-4 py-2">Domain Name</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Network3_' + opt.value" :value="opt.value" v-model="checklist.Network_Settings3" />
+      <label class="form-check-label" :for="'Network3_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+      <tr>
+        <td class="border px-4 py-2">Security Settings</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Network4_' + opt.value" :value="opt.value" v-model="checklist.Network_Settings4" />
+      <label class="form-check-label" :for="'Network4_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+      <tr>
+        <td class="border px-4 py-2">Client Configurations</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Network5_' + opt.value" :value="opt.value" v-model="checklist.Network_Settings5" />
+      <label class="form-check-label" :for="'Network5_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+      <tr>
+        <td class="border px-4 py-2">Computer Name</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Network6_' + opt.value" :value="opt.value" v-model="checklist.Network_Settings6" />
+      <label class="form-check-label" :for="'Network6_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+
+      <tr>
+        <td class="border px-4 py-2" rowspan="6">4</td>
+        <td class="border px-4 py-2" rowspan="6">Computer Hardware Settings	</td>
+        <td class="border px-4 py-2">Verify Device Manager settings	</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware1_' + opt.value" :value="opt.value" v-model="checklist.Computer_Hardware_Settings1" />
+      <label class="form-check-label" :for="'Hardware1_' + opt.value"> </label> </div>
+  </td>
+      </tr>
+      <tr>
+        <td class="border px-4 py-2">BIOS up-to-date</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware2_' + opt.value" :value="opt.value" v-model="checklist.Computer_Hardware_Settings2" />
+      <label class="form-check-label" :for="'Hardware2_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+      <tr>
+        <td class="border px-4 py-2">Hard Disk	</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware3_' + opt.value" :value="opt.value" v-model="checklist.Computer_Hardware_Settings3" />
+      <label class="form-check-label" :for="'Hardware3_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+      <tr>
+        <td class="border px-4 py-2">DVD/CD-RW firmware up-to-date	</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware4_' + opt.value" :value="opt.value" v-model="checklist.Computer_Hardware_Settings4" />
+      <label class="form-check-label" :for="'Hardware4_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+      <tr>
+        <td class="border px-4 py-2">Memory is O.K.	</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware5_' + opt.value" :value="opt.value" v-model="checklist.Computer_Hardware_Settings5" />
+      <label class="form-check-label" :for="'Hardware5_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+      <tr>
+        <td class="border px-4 py-2">For Laptop battery run-time is norm	</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware6_' + opt.value" :value="opt.value" v-model="checklist.Computer_Hardware_Settings6" />
+      <label class="form-check-label" :for="'Hardware6_' + opt.value"> </label> </div>
+    </td>
+      </tr>
+
+      <tr>
+        <td class="border px-4 py-2">5  </td>
+        <td class="border px-4 py-2">Browser/Proxy Settings	</td>
+        <td class="border px-4 py-2">Verify proper settings and operation.	</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Browser' + opt.value" :value="opt.value" v-model="checklist.Browser_Settings" />
+      <label class="form-check-label" :for="'Browser_' + opt.value"> </label> </div>
+  </td>
+      </tr>
+
+      <tr>
+        <td class="border px-4 py-2">6 </td>
+        <td class="border px-4 py-2">Proper Software Loads		</td>
+        <td class="border px-4 py-2">Required software is installed and operating.		</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Sofware_' + opt.value" :value="opt.value" v-model="checklist.Proper_Software_Loads" />
+      <label class="form-check-label" :for="'Sofware_' + opt.value"> </label> </div>
+  </td>
+      </tr>
+
+      
+      <tr>
+  <td class="border px-4 py-2" rowspan="2">7</td>
+  <td class="border px-4 py-2" rowspan="2">Viruses and Malware</td>
+  <td class="border px-4 py-2">Anti-virus installed</td>
+
+  <!-- Loop through radio options -->
+  <td v-for="opt in options" :key="opt.value" class="border text-center">
+  <div class="form-check form-check-inline">
+  <input class="form-check-input" type="radio" :id="'virus1_' + opt.value":value="opt.value"  
+  v-model="checklist.Viruses_Malware1" /><label class="form-check-label" :for="'virus1_' + opt.value" >{{ opt.label }}</label>
+  </div>
+  </td>
+  </tr>
+  
+  <td class="border px-4 py-2">  Virus scan done</td>
+  <!-- Loop through radio options -->
+  <td v-for="opt in options" :key="opt.value" class="border text-center">
+  <div class="form-check form-check-inline">
+  <input class="form-check-input" type="radio" :id="'virus2_' + opt.value":value="opt.value"  
+  v-model="checklist.Viruses_Malware2" /><label class="form-check-label" :for="'virus2_' + opt.value" >{{ opt.label }}</label>
+  </div>
+  </td>
+ 
+
+
+
+  <!-- Clearance Section -->
+<tr>
+  <td class="border px-4 py-2" rowspan="4">8</td>
+  <td class="border px-4 py-2" rowspan="4">Clearance</td>
+  <td class="border px-4 py-2">Unuse Software Removed</td>
+  <!-- Clearance1 -->
+  <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'clearance1_' + opt.value" :value="opt.value" v-model="checklist.Clearance1" />
+      <label class="form-check-label" :for="'clearance1_' + opt.value"> </label> </div>
+  </td>
+  </tr>
+
+  <tr>
+  <td class="border px-4 py-2">Temporary files removed</td>
+  <!-- Clearance2 -->
+  <td v-for="opt in options" :key="opt.value" class="border text-center"> 
+    <div class="form-check form-check-inline"><input  class="form-check-input"  type="radio" :id="'clearance2_' + opt.value" :value="opt.value" v-model="checklist.Clearance2" />
+    <label class="form-check-label" :for="'clearance2_' + opt.value"></label></div>
+  </td>
+  </tr>
+
+  <tr>
+  <td class="border px-4 py-2">Cache Cleared</td>
+
+  <!-- Clearance3 -->
+  <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'clearance3_' + opt.value" :value="opt.value" v-model="checklist.Clearance3"  />
+      <label class="form-check-label" :for="'clearance3_' + opt.value" ></label></div>
+   </td>
+  </tr>
+
+<tr>
+  <td class="border px-4 py-2">Recycle Bin Emptied</td>
+
+  <!-- Clearance4 -->
+  <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline">
+<input class="form-check-input" type="radio" :id="'clearance4_' + opt.value" :value="opt.value" v-model="checklist.Clearance4" />
+<label class="form-check-label" :for="'clearance4_' + opt.value"></label></div>
+  </td>
+</tr>
+
+       
+      <tr>
+        <td class="border px-4 py-2" rowspan="5">9</td>
+        <td class="border px-4 py-2" rowspan="5">Interiors and Cleaning			</td>
+        <td class="border px-4 py-2">Dust removed			</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Interior1_' + opt.value" :value="opt.value" v-model="checklist.Interiors_Cleaning1" />
+      <label class="form-check-label" :for="'Interior1_' + opt.value"> </label> </div>
+  </td>
+  </tr>
+
+      <tr>
+        <td class="border px-4 py-2">No loose parts			</td>
+           <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Interior2_' + opt.value" :value="opt.value" v-model="checklist.Interiors_Cleaning2" />
+      <label class="form-check-label" :for="'Interior2_' + opt.value"> </label> </div>
+  </td>
+  </tr>
+      <tr>
+        <td class="border px-4 py-2">Airflow is O.K.				</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Interior3_' + opt.value" :value="opt.value" v-model="checklist.Interiors_Cleaning3" />
+      <label class="form-check-label" :for="'Interior3_' + opt.value"> </label> </div>
+  </td>
+  </tr>
+      <tr>
+        <td class="border px-4 py-2">Cables unplugged and re-plugged				</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Interior4_' + opt.value" :value="opt.value" v-model="checklist.Interiors_Cleaning4" />
+      <label class="form-check-label" :for="'Interior4_' + opt.value"> </label> </div>
+  </td>
+  </tr>
+      <tr>
+        <td class="border px-4 py-2">Fans are operating					</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Interior5_' + opt.value" :value="opt.value" v-model="checklist.Interiors_Cleaning5" />
+      <label class="form-check-label" :for="'Interior5_' + opt.value"> </label> </div>
+  </td>
+  </tr>
+
+      <tr>
+        <td class="border px-4 py-2" rowspan="7">10</td>
+        <td class="border px-4 py-2" rowspan="7">Peripheral Devices	</td>
+        <td class="border px-4 py-2">Mouse			</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device1_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices1" />
+      <label class="form-check-label" :for="'Device1_' + opt.value"> </label> </div>
+  </td>
+  
+  </tr>
+      <tr>
+        <td class="border px-4 py-2">Keyboard				</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device2_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices2" />
+      <label class="form-check-label" :for="'Device2_' + opt.value"> </label> </div>
+  </td>
+</tr>
+        <td class="border px-4 py-2">Monitor</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device3_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices3" />
+      <label class="form-check-label" :for="'Device3_' + opt.value"> </label> </div>
+  </td>
+
+      <tr>
+        <td class="border px-4 py-2">UPS	</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device4_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices4" />
+      <label class="form-check-label" :for="'Device4_' + opt.value"> </label> </div>
+  </td>
+      </tr>
+      
+      <tr>
+        <td class="border px-4 py-2">Printer	</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device5_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices5" />
+      <label class="form-check-label" :for="'Device5_' + opt.value"> </label> </div>
+  </td>
+      </tr>
+
+      <tr>
+        <td class="border px-4 py-2">Telephone extension	</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device6_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices6" />
+      <label class="form-check-label" :for="'Device6_' + opt.value"> </label> </div>
+  </td>
+      </tr>
+      <tr>
+        <td class="border px-4 py-2">Fax	</td>
+        <td v-for="opt in options" :key="opt.value" class="border text-center">
+    <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device7_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices7" />
+      <label class="form-check-label" :for="'Device7_' + opt.value"> </label> </div>
+  </td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <!-- Summary -->
+  <div class="mt-3">
+    <label for="comments" class="fw-bold">Summary/Recommendation</label>
+    <textarea id="comments" v-model="checklist.Summary" class="form-control" rows="3"
+              placeholder="Enter any additional comments..."></textarea>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
+</div>
+</div>
+</div>
+</div>
   </MainLayout>
 </template>
 

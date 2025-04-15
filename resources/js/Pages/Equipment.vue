@@ -5,12 +5,13 @@ import axios from "axios";
 
 const props = defineProps({
   departments: { type: Array, default: () => [] },  
-  pmYear: { type: Object, default: () => ({}) },
   YrId: { type: [String, Number], default: null }, 
   PlanId: { type: [String, Number], default: null },
   office: { type: Object, default: () => ({}) },
   deptId: { type: [String, Number], default: null },  
-  categoryId: { type: [String, Number], default: null } 
+  categoryId: { type: [String, Number], default: null },
+  pmYear: { type: Object,default: () => ({ Name: '', Description: '' })},
+  pmYearList: {type: Array,default: () => []}
 
 });
 
@@ -18,6 +19,76 @@ const props = defineProps({
 const department = ref(props.departments || []);
 const mainId = ref (0)
 const selectedDepartments = ref(null);
+const pmYear = ref({}); // selected year object
+const selectedYear = ref(pmYear); // Initially set to passed `pmYear` from props
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+const updateYear = async (year) => {
+  pmYear.value = year;  // Set selected year
+  isDropdownOpen.value = false;  // Close the dropdown
+
+  try {
+    // Fetch checklist data using the selected YrId
+    const response = await axios.get(`/api/getChecklistByYrId/${year.YrId}`);
+    
+    console.log("API Response:", response.data);  // Log the API response to check its structure
+
+    if (response.data.success) {
+      const data = response.data.data[0];  // Access first item in the response
+
+      // Check if the data object exists and has the required properties
+      if (data) {
+        checklist.System_Boot = data.System_Boot || "";
+        checklist.System_Log = data.System_Log || "";
+
+        checklist.Network_Settings1 = data.Network_Settings1 || "";
+        checklist.Network_Settings2 = data.Network_Settings2 || "";
+        checklist.Network_Settings3 = data.Network_Settings3 || "";
+        checklist.Network_Settings4 = data.Network_Settings4 || "";
+        checklist.Network_Settings5 = data.Network_Settings5 || "";
+        checklist.Network_Settings6 = data.Network_Settings6 || "";
+
+        checklist.Computer_Hardware_Settings1 = data.Computer_Hardware_Settings1 || "";
+        checklist.Computer_Hardware_Settings2 = data.Computer_Hardware_Settings2 || "";
+        checklist.Computer_Hardware_Settings3 = data.Computer_Hardware_Settings3 || "";
+        checklist.Computer_Hardware_Settings4 = data.Computer_Hardware_Settings4 || "";
+        checklist.Computer_Hardware_Settings5 = data.Computer_Hardware_Settings5 || "";
+        checklist.Computer_Hardware_Settings6 = data.Computer_Hardware_Settings6 || "";
+
+        checklist.Browser_Settings = data.Browser_Settings || "";
+        checklist.Proper_Software_Loads = data.Proper_Software_Loads || "";
+
+        checklist.Viruses_Malware1 = data.Viruses_Malware1 || "";
+        checklist.Viruses_Malware2 = data.Viruses_Malware2 || "";
+
+        checklist.Clearance1 = data.Clearance1 || "";
+        checklist.Clearance2 = data.Clearance2 || "";
+        checklist.Clearance3 = data.Clearance3 || "";
+        checklist.Clearance4 = data.Clearance4 || "";
+
+        checklist.Interiors_Cleaning1 = data.Interiors_Cleaning1 || "";
+        checklist.Interiors_Cleaning2 = data.Interiors_Cleaning2 || "";
+        checklist.Interiors_Cleaning3 = data.Interiors_Cleaning3 || "";
+        checklist.Interiors_Cleaning4 = data.Interiors_Cleaning4 || "";
+        checklist.Interiors_Cleaning5 = data.Interiors_Cleaning5 || "";
+
+        checklist.Peripheral_Devices1 = data.Peripheral_Devices1 || "";
+        checklist.Peripheral_Devices2 = data.Peripheral_Devices2 || "";
+        checklist.Peripheral_Devices3 = data.Peripheral_Devices3 || "";
+        checklist.Peripheral_Devices4 = data.Peripheral_Devices4 || "";
+        checklist.Peripheral_Devices5 = data.Peripheral_Devices5 || "";
+        checklist.Peripheral_Devices6 = data.Peripheral_Devices6 || "";
+        checklist.Peripheral_Devices7 = data.Peripheral_Devices7 || "";
+
+        checklist.Summary = data.Summary || "";
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching checklist data:", error);
+  }
+};
 
 
       
@@ -55,9 +126,36 @@ const modal1 = () => {
 
 };
 
-const openStep2Modal = () => {
-  isStep1ModalOpen.value = false;
-  isStep2ModalOpen.value = true;
+const openStepModal = (mainId) => {
+  isStep1ModalOpen.value = true;
+  currentMainId.value = mainId;
+  console.log("MainId: " + currentMainId.value);
+
+  const employeeData = props.employees.find(emp => String(emp.mainId) === String(mainId));
+  if (employeeData) {
+    selectedEmployee.value = employeeData;
+  } else {
+    console.error("Employee not found with mainId:", mainId);
+  }
+};
+
+
+const openStep2Modal = (mainId = currentMainId.value) => {
+  console.log("mainId passed to Step 2:", mainId);
+
+  if (!mainId) {
+    console.error("Step 2 called without a valid mainId");
+    return;
+  }
+
+  const employeeData = props.employees.find(emp => String(emp.mainId) === String(mainId));
+  if (employeeData) {
+    selectedEmployee.value = employeeData;
+    isStep1ModalOpen.value = false;
+    isStep2ModalOpen.value = true;
+  } else {
+    console.error("Employee not found with mainId:", mainId);
+  }
 };
 
 const closeModal = () => {
@@ -226,6 +324,7 @@ const submitForm = async () => {
     const payload = {
       employeeId: null,
       deptId,
+      YrId: selectedDepartments.value?.YrId || props.YrId,
       pcName: formData.pcName,
       ticketnumber: formData.ticketnumber,
       equipment: formData.equipment,
@@ -438,17 +537,7 @@ const printDetails = (item) => {
 };
 
 const isDropdownOpen = ref(false);
-const selectedYear = ref(new Date().getFullYear());
-const years = ref([2023, 2024, 2025, 2026, 2027]);
 
-const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value;
-};
-
-const updateYear = (year) => {
-  selectedYear.value = year;
-  isDropdownOpen.value = false; // Close dropdown after selection
-};
 // Add User Modal Control
 const isAddUserModalOpen = ref(false);
 
@@ -522,8 +611,10 @@ watch(isStatusDropdownOpen, (newVal) => {
             
             <td class="text-center">
             <div class="d-flex justify-content-center">
-              
-
+              <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2" 
+                      @click="openStepModal(employee.mainId)">
+                <i class="fas fa-eye me-1"></i> View
+              </button>
               <button 
                 class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
                 @click="printDetails(employee)">
@@ -757,18 +848,19 @@ watch(isStatusDropdownOpen, (newVal) => {
             <h4 class="modal-title fw-bold">ITEM CHECKLIST</h4>
 
             <!-- SAVE BUTTON ON WHAT YR TO BE SAVED IF NEEDED -->
-            <div class="dropdown position-relative ms-auto">
-              <button class="btn btn-primary dropdown-toggle ms-auto" type="button" @click="toggleDropdown">
-                Save
-              </button>
-              <ul class="dropdown-menu me-2" :class="{ show: isDropdownOpen }">
-                <li v-for="year in years" :key="year">
-                  <a class="dropdown-item" href="#" @click.prevent="updateYear(year)">
-                    {{ year }}
-                  </a>
-                </li>
-              </ul>
-            </div>
+                <!-- SAVE BUTTON ON WHAT YR TO BE SAVED IF NEEDED -->
+                <div class="dropdown position-relative ms-auto">
+  <button class="btn btn-primary dropdown-toggle ms-auto" type="button" @click="toggleDropdown">
+    {{ selectedYear.Name || 'Select Year' }}
+  </button>
+  <ul class="dropdown-menu me-2" :class="{ show: isDropdownOpen }">
+    <li v-for="year in pmYearList" :key="year.YrId">
+      <a class="dropdown-item" href="#" @click.prevent="updateYear(year)">
+        {{ year.Name }}
+      </a>
+    </li>
+  </ul>
+</div>
 
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
