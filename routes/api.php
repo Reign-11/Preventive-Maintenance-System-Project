@@ -62,6 +62,8 @@ Route::delete('/delete-maintenance-planB/{id}', [MaintenancePlanControllerB::cla
 
 Route::post('/add-checkilist', [MaintenancePlanControllerB::class, 'addCollegeB']);
 
+Route::post('/addDatacenter', [MaintenancePlanControllerB::class, 'addDatacenter']);
+
 
 
 // SET c

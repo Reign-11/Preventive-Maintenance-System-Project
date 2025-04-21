@@ -233,4 +233,125 @@ class MaintenancePlanControllerB extends Controller
         }
     }
     
+
+    public function departments(Request $request, int $departmentId )
+{
+try {
+    // Use route parameter directly
+        $yrId = $request->query('YrId');  
+        $PlanId  = $request->query('PlanId'); 
+        $officeId  = $request->query('officeId'); 
+        $categoryId = $request->query('CatId', 2); 
+
+
+
+        $dept = DB::select('CALL GetDepartmentData(?)', [$departmentId]);
+
+        $depts = array_filter($dept, function ($depart) use ($PlanId, $yrId, $officeId, $departmentId,$categoryId) {
+            return $depart-> PlanId == $PlanId 
+            && $depart-> YrId == $yrId
+            && $depart-> OffId == $officeId
+            && $depart-> deptId == $departmentId
+            &&  ($depart->CatId == $categoryId || is_null($depart->CatId));
+        });
+
+
+        $depts = array_values ($depts);
+
+        $pmYearData = DB::table('tbl_pmyear')->get();
+
+
+        return Inertia::render('Viewdata', [
+            'departments' => $depts,
+            'YrId' => $yrId ?? '',
+            'PlanId' => $PlanId ?? '',
+            'officeId' => $officeId ?? '',
+            'CatId' => $categoryId ?? 2,
+            'pmYearList' => $pmYearData, 
+            'pmYear' => $pmYearData->first() ? (array) $pmYearData->first() : ['Name' => '', 'Description' => ''],
+
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error("❌ Error fetching department:", ['error' => $e->getMessage()]);
+        return redirect()->back()->withErrors(['error' => 'Failed to fetch department data']);
+    }
+    }
+    
+    public function addDatacenter(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'YrId' => 'required|integer',
+            'OffId' => 'required|integer',
+            'PlanId' => 'required|integer',
+            'deptId' => 'required|integer',
+
+
+            'data_softsystem_checks1' => 'nullable|integer',
+            'data_softsystem_checks2' => 'nullable|integer',
+            'data_softsystem_checks3' => 'nullable|integer',
+            'data_softsystem_checks4' => 'nullable|integer',
+            'data_softsystem_checks5' => 'nullable|integer',
+            'data_softsystem_checks6' => 'nullable|integer',
+            'data_softsystem_checks7' => 'nullable|integer',
+            'data_softsystem_checks8' => 'nullable|integer',
+
+            'security_checks1' => 'nullable|integer',
+            'security_checks2' => 'nullable|integer',
+            'security_checks3' => 'nullable|integer',
+            'security_checks4' => 'nullable|integer',
+            'security_checks5' => 'nullable|integer',
+
+            'hardware_checks1' => 'nullable|integer',
+            'hardware_checks2' => 'nullable|integer',
+
+            'Summary' => 'nullable|string|max:255',
+        ]);
+
+        // Prepare parameters for the stored procedure
+        $parameters = [
+            $validated['YrId'],
+            $validated['OffId'],
+            $validated['PlanId'],
+            $validated['deptId'],
+
+            $validated['data_softsystem_checks1'],
+            $validated['data_softsystem_checks2'],
+            $validated['data_softsystem_checks3'],
+            $validated['data_softsystem_checks4'],
+            $validated['data_softsystem_checks5'],
+            $validated['data_softsystem_checks6'],
+            $validated['data_softsystem_checks7'],
+            $validated['data_softsystem_checks8'],
+
+            $validated['security_checks1'],
+            $validated['security_checks2'],
+            $validated['security_checks3'],
+            $validated['security_checks4'],
+            $validated['security_checks5'],
+
+            $validated['hardware_checks1'],
+            $validated['hardware_checks2'],
+
+            $validated['Summary'],
+        ];
+
+        // Log the parameters
+        \Log::info('Parameters passed to InsertChecklist: ', $parameters);
+
+        // Call Stored Procedure
+        DB::statement("CALL InsertChecklist(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
+
+        return response()->json([
+            'message' => 'Data inserted successfully',
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+    
 }

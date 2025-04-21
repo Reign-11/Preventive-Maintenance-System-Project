@@ -167,7 +167,7 @@ const printDetails = (item) => {
       })"
       class="btn btn-sm btn-outline-primary w-auto align-items-center"
       @click.prevent="logParams(department.DeptId)">
-      <i class="fas fa-eye me-1"></i> Add Equipment 
+      <i class="fas fa-tools me-1"></i> Add Equipment
     </Link>
           </td>
           <td class="status-column">N/A</td> 

@@ -112,7 +112,6 @@ const selectedOption = ref("Office");
 const isModalOpen = ref(false);  
 const isLoading = ref(false);
 
-
 const openModal = () => {
   isModalOpen.value = true;
 };
@@ -121,7 +120,6 @@ const openModal = () => {
 const iscloseModal = () => {
   isModalOpen.value = false;
 };
-
 
 const openStep1Modal = (employeeId) => {
   isStep1ModalOpen.value = true;
@@ -137,7 +135,6 @@ const modal1 = () => {
   isStep2ModalOpen.value = true;
 
 };
-
 
 const openStep2Modal = () => {
   isStep1ModalOpen.value = false;
@@ -159,7 +156,6 @@ const disableBackgroundScroll = () => {
 const enableBackgroundScroll = () => {
   document.body.style.overflow = '';
 };
-
 
 // Form Data
 const formData = reactive({
@@ -211,7 +207,6 @@ const formData = reactive({
     AVR: "",
     NetWorkMacIp: ""
   },
-
 });
 
 watch(selectedEmployee, (newVal) => {
@@ -225,7 +220,7 @@ watch(selectedEmployee, (newVal) => {
 const isLocked = ref(false);
 
 const setForDisposal = () => {
-  formData.disposal = "1";
+  formData.disposal = 1;
 
   // Lock equipment statuses
   formData.equipmentInstalled = [];
@@ -246,18 +241,17 @@ const setForDisposal = () => {
 
   // Lock software
   formData.softwareInstalled = [];
-  formData.enrollment = "1";
-  formData.adobe_reader = "1";
-  formData.word_processor = "1";
-  formData.media_player = "1";
-  formData.anti_virus = "1";
-  formData.browser = "1";
-  formData.microsoft = "1";
+  formData.enrollment = "0";
+  formData.adobe_reader = "0";
+  formData.word_processor = "0";
+  formData.media_player = "0";
+  formData.anti_virus = "0";
+  formData.browser = "0";
+  formData.microsoft = "0";
   formData.other_sys = "";
 
   isLocked.value = true; // Set UI to readonly/disabled
 };
-
 
 // Options for checkboxes
 const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS', 'AVR', 'Other'];
@@ -278,7 +272,6 @@ const updateOsInstalled = (option) => {
     formData.windows11 = 1;
   }
 };
-
 
 const updateEquipmentStatus = (option) => {
   // If option is CHECKED, set to 1
@@ -303,8 +296,6 @@ const updateEquipmentStatus = (option) => {
     if (option === "Other") formData.other_equip = ""; // Optional: clear
   }
 };
-
-
 
 const updateSoftwareStatus = (option) => {
   if (formData.softwareInstalled.includes(option)) {
@@ -383,11 +374,6 @@ const checklist = reactive({
   Summary: ""
 });
 
-
-
-
-
-
 const submitForm = async () => {
   try {
     if (!props.employee || props.employee.length === 0) {
@@ -407,7 +393,7 @@ const submitForm = async () => {
 
     // Construct request payload
     const payload = {
-      disposal: String(formData.disposal),
+      disposal: formData.disposal,
       employeeId,
       YrId: selectedEmployee.value.YrId,
       ticketnumber: formData.ticketnumber, 
@@ -562,9 +548,6 @@ const printDetails = (item) => {
   printWindow.print();
 };
 
-
-
-
 // Add User Modal Control
 const isAddUserModalOpen = ref(false);
 
@@ -666,13 +649,13 @@ watch(isStatusDropdownOpen, (newVal) => {
       <button 
         class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
         @click="openStep1Modal(employee.employeeId)">
-        <i class="fas fa-eye me-1"></i> Add Form
+        <i class="fas fa-edit me-1"></i> Add Form
       </button>
 
       <button 
         class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
         @click="printDetails(employee)">
-        <i class="fas fa-eye me-1"></i> Print
+        <i class="fas fa-print me-1"></i> Print
       </button>
     </div>
   </td>
@@ -683,25 +666,22 @@ watch(isStatusDropdownOpen, (newVal) => {
 
   <td>
     <Link 
-  v-if="employee.employeeId"
-  :href="route('employees', {
-    employeeId: employee.employeeId, 
-    YrId: employee.YrId,
-    PlanId: employee.PlanId,
-    officeId: employee.OffId,
-    DeptId: employee.DeptId,
-    CatId: employee.CatId
-  })"
-  class="btn btn-sm btn-outline-primary w-auto align-items-center"
->
-  <i class="fas fa-eye me-1"></i> View User
-</Link>
-
-
-  </td>
+    v-if="employee.employeeId"
+    :href="route('employees', {
+      employeeId: employee.employeeId, 
+      YrId: employee.YrId,
+      PlanId: employee.PlanId,
+      officeId: employee.OffId,
+      DeptId: employee.DeptId,
+      CatId: employee.CatId
+      })"
+      class="btn btn-sm btn-outline-primary w-auto align-items-center"
+    >
+      <i class="fas fa-eye me-1"></i> View User
+    </Link>
+</td>
 </tr>
-
-  </tbody>
+</tbody>
 </table>
 
       <!-- Add User Modal -->
@@ -732,17 +712,17 @@ watch(isStatusDropdownOpen, (newVal) => {
     </div>
   </div>
 
-<!-- Modal -->
-<div v-if="isStep1ModalOpen" class="modal fade show d-block">
+    <!-- Modal -->
+    <div v-if="isStep1ModalOpen" class="modal fade show d-block">
       <div class="modal-dialog modal-xl" role="document">
         <!-- Preventive Maintenance Form Modal -->
         <div class="modal-content">
           <!-- Modal Header -->
           <div class="modal-header d-flex align-items-center justify-content-between w-100 flex-wrap gap-3">
-
+                               
             <!-- Title -->
             <h5 class="modal-title mb-0">Preventive Maintenance Form</h5>
-
+ 
             <!-- Inputs Group -->
             <div class="d-flex align-items-center gap-3 flex-wrap">
               
@@ -773,13 +753,8 @@ watch(isStatusDropdownOpen, (newVal) => {
                 style="width: 150px; height: 30px; font-size: 14px; padding: 5px;"
             >
               </div>
-
-
-        <!-- MODAL -->
-
         <!-- For Disposal Button -->
         <button class="btn btn-danger btn-sm" @click="setForDisposal">For Disposal</button>
-
       </div>
 
           <div class="modal-body modal-scrollable">
@@ -915,29 +890,28 @@ watch(isStatusDropdownOpen, (newVal) => {
     </div>
   </div>
 
-              <!-- Desktop Specifications -->
-                       <div class="card p-3 mt-3">
-              <h6 class="fw-bold">Desktop Specifications:</h6>
-              <div class="row">
-                <div v-for="(value, key) in formData.desktopSpecs" :key="key" class="col-md-2">
-                  <label class="form-label">{{ key.replace(/([A-Z])/g, ' $1') }}</label>
-                  <input type="text" class="form-control" v-model="formData.desktopSpecs[key]">
-                </div>
-              </div>
+    <!-- Desktop Specifications -->
+      <div class="card p-3 mt-3">
+        <h6 class="fw-bold">Desktop Specifications:</h6>
+          <div class="row">
+            <div v-for="(value, key) in formData.desktopSpecs" :key="key" class="col-md-2">
+              <label class="form-label">{{ key.replace(/([A-Z])/g, ' $1') }}</label>
+              <input type="text" class="form-control" v-model="formData.desktopSpecs[key]">
             </div>
-                     <!-- Modal Footer -->
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
-            <button type="button" class="btn btn-primary" @click="submitForm">Save</button>
-            <button type="button" class="btn btn-secondary" @click="openStep2Modal()">Next  </button>
-          </div>
+            </div>
           </div>
 
- 
-        </div>
+    <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
+        <button type="button" class="btn btn-primary" @click="submitForm">Save</button>
+        <button type="button" class="btn btn-secondary" @click="openStep2Modal()">Next  </button>
       </div>
-    </div>
-</div>
+      </div>
+      </div>
+      </div>
+      </div>
+      </div>
 
     <!-- Step 2: Preventive Maintenance Checklist Modal -->
     <div v-if="isStep2ModalOpen" class="modal fade show d-block">

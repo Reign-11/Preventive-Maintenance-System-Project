@@ -1,4 +1,3 @@
-
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount,defineProps} from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
@@ -107,11 +106,10 @@ const formData = ref({
     Mac: '',
     DNS: '',
     DHCP: '',
-    Vlan: '',
     WifiName: '',
+    WifiBand: '',
     Password: '',
-    Vlan: '',
-    DHCP: ''
+    Vlan: ''
   } 
 });
 
@@ -121,7 +119,7 @@ const formatKey = (key) => {
 };
 
 const filteredSpecs = computed(() => {
-  const excluded = ['DHCP', 'IPv4', 'IPv6', 'Gateway'];
+  const excluded = ['DHCP', 'IPv4', 'IPv6', 'Gateway', 'WifiBand'];
   return Object.fromEntries(
     Object.entries(formData.value.desktopSpecs).filter(([key]) => !excluded.includes(key))
   );
@@ -204,29 +202,31 @@ const submitForm = async () => {
               <div class="d-flex justify-content-center">
               <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
               @click="openStep1Modal(item)">
-              <i class="fas fa-eye me-1"></i>View</button>
+              <i class="fas fa-edit me-1"></i>Fillup Form</button>
             </div>
             </td>
-            <td :class="{ 'clear-status': 'Clear', 'unclear-status':'Unclear' }">
-              
+            <td :class="{ 'clear-status': 'Clear', 'unclear-status':'Unclear' }">              
             </td>
           </tr>
         </tbody>
       </table>
-
     </div>
 
    <!-- Modal -->
    <div v-if="isStep1ModalOpen" class="modal fade show d-block">
         <div class="modal-dialog modal-xl" role="document">
+          <!-- Preventive Maintenance Form Modal -->
             <div class="modal-content">
+            <!-- Modal Header -->
             <div class="modal-header d-flex align-items-center justify-content-between w-100 flex-wrap gap-3">
-                <h5 class="modal-title">Preventive Maintenance Form</h5>
+            <!-- Title -->
+            <h5 class="modal-title mb-0">Preventive Maintenance Form</h5>
             <!-- Inputs Group -->
-            <div class="d-flex align-items-center gap-4 flex-wrap">
+            <div class="d-flex align-items-center gap-3 flex-wrap ml-auto">
+            <!-- <div class="d-flex align-items-center gap-4 flex-wrap"> -->
               
-                     <!-- Inputs Group -->
-                     <div class="d-flex align-items-center gap-3 flex-wrap">
+            <!-- Inputs Group -->
+              <div class="d-flex align-items-center gap-3 flex-wrap">
               
               <!-- Number Input -->
               <div class="d-flex flex-column">
@@ -332,10 +332,10 @@ const submitForm = async () => {
                 </div>
 
 
-                <!-- Wifi -->
+                <!-- Wifi Band-->
                 <div class="col-md-2">
-                  <label class="form-label">Wifi</label>
-                  <select class="form-control" v-model="formData.desktopSpecs.DHCP">
+                  <label class="form-label">Wifi Band</label>
+                  <select class="form-control" v-model="formData.desktopSpecs.WifiBand">
                     <option disabled value="">Select</option>
                     <option>2.4 GHz</option>
                     <option>5z</option>

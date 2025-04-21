@@ -421,7 +421,7 @@ public function employeeChecklist(Request $request)
             'ups_details' => 'nullable|string|max:255',
             'printer_details' => 'nullable|string|max:255',
             'network_mac_ip_details' => 'nullable|string|max:255',
-            'disposal' => 'nullable|string|max:255',
+            'disposal' => 'nullable|integer|max:255',
 
             
         ]);

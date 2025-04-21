@@ -83,6 +83,11 @@ Route::get('/datacenter/{officeId}', [MaintenancePlanControllerB::class, 'data']
 
 Route::get('/prevoffice/{officeId}', [MaintenancePlanControllerC::class, 'prev'])
     ->middleware(['auth', 'verified'])
-    ->name('prevoffice');;
+    ->name('prevoffice');
+
+
+ Route::get('/viewdata/{departmentId}', [MaintenancePlanControllerB::class, 'departments'])
+    ->middleware(['auth', 'verified'])
+    ->name('viewdata');
 
 require __DIR__.'/auth.php';

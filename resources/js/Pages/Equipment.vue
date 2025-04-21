@@ -207,9 +207,19 @@ const formData = reactive({
     Mouse: "",
     AVR: "",
     NetWorkMacIp: ""
+    
   },
-
 });
+
+const officeUnits = ref([
+  "Admin Office",
+  "IT Department",
+  "HR Department",
+  "Finance Office",
+  "Maintenance",
+  "Library"
+]);
+
 watch(selectedDepartments, (newVal) => {
   if (newVal) {
     console.log(newVal); // Check the new value of selectedEmployee
@@ -739,19 +749,15 @@ watch(isStatusDropdownOpen, (newVal) => {
               <button 
                 class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
                 @click="printDetails(employee)">
-                <i class="fas fa-eye me-1"></i> Print
+                <i class="fas fa-print me-1"></i> Print
               </button>
             </div>
           </td>       
-
             <!-- Action button (e.g., print details) -->
             <td class="text-center">
            
-            </td>
-            
-        
-              </tr>
-
+          </td>
+        </tr>
       </tbody>
     </table>
 
@@ -809,8 +815,9 @@ watch(isStatusDropdownOpen, (newVal) => {
           <div class="modal-body modal-scrollable">
             <!-- User & Date Info -->
             <div class="row mb-3">
-           
-              <div class="col-md-3">
+              
+            
+              <div class="col-md-2">
                 <label class="form-label">Office/College/Unit</label>
                 <input type="text" class="form-control" v-model="formData.officeUnit">
               </div>
