@@ -67,10 +67,6 @@ const openStep2Modal = (mainId = currentMainId.value) => {
   }
 };
 
-
-
-
-
 // Form Data
 const formData = reactive({
   ticketnumber: "",
@@ -151,7 +147,6 @@ watch(selectedEmployee, (newVal) => {
     if (newVal.adobe_reader === 1) formData.softwareInstalled.push("Adobe Reader");
     if (newVal.word_processor === 1) formData.softwareInstalled.push("Word Processor");
     if (newVal.media_player === 1) formData.softwareInstalled.push("Media Player");
-
     if (newVal.other_sys) formData.softwareInstalled.push("Other");
 
     formData.other_sys = newVal.other_sys || "";
@@ -184,9 +179,7 @@ const updateEquipmentStatus = (option) => {
   if (option === "UPS") formData.ups_status = "1";
   if (option === "AVR") formData.avr_status = "1";
   if (option === "Other") formData.other_equip = ""; // Allow user input
-
 } else {
-
   // Set the selected option to "1"
   if (option === "CPU") formData.cpu_status = "1";
   if (option === "Keyboard") formData.keyboard_status = "1";
@@ -199,7 +192,6 @@ const updateEquipmentStatus = (option) => {
 }
 };
 
-
 const updateSoftwareStatus = (option) => {
   if (formData.softwareInstalled.includes(option)) {
     if (option === "Enrollment System") formData.enrollment = "1";
@@ -210,7 +202,6 @@ const updateSoftwareStatus = (option) => {
     if (option === "Browser") formData.browser = "1";
     if (option === "Microsoft") formData.microsoft = "1";
     if (option === "Other") formData.other_sys = ""; // Allow user input
-
   } else {
     if (option === "Enrollment System") formData.enrollment = "0";
     if (option === "Adobe Reader") formData.adobe_reader = "0";
@@ -237,8 +228,6 @@ const updateOsInstalled = (option) => {
     formData.windows11 = 1;
   }
 };
-
-
 
 // Options for checkboxes
 const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS', 'AVR', 'Other'];
@@ -303,15 +292,73 @@ const checklist = reactive({
   Summary: ""
 });
 
-
+// This should replace your existing watch function for selectedEmployee
 watch(selectedEmployee, (newVal) => {
-  console.log("Selected Employee Data:", newVal); // Check the data structure
   if (newVal) {
-    for (const key in checklist) {
-      checklist[key] = newVal[key] || ""; // Update checklist for all matching keys
-    }
+    console.log("Selected employee changed:", newVal);
+    
+    // Basic Info
+    formData.userOperator = newVal.emp_name || "";
+    formData.officeUnit = newVal.OfficeName || "";
+    formData.pcName = newVal.pcName || "";
+    formData.department = newVal.department_name || "";
+    formData.ticketnumber = newVal.ticketnumber || "";
+    formData.equipment = newVal.equipmentId || "";
+    formData.dateAcquired = newVal.date_acquired || "";
+    formData.date = newVal.date || "";
 
-    // If the keys don't match exactly, you can manually map the specific keys as needed
+    // Equipment Installed
+    formData.equipmentInstalled = [];
+    if (newVal.cpu === 1) formData.equipmentInstalled.push("CPU");
+    if (newVal.monitor_status === 1) formData.equipmentInstalled.push("Monitor");
+    if (newVal.mouse_status === 1) formData.equipmentInstalled.push("Mouse");
+    if (newVal.keyboard_status === 1) formData.equipmentInstalled.push("Keyboard");
+    if (newVal.printer_status === 1) formData.equipmentInstalled.push("Printer");
+    if (newVal.ups_status === 1) formData.equipmentInstalled.push("UPS");
+    if (newVal.avr_status === 1) formData.equipmentInstalled.push("AVR");
+    if (newVal.other_equip) formData.equipmentInstalled.push("Other");
+    formData.other_equip = newVal.other_equip || "";
+
+    // Operating System
+    if (newVal.windows10 === 1) {
+      formData.osInstalled = "Windows 10";
+    } else if (newVal.windows11 === 1) {
+      formData.osInstalled = "Windows 11";
+    } else {
+      formData.osInstalled = "Other";
+    }
+    formData.license = newVal.license || "";
+    formData.other_os = newVal.other_os || "";
+
+    // Software Installed
+    formData.softwareInstalled = [];
+    if (newVal.enrollment === 1) formData.softwareInstalled.push("Enrollment System");
+    if (newVal.anti_virus === 1) formData.softwareInstalled.push("Anti-Virus");
+    if (newVal.browser === 1) formData.softwareInstalled.push("Browser");
+    if (newVal.microsoft === 1) formData.softwareInstalled.push("Microsoft");
+    if (newVal.adobe_reader === 1) formData.softwareInstalled.push("Adobe Reader");
+    if (newVal.word_processor === 1) formData.softwareInstalled.push("Word Processor");
+    if (newVal.media_player === 1) formData.softwareInstalled.push("Media Player");
+    if (newVal.other_sys) formData.softwareInstalled.push("Other");
+    formData.other_sys = newVal.other_sys || "";
+
+    // Desktop Specs
+    formData.desktopSpecs.Processor = newVal.processor_details || "";
+    formData.desktopSpecs.Motherboard = newVal.motherboard_details || "";
+    formData.desktopSpecs.Memory = newVal.memory_details || "";
+    formData.desktopSpecs.GraphicCard = newVal.graphics_card_details || "";
+    formData.desktopSpecs.Monitor = newVal.monitor_details || "";
+    formData.desktopSpecs.HardDisk = newVal.hard_disk_details || "";
+    formData.desktopSpecs.Casing = newVal.casing_details || "";
+    formData.desktopSpecs.PowerSupply = newVal.power_supply_details || "";
+    formData.desktopSpecs.Keyboard = newVal.keyboard_details || "";
+    formData.desktopSpecs.Mouse = newVal.mouse_details || "";
+    formData.desktopSpecs.AVR = newVal.avr_details || "";
+    formData.desktopSpecs.UPS = newVal.ups_details || "";
+    formData.desktopSpecs.Printer = newVal.printer_details || "";
+    formData.desktopSpecs.NetWorkMacIp = newVal.network_mac_ip_details || "";
+    
+    // Update checklist data specifically
     checklist.System_Boot = newVal.System_Boot || "";
     checklist.System_Log = newVal.System_Log || "";
 
@@ -355,12 +402,46 @@ watch(selectedEmployee, (newVal) => {
     checklist.Peripheral_Devices7 = newVal.Peripheral_Devices7 || "";
 
     checklist.Summary = newVal.Summary || "";
+    
+    // Log the updated data
+    console.log("Checklist data updated successfully");
   }
-});
+}, { immediate: true, deep: true }); // Important: immediate ensures it runs once immediately, deep ensures nested properties are watched
 
+// In your Vue component
+import PrintService from '../../css/PrintService.js'; 
+const printDetails = async (emp) => {
+  // Get employee data
+  const employeeData = props.employees.find(e => String(e.mainId) === String(emp.mainId));
+  if (!employeeData) {
+    console.error("Employee not found for printing with mainId:", emp.mainId);
+    return;
+  }
+  
+  // Set the selected employee to populate form data
+  selectedEmployee.value = employeeData;
+  
+  // Wait a moment for the reactive data to update
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Ensure all checklist values are strings
+  const printReadyChecklist = {};
+  for (const key in checklist) {
+    printReadyChecklist[key] = checklist[key] ? String(checklist[key]) : '';
+  }
+  
+  // Debug what's being printed
+  console.log("Printing with data:", {
+    employeeData,
+    formData: {...formData},
+    checklist: printReadyChecklist
+  });
+  
+  // Use the print service with properly formatted checklist
+  PrintService.printPreventiveMaintenance(employeeData, formData, printReadyChecklist);
+};
 
 </script>
-
 
 <template>
   <MainLayout>
@@ -375,31 +456,36 @@ watch(selectedEmployee, (newVal) => {
           <tr>
             <th>Employee Name </th>
             <th>PC Name </th>
-            <th>Equipment Number  </th>
+            <th>Equipment Number</th>
             <th>Actions</th>
             <th>Status</th>
-            <th>DATE</th>
-    
+            <th>Date</th>
+     
           </tr>
         </thead>
         <tbody>
           <tr v-for="emp in employees" :key="emp.employeeId">
-  <td>{{ emp.emp_name }}</td>
-  <td>{{ emp.pcName }}</td>
-  <td>{{ emp.equipmentId }}</td>
+            <td>{{ emp.emp_name }}</td>
+            <td>{{ emp.pcName }}</td>
+            <td>{{ emp.equipmentId }}</td>
 
-  <td class="text-center">
-    <div class="d-flex justify-content-center">
-      <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-              @click="openStep1Modal(emp.mainId)">
-        <i class="fas fa-eye me-1"></i> View
-      </button>
-    </div>
-  </td>
+            <td class="text-center">
+              <div class="d-flex justify-content-center">
+                <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2" 
+                        @click="openStep1Modal(emp.mainId)">
+                  <i class="fas fa-eye me-1"></i> View
+                </button>
+                <button 
+                class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+                @click="printDetails(emp)">
+                <i class="fas fa-print me-1"></i> Print
+              </button>
+              </div>
+            </td>
+            <td>{{ emp.disposal === 1 ? 'For Disposal' : (emp.disposal == null ? 'None' : emp.disposal) }}</td>
 
-  <td :class="{ 'clear-status': 'Clear', 'unclear-status': 'Unclear' }"></td>
-  <td>{{ formatDate(emp.date) }}</td>
-</tr>
+            <td>{{ formatDate(emp.date) }}</td>
+          </tr>
 
         </tbody>
       </table>
@@ -445,9 +531,6 @@ watch(selectedEmployee, (newVal) => {
                 style="width: 150px; height: 30px; font-size: 14px; padding: 5px;"
             >
               </div>
-
-
-        <!-- MODAL -->
 
         <!-- For Disposal Button -->
         <button class="btn btn-danger btn-sm">For Disposal</button>
@@ -593,7 +676,6 @@ watch(selectedEmployee, (newVal) => {
           </div>
         </div>
 
-
             <!-- Desktop Specifications -->
             <div class="card p-3 mt-3">
               <h6 class="fw-bold text-start">Desktop Specifications:</h6>
@@ -609,14 +691,10 @@ watch(selectedEmployee, (newVal) => {
           <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
           <button type="button" class="btn btn-secondary" @click="openStep2Modal(currentMainId.value)">Next  </button>
         </div>
-        
           </div>
-          
         </div>
-        
       </div>
     </div>
-    
 </div>
 
     </div>
@@ -625,7 +703,6 @@ watch(selectedEmployee, (newVal) => {
         <div class="modal-content">
           <div class="modal-header d-flex justify-content-between align-items-center">
             <h4 class="modal-title fw-bold">ITEM CHECKLIST</h4>
-
          
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
@@ -714,8 +791,8 @@ watch(selectedEmployee, (newVal) => {
 
       <tr>
         <td class="border px-4 py-2" rowspan="6">4</td>
-        <td class="border px-4 py-2" rowspan="6">Computer Hardware Settings	</td>
-        <td class="border px-4 py-2">Verify Device Manager settings	</td>
+        <td class="border px-4 py-2" rowspan="6">Computer Hardware Settings </td>
+        <td class="border px-4 py-2">Verify Device Manager settings </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware1_' + opt.value" :value="opt.value" v-model="checklist.Computer_Hardware_Settings1" />
       <label class="form-check-label" :for="'Hardware1_' + opt.value"> </label> </div>
@@ -729,28 +806,28 @@ watch(selectedEmployee, (newVal) => {
     </td>
       </tr>
       <tr>
-        <td class="border px-4 py-2">Hard Disk	</td>
+        <td class="border px-4 py-2">Hard Disk  </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware3_' + opt.value" :value="opt.value" v-model="checklist.Computer_Hardware_Settings3" />
       <label class="form-check-label" :for="'Hardware3_' + opt.value"> </label> </div>
     </td>
       </tr>
       <tr>
-        <td class="border px-4 py-2">DVD/CD-RW firmware up-to-date	</td>
+        <td class="border px-4 py-2">DVD/CD-RW firmware up-to-date  </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware4_' + opt.value" :value="opt.value" v-model="checklist.Computer_Hardware_Settings4" />
       <label class="form-check-label" :for="'Hardware4_' + opt.value"> </label> </div>
     </td>
       </tr>
       <tr>
-        <td class="border px-4 py-2">Memory is O.K.	</td>
+        <td class="border px-4 py-2">Memory is O.K. </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware5_' + opt.value" :value="opt.value" v-model="checklist.Computer_Hardware_Settings5" />
       <label class="form-check-label" :for="'Hardware5_' + opt.value"> </label> </div>
     </td>
       </tr>
       <tr>
-        <td class="border px-4 py-2">For Laptop battery run-time is norm	</td>
+        <td class="border px-4 py-2">For Laptop battery run-time is norm  </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware6_' + opt.value" :value="opt.value" v-model="checklist.Computer_Hardware_Settings6" />
       <label class="form-check-label" :for="'Hardware6_' + opt.value"> </label> </div>
@@ -759,8 +836,8 @@ watch(selectedEmployee, (newVal) => {
 
       <tr>
         <td class="border px-4 py-2">5  </td>
-        <td class="border px-4 py-2">Browser/Proxy Settings	</td>
-        <td class="border px-4 py-2">Verify proper settings and operation.	</td>
+        <td class="border px-4 py-2">Browser/Proxy Settings </td>
+        <td class="border px-4 py-2">Verify proper settings and operation.  </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Browser' + opt.value" :value="opt.value" v-model="checklist.Browser_Settings" />
       <label class="form-check-label" :for="'Browser_' + opt.value"> </label> </div>
@@ -769,15 +846,13 @@ watch(selectedEmployee, (newVal) => {
 
       <tr>
         <td class="border px-4 py-2">6 </td>
-        <td class="border px-4 py-2">Proper Software Loads		</td>
-        <td class="border px-4 py-2">Required software is installed and operating.		</td>
+        <td class="border px-4 py-2">Proper Software Loads    </td>
+        <td class="border px-4 py-2">Required software is installed and operating.    </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Sofware_' + opt.value" :value="opt.value" v-model="checklist.Proper_Software_Loads" />
       <label class="form-check-label" :for="'Sofware_' + opt.value"> </label> </div>
   </td>
       </tr>
-
-      
       <tr>
   <td class="border px-4 py-2" rowspan="2">7</td>
   <td class="border px-4 py-2" rowspan="2">Viruses and Malware</td>
@@ -801,9 +876,6 @@ watch(selectedEmployee, (newVal) => {
   </div>
   </td>
  
-
-
-
   <!-- Clearance Section -->
 <tr>
   <td class="border px-4 py-2" rowspan="4">8</td>
@@ -849,8 +921,8 @@ watch(selectedEmployee, (newVal) => {
        
       <tr>
         <td class="border px-4 py-2" rowspan="5">9</td>
-        <td class="border px-4 py-2" rowspan="5">Interiors and Cleaning			</td>
-        <td class="border px-4 py-2">Dust removed			</td>
+        <td class="border px-4 py-2" rowspan="5">Interiors and Cleaning     </td>
+        <td class="border px-4 py-2">Dust removed     </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Interior1_' + opt.value" :value="opt.value" v-model="checklist.Interiors_Cleaning1" />
       <label class="form-check-label" :for="'Interior1_' + opt.value"> </label> </div>
@@ -858,28 +930,28 @@ watch(selectedEmployee, (newVal) => {
   </tr>
 
       <tr>
-        <td class="border px-4 py-2">No loose parts			</td>
+        <td class="border px-4 py-2">No loose parts     </td>
            <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Interior2_' + opt.value" :value="opt.value" v-model="checklist.Interiors_Cleaning2" />
       <label class="form-check-label" :for="'Interior2_' + opt.value"> </label> </div>
   </td>
   </tr>
       <tr>
-        <td class="border px-4 py-2">Airflow is O.K.				</td>
+        <td class="border px-4 py-2">Airflow is O.K.        </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Interior3_' + opt.value" :value="opt.value" v-model="checklist.Interiors_Cleaning3" />
       <label class="form-check-label" :for="'Interior3_' + opt.value"> </label> </div>
   </td>
   </tr>
       <tr>
-        <td class="border px-4 py-2">Cables unplugged and re-plugged				</td>
+        <td class="border px-4 py-2">Cables unplugged and re-plugged        </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Interior4_' + opt.value" :value="opt.value" v-model="checklist.Interiors_Cleaning4" />
       <label class="form-check-label" :for="'Interior4_' + opt.value"> </label> </div>
   </td>
   </tr>
       <tr>
-        <td class="border px-4 py-2">Fans are operating					</td>
+        <td class="border px-4 py-2">Fans are operating         </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Interior5_' + opt.value" :value="opt.value" v-model="checklist.Interiors_Cleaning5" />
       <label class="form-check-label" :for="'Interior5_' + opt.value"> </label> </div>
@@ -888,8 +960,8 @@ watch(selectedEmployee, (newVal) => {
 
       <tr>
         <td class="border px-4 py-2" rowspan="7">10</td>
-        <td class="border px-4 py-2" rowspan="7">Peripheral Devices	</td>
-        <td class="border px-4 py-2">Mouse			</td>
+        <td class="border px-4 py-2" rowspan="7">Peripheral Devices </td>
+        <td class="border px-4 py-2">Mouse      </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device1_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices1" />
       <label class="form-check-label" :for="'Device1_' + opt.value"> </label> </div>
@@ -897,7 +969,7 @@ watch(selectedEmployee, (newVal) => {
   
   </tr>
       <tr>
-        <td class="border px-4 py-2">Keyboard				</td>
+        <td class="border px-4 py-2">Keyboard       </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device2_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices2" />
       <label class="form-check-label" :for="'Device2_' + opt.value"> </label> </div>
@@ -910,7 +982,7 @@ watch(selectedEmployee, (newVal) => {
   </td>
 
       <tr>
-        <td class="border px-4 py-2">UPS	</td>
+        <td class="border px-4 py-2">UPS  </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device4_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices4" />
       <label class="form-check-label" :for="'Device4_' + opt.value"> </label> </div>
@@ -918,7 +990,7 @@ watch(selectedEmployee, (newVal) => {
       </tr>
       
       <tr>
-        <td class="border px-4 py-2">Printer	</td>
+        <td class="border px-4 py-2">Printer  </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device5_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices5" />
       <label class="form-check-label" :for="'Device5_' + opt.value"> </label> </div>
@@ -926,14 +998,14 @@ watch(selectedEmployee, (newVal) => {
       </tr>
 
       <tr>
-        <td class="border px-4 py-2">Telephone extension	</td>
+        <td class="border px-4 py-2">Telephone extension  </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device6_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices6" />
       <label class="form-check-label" :for="'Device6_' + opt.value"> </label> </div>
   </td>
       </tr>
       <tr>
-        <td class="border px-4 py-2">Fax	</td>
+        <td class="border px-4 py-2">Fax  </td>
         <td v-for="opt in options" :key="opt.value" class="border text-center">
     <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Device7_' + opt.value" :value="opt.value" v-model="checklist.Peripheral_Devices7" />
       <label class="form-check-label" :for="'Device7_' + opt.value"> </label> </div>

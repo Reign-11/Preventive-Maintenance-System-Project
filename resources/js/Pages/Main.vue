@@ -4,8 +4,6 @@ import MainLayout from '@/Layouts/MainLayout.vue';
 import axios from "axios";
 import { Link } from '@inertiajs/vue3';
 
-
-
 //  Reactive properties
 const years = ref([]);
 const selectedYear = ref(new Date().getFullYear());
@@ -17,6 +15,8 @@ const offices = ref([]); // Store the list of offices for the dropdown
 const selectedOffice= ref(null); //  Holds selected value
 const selectedParentOffice = ref(null); // Define this to avoid ReferenceError
 const addedOffices = ref([]); //  Fix: Declare addedOffices as a reactive array
+
+const isPrinting = ref(false);
 
 //  External Scripts
 const files = [
@@ -197,7 +197,6 @@ const saveOnEnter = async (plan) => {
 };
 
 // Add College (POST Request to Laravel API)
-
 const addOffice = async () => {
   if (!selectedOffice.value) {
     alert("Please select an office.");
@@ -319,9 +318,31 @@ const months = ref([
 ]);
 
 const printTable = () => {
-  window.print();
+  // Set printing mode to true - this will use all plans instead of paginated ones
+  isPrinting.value = true;
+  
+  // Add a small delay to ensure the DOM updates before printing
+  setTimeout(() => {
+    // Trigger the print dialog
+    window.print();
+    
+    // Reset printing mode after printing is done
+    setTimeout(() => {
+      isPrinting.value = false;
+    }, 1000);
+  }, 300);
 };
 
+// Add this function to properly close the modal
+const closeModal = () => {
+  const modalElement = document.getElementById("addCollegeModal");
+  if (modalElement) {
+    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+    if (modalInstance) {
+      modalInstance.hide();
+    }
+  }
+};
 const deleteOffice = async (planId) => {
   if (!planId) {
     alert("Invalid Office ID.");
@@ -350,7 +371,7 @@ const deleteOffice = async (planId) => {
 };
 
 // Reactive variables for pagination
-const entriesPerPage = ref(10); // Default to 10 entries per page
+const entriesPerPage = ref(5); // Default to 10 entries per page
 const currentPage = ref(1); // Start at page 1
 
 const paginatedPlans = computed(() => {
@@ -388,8 +409,10 @@ const prevPage = () => {
         <!-- Header Section -->
         <div class="text-center">
           <h2 class="fw-bold">
-            {{ selectedYearName }} {{ selectedYearDescription ? ` - ${selectedYearDescription}` : '' }}
+            {{ selectedYearName }} 
+            <span v-if="selectedYearDescription" style="color: black;"> - {{ selectedYearDescription }}</span>
           </h2>
+
           <!-- Legend -->
           <div class="mt-2">
             <strong>Legend:</strong>
@@ -399,18 +422,23 @@ const prevPage = () => {
             <span class="badge bg-warning text-white">M</span> Monthly
           </div>
 
-          <div class="d-flex justify-content-center gap-3 mt-2 no-print">
-            <button class="btn btn-success"><i class="fas fa-save"></i> Save</button>
-            <button class="btn btn-warning"><i class="fas fa-lock"></i> Lock</button>
-            <button class="btn btn-info" @click="printTable">
-              <i class="fas fa-print"></i> Print
-            </button>
-          </div>
+          <!-- Action Buttons -->
+            <div class="d-flex justify-content-center gap-4 mt-3 no-print">
+              <button class="btn btn-success rounded-pill shadow-sm px-4 py-2" style="font-size: 16px;">
+                <i class="fas fa-save"></i> Save
+              </button>
+              <button class="btn btn-warning rounded-pill shadow-sm px-4 py-2" style="font-size: 16px;">
+                <i class="fas fa-lock"></i> Lock
+              </button>
+              <button class="btn btn-info rounded-pill shadow-sm px-4 py-2" @click="printTable" style="font-size: 16px;">
+                <i class="fas fa-print"></i> Print
+              </button>
+            </div>
 
           <!-- Year Selection -->
-          <div class="mt-2">
+          <div class="mt-2 no-print">
             <label for="year">Select Year:</label>
-            <select v-model="selectedYear">
+            <select v-model="selectedYear" class="form-select w-auto rounded"> 
               <option v-for="year in years" :key="year.YrId" :value="year.YrId">
                 {{ year.Name }}
               </option>
@@ -420,12 +448,12 @@ const prevPage = () => {
 
         <!-- "Set A" Title -->
         <div class="text-success fw-bold fs-3 text-center mt-2">Set A</div>
-
+        
         <!-- Table Section -->
         <div class="card mt-2">
        <div class="card-body">
       <!-- Top Controls --> 
-      <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3 no-print">
         <!-- Add College Button -->
         <button class="btn btn-success btn-lg fw-bold px-4 py-2 no-print" @click="openModal">
           <i class="fas fa-file-signature"></i> Add College/Office
@@ -456,14 +484,18 @@ const prevPage = () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="plan in paginatedPlans" :key="plan.PlanId">
+            <tr v-for="plan in isPrinting ? maintenancePlans : paginatedPlans" :key="plan.PlanId">
               <td>{{ plan.OffName ?? 'N/A' }}</td>
               <td v-for="month in months" :key="month">
+                <!-- Show input box only when not printing -->
                 <input 
+                  v-if="!isPrinting"
                   v-model="plan[month]" 
                   @keyup.enter="saveOnEnter(plan, month)" 
                   :disabled="plan.isSaving || !isInputAllowed(plan[month])"
                 />
+                <!-- When printing, show just the value -->
+                <span v-if="isPrinting">{{ plan[month] }}</span>
                 <span v-if="plan.isSaving">Saving...</span>
               </td>
               <td class="no-print text-center">
@@ -484,7 +516,7 @@ const prevPage = () => {
         </table>
 
         <!-- Pagination -->
-        <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="d-flex justify-content-between align-items-center mt-3 no-print">
           <div class="dataTables_paginate paging_simple_numbers" id="dataTable_paginate">
             <ul class="pagination justify-content-end">
               <!-- Previous Button -->
@@ -572,12 +604,79 @@ button {
   display: block;
 }
 
+/* Print-specific styles */
 @media print {
-    a {
-        text-decoration: none !important;
-        color: black;
-        pointer-events: none;
-    }
+  /* Hide elements that shouldn't be printed */
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure the table takes full width and breaks across pages properly */
+  .table {
+    width: 100% !important;
+    page-break-inside: auto;
+  }
+  
+  /* Allow rows to break across pages */
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  
+  /* Style table to remove input boxes appearance */
+  td {
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+  }
+  
+  /* Remove background colors that might not print well */
+  .table-success {
+    background-color: #f2f2f2 !important;
+    color: black !important;
+  }
+  
+  /* Ensure text is black for better printing */
+  body {
+    color: black !important;
+  }
+  
+  /* Remove any shadows or decorative elements */
+  .shadow-sm, .card {
+    box-shadow: none !important;
+  }
+  
+  /* Make sure the Set A title is visible */
+  .text-success.fw-bold.fs-3 {
+    color: black !important;
+    font-weight: bold !important;
+  }
+  
+  /* Remove card styling but keep content */
+  .card {
+    border: none !important;
+  }
+  
+  .card-body {
+    padding: 0 !important;
+  }
+  
+  /* Ensure the table is readable */
+  .table-responsive {
+    overflow-x: visible !important;
+    white-space: normal !important;
+  }
+}
+@media print {
+  /* These styles ONLY apply during printing */
+  .badge {
+    background-color: transparent !important;
+    color: black !important;
+    padding: 0 !important;
+    margin: 0 3px !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-weight: bold !important;
+  }
 }
 
 .table-responsive {
@@ -585,6 +684,28 @@ button {
   overflow-x: auto;
   white-space: nowrap;
 }
+
+.badge-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    font-size: 1.1rem;
+  }
+
+  .badge {
+    padding: 5px 15px;
+    font-size: 1rem;
+    border-radius: 25px;
+  }
+
+  .btn {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
 </style>
 
 

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\MaintenancePlanController;
 use App\Http\Controllers\MaintenancePlanControllerB;
 use App\Http\Controllers\MaintenancePlanControllerC;
+use App\Http\Controllers\WordExportController;
 
 
 /*
@@ -30,6 +31,10 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 });
+
+Route::get('/', function () {  
+    return redirect()->route('login');  
+});  
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
@@ -86,8 +91,14 @@ Route::get('/prevoffice/{officeId}', [MaintenancePlanControllerC::class, 'prev']
     ->name('prevoffice');
 
 
- Route::get('/viewdata/{departmentId}', [MaintenancePlanControllerB::class, 'departments'])
+Route::get('/viewdata/{departmentId}', [MaintenancePlanControllerB::class, 'departments'])
     ->middleware(['auth', 'verified'])
     ->name('viewdata');
+    
+Route::get('/print-view', [WordExportController::class, 'print']);
+
+Route::get('/network/{departmentId}', [MaintenancePlanControllerC::class, 'network'])
+    ->middleware(['auth', 'verified'])
+    ->name('network');
 
 require __DIR__.'/auth.php';

@@ -39,7 +39,7 @@ class MaintenancePlanControllerC extends Controller
         return response()->json($years);
     }
 
-    public function saveMaintenancePlanB(Request $request)
+    public function saveMaintenancePlanC(Request $request)
     {
         try {
             Log::info("Received data:", $request->all());
@@ -180,6 +180,7 @@ class MaintenancePlanControllerC extends Controller
             ], 500);
         }
     }
+
     public function prev(Request $request, int $officeId)
     {
         try {
@@ -231,4 +232,123 @@ class MaintenancePlanControllerC extends Controller
             return redirect()->back()->withErrors(['error' => 'Failed to fetch office data']);
         }
     }
+
+public function network(Request $request, int $departmentId )
+{
+try {
+    // Use route parameter directly
+    $yrId = $request->query('YrId');  
+    $PlanId  = $request->query('PlanId'); 
+    $officeId  = $request->query('officeId'); 
+    $categoryId = $request->query('CatId', 3); 
+
+
+
+    $network = DB::select('CALL GetNetworkRouterData(?)', [$departmentId]);
+
+    $networks = array_filter($network, function ($net) use ($yrId, $officeId, $departmentId) {
+        return $net-> YrId == $yrId
+        && $net-> OffId == $officeId
+        && $net-> deptId == $departmentId;
+    });
+
+
+    $networks = array_values ($networks);
+
+    $pmYearData = DB::table('tbl_pmyear')->get();
+
+
+    return Inertia::render('Networkdata', [
+        'departments' => $networks,
+        'YrId' => $yrId ?? '',
+        'PlanId' => $PlanId ?? '',
+        'officeId' => $officeId ?? '',
+        'CatId' => $categoryId ?? 3,
+        'pmYearList' => $pmYearData, 
+        'pmYear' => $pmYearData->first() ? (array) $pmYearData->first() : ['Name' => '', 'Description' => ''],
+
+    ]);
+
+} catch (\Exception $e) {
+    Log::error("❌ Error fetching department:", ['error' => $e->getMessage()]);
+    return redirect()->back()->withErrors(['error' => 'Failed to fetch department data']);
+}
+}
+
+public function checklistC(Request $request)
+{
+    $validated = $request->validate([
+        'Offid' => 'nullable|integer',
+        'deptId' => 'nullable|integer',
+        'YrId' => 'nullable|integer',
+        'equipmentnumber' => 'nullable|string|max:255',
+        'date_acquired' => 'nullable|date',
+        'router_status' => 'nullable|integer',
+        'switch_status' => 'nullable|integer',
+        'access_point_status' => 'nullable|integer',
+        'modem_status' => 'nullable|integer',
+        'network_cable_status' => 'nullable|integer',
+        'patch_panel' => 'nullable|integer',
+        'other_equipment' => 'nullable|string|max:255',
+        'networking_monitoring_tool_status' => 'nullable|integer',
+        'firewall_status' => 'nullable|integer',
+        'vpn_client_status' => 'nullable|integer',
+        'network_config_tool_status' => 'nullable|integer',
+        'manageable_software_status' => 'nullable|integer',
+        'anti_virus_status' => 'nullable|integer',
+        'other_software' => 'nullable|string|max:255',
+        'access_point_details' => 'nullable|string|max:255',
+        'modem_details' => 'nullable|string|max:255',
+        'number_ports' => 'nullable|string|max:255',
+        'ip_details' => 'nullable|string|max:255',
+        'mac_details' => 'nullable|string|max:255',
+        'dns_details' => 'nullable|string|max:25',
+        'wifi_name' => 'nullable|string|max:25',
+        'password_details' => 'nullable|string|max:255',
+        'vlan_details' => 'nullable|string',
+        'wifiband_details' => 'nullable|string|max:25',
+        'dhcp_details' => 'nullable|string|max:255',
+        'gateway_details' => 'nullable|string|max:255',
+        'ipv4_details' => 'nullable|string|max:255',
+        'ipv6_details' => 'nullable|string|max:25',
+    ]);
+
+    DB::statement('CALL InsertPremainPlanSetC(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+        $validated['Offid'],
+        $validated['deptId'],
+        $validated['YrId'],
+        $validated['equipmentnumber'],
+        $validated['date_acquired'],
+        $validated['router_status'],
+        $validated['switch_status'],
+        $validated['access_point_status'],
+        $validated['modem_status'],
+        $validated['network_cable_status'],
+        $validated['patch_panel'],
+        $validated['other_equipment'],
+        $validated['networking_monitoring_tool_status'],
+        $validated['firewall_status'],
+        $validated['vpn_client_status'],
+        $validated['network_config_tool_status'],
+        $validated['manageable_software_status'],
+        $validated['anti_virus_status'],
+        $validated['other_software'],
+        $validated['access_point_details'],
+        $validated['modem_details'],
+        $validated['number_ports'],
+        $validated['ip_details'],
+        $validated['mac_details'],
+        $validated['dns_details'],
+        $validated['wifi_name'],
+        $validated['password_details'],
+        $validated['vlan_details'],
+        $validated['wifiband_details'],
+        $validated['dhcp_details'],
+        $validated['gateway_details'],
+        $validated['ipv4_details'],
+        $validated['ipv6_details'],
+    ]);
+
+    return response()->json(['message' => 'Record inserted successfully.']);
+}
 }

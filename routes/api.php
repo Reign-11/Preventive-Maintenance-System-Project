@@ -82,3 +82,5 @@ Route::post('/add-collegesC', [MaintenancePlanControllerC::class, 'addCollegeC']
 Route::get('/officesC', [MaintenancePlanControllerC::class, 'getOfficeC']);
 
 Route::delete('/delete-maintenance-planC/{id}', [MaintenancePlanControllerC::class, 'destroyC']);
+
+Route::post('/checklistC', [MaintenancePlanControllerC::class, 'checklistC']);

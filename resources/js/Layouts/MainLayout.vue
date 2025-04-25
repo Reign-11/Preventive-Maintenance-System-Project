@@ -74,23 +74,25 @@ onMounted(() => {
                 </div>
 
                 <!-- Nav Items Wrapper (Push Down Set A) -->
+                <!-- Nav Items Wrapper (Push Down Set A) -->
                 <ul class="navbar-nav d-flex flex-column align-items-center nav-items-wrapper">
                     <li class="nav-item nav-item-spacing">
-                        <NavLink :href="route('main')" :active="route().current('main')" class="nav-link-custom">
+                        <NavLink :href="route('main')" :active="route().current('main')" class="nav-link-custom" active-class="active">
                             <i data-feather="cpu" style="width: 25px; height: 25px; font-size: 8px; margin-right: 8px;"></i> Set A
                         </NavLink>
                     </li>
                     <li class="nav-item nav-item-spacing">
-                        <NavLink :href="route('setb')" :active="route().current('setb')" class="nav-link-custom">
+                        <NavLink :href="route('setb')" :active="route().current('setb')" class="nav-link-custom" active-class="active">
                             <i data-feather="database" style="width: 25px; height: 25px; font-size: 8px; margin-right: 8px;"></i> Set B
                         </NavLink>
                     </li>
                     <li class="nav-item nav-item-spacing">
-                        <NavLink :href="route('setc')" :active="route().current('setc')" class="nav-link-custom">
+                        <NavLink :href="route('setc')" :active="route().current('setc')" class="nav-link-custom" active-class="active">
                             <i data-feather="server" style="width: 25px; height: 25px; font-size: 8px; margin-right: 8px;"></i> Set C
                         </NavLink>
                     </li>
                 </ul>
+
             </nav>
         </div>
 
@@ -308,6 +310,10 @@ footer {
     }
 }
 
-
+.nav-link-custom.active {
+    background-color: #e0e0e0; /* Light grey background for active */
+    font-weight: bold;
+    border-radius: 5px;
+}
 
 </style>

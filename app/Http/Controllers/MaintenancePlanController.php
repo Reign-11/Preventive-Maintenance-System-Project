@@ -307,16 +307,17 @@ public function employees(Request $request, int $employeeId)
         $employed = DB::select('CALL GetEquipmentDetailsByEmployeeId(?)', [$employeeId]);
         Log::info("📢 Raw Employees Data Before Filtering:", $employed);
 
-        // Filter Employee based on PlanId, YrId, OfficeId, Dept, CatId, and employeeId
-        $employees = array_filter($employed, function ($emp) use ($PlanId, $yrId, $officeId, $departmentId, $categoryId, $employeeId) {
-            return 
-                $emp->PlanId == $PlanId &&
-                $emp->YrId == $yrId &&
-                $emp->OffId == $officeId &&
-                $emp->DeptId == $departmentId &&
-                ($emp->CatId == $categoryId || is_null($emp->CatId)) &&
-                $emp->employeeId == $employeeId;
-        });
+    // Filter Employee based on PlanId, YrId, OfficeId, Dept, CatId, and employeeId, excluding null employeeId
+    $employees = array_filter($employed, function ($emp) use ($yrId, $officeId, $departmentId, $categoryId, $employeeId) {
+    return 
+        $emp->employeeId !== null && 
+        $emp->YrId == $yrId &&
+        $emp->OffId == $officeId &&
+        $emp->DeptId == $departmentId &&
+        ($emp->CatId == $categoryId || $emp->CatId) &&
+        $emp->employeeId == $employeeId;
+});
+
 
         $employees = array_values($employees);
         Log::info("📢 Filtered Employees:", $employees);
@@ -330,7 +331,7 @@ public function employees(Request $request, int $employeeId)
             'YrId' => $yrId ?? '',
             'employeeId' => $employeeId ?? '',
             'PlanId' => $PlanId ?? '', 
-            'departmentId' => $departmentId ?? '',  // ✅ Fix variable name here
+            'departmentId' => $departmentId ?? '', 
             'categoryId' => $categoryId ?? 1,
             'pmYear' => $pmYearData ? (array) $pmYearData : ['Name' => '', 'Description' => ''],
         ]);
@@ -671,14 +672,14 @@ try {
 
     $dept = DB::select('CALL GetDepartmentPlanDetails(?)', [$departmentId]);
 
-    $depts = array_filter($dept, function ($depart) use ($PlanId, $yrId, $officeId, $departmentId,$categoryId) {
-        return $depart-> PlanId == $PlanId 
-        && $depart-> YrId == $yrId
-        && $depart-> OffId == $officeId
-        && $depart-> deptId == $departmentId
-        &&  ($depart->CatId == $categoryId || is_null($depart->CatId));
+    $depts = array_filter($dept, function ($depart) use ($PlanId, $yrId, $officeId, $departmentId, $categoryId) {
+        return (!$PlanId || $depart->PlanId == $PlanId) 
+            && (!$yrId || $depart->YrId == $yrId)
+            && (!$officeId || $depart->OffId == $officeId)
+            && $depart->deptId == $departmentId
+            && (!$categoryId || $depart->CatId == $categoryId);
     });
-
+    
 
     $depts = array_values ($depts);
 
@@ -724,7 +725,7 @@ public function departmentChecklist(Request $request)
             'employeeId' => 'nullable|integer',
             'deptId' => 'required|integer', 
             'YrId' => 'required|integer',
-            'pcName' => 'required|string|max:100',
+            'pcName' => 'nullable|string|max:100',
             'equipment' => 'required|string|max:50',
             'dateAcquired' => 'required|date',
             'cpu_status' => 'nullable|integer',
@@ -761,6 +762,8 @@ public function departmentChecklist(Request $request)
             'ups_details' => 'nullable|string|max:255',
             'printer_details' => 'nullable|string|max:255',
             'network_mac_ip_details' => 'nullable|string|max:255',
+            'disposal' => 'nullable|integer|max:255',
+
         ]);
 
         // Prepare parameters for the stored procedure
@@ -806,13 +809,15 @@ public function departmentChecklist(Request $request)
             $validated['ups_details'],
             $validated['printer_details'],
             $validated['network_mac_ip_details'],
+            $validated['disposal'],
+
         ];
 
         // Log the parameters
         \Log::info('Parameters passed to stored procedure: ', $parameters);
 
         // Call the Stored Procedure
-        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)", $parameters);
+        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)", $parameters);
 
         $savedData = DB::table('tbl_preventive_maintainance')
         ->where('ticketnumber', $generatedTicketNumber)
@@ -847,6 +852,3 @@ public function getChecklistByYrId($YrId)
 }
 
 }
-
-
-

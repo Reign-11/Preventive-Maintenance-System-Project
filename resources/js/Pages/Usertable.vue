@@ -182,13 +182,13 @@ const formData = reactive({
   license : null,
   other_os: null,
   softwareInstalled: [],
-  enrollment: "1",
-  adobe_reader: "1",
-  word_processor: "1",
-  media_player: "1",
-  anti_virus: "1",
-  browser: "1",
-  microsoft: "1",
+  enrollment: "0",
+  adobe_reader: "0",
+  word_processor: "0",
+  media_player: "0",
+  anti_virus: "0",
+  browser: "0",
+  microsoft: "0",
   other_sys: "",
   desktopSpecs: {
     Processor: "",
@@ -220,7 +220,7 @@ watch(selectedEmployee, (newVal) => {
 const isLocked = ref(false);
 
 const setForDisposal = () => {
-  formData.disposal = 1;
+  formData.disposal = "1";
 
   // Lock equipment statuses
   formData.equipmentInstalled = [];
@@ -300,16 +300,6 @@ const updateEquipmentStatus = (option) => {
 const updateSoftwareStatus = (option) => {
   if (formData.softwareInstalled.includes(option)) {
     // If checked, mark status as "0"
-    if (option === "Enrollment System") formData.enrollment = "0";
-    if (option === "Adobe Reader") formData.adobe_reader = "0";
-    if (option === "Word Processor") formData.word_processor = "0";
-    if (option === "Media Player") formData.media_player = "0";
-    if (option === "Anti-Virus") formData.anti_virus = "0";
-    if (option === "Browser") formData.browser = "0";
-    if (option === "Microsoft") formData.microsoft = "0";
-    if (option === "Other") formData.other_sys = ""; // Keep user input empty
-  } else {
-    // If unchecked, mark status as "1"
     if (option === "Enrollment System") formData.enrollment = "1";
     if (option === "Adobe Reader") formData.adobe_reader = "1";
     if (option === "Word Processor") formData.word_processor = "1";
@@ -317,6 +307,16 @@ const updateSoftwareStatus = (option) => {
     if (option === "Anti-Virus") formData.anti_virus = "1";
     if (option === "Browser") formData.browser = "1";
     if (option === "Microsoft") formData.microsoft = "1";
+    if (option === "Other") formData.other_sys = ""; // Keep user input empty
+  } else {
+    // If unchecked, mark status as "1"
+    if (option === "Enrollment System") formData.enrollment = "0";
+    if (option === "Adobe Reader") formData.adobe_reader = "0";
+    if (option === "Word Processor") formData.word_processor = "0";
+    if (option === "Media Player") formData.media_player = "0";
+    if (option === "Anti-Virus") formData.anti_virus = "0";
+    if (option === "Browser") formData.browser = "0";
+    if (option === "Microsoft") formData.microsoft = "0";
     if (option === "Other") formData.other_sys = ""; // Still allow input
   }
 };
@@ -552,7 +552,6 @@ const printDetails = (item) => {
 const isAddUserModalOpen = ref(false);
 
 // New User Data
-
 const addUser = async () => {
   if (!newUser.value.name.trim() || !newUser.value.number.trim()) {
     alert("Please fill in all fields.");
@@ -650,12 +649,6 @@ watch(isStatusDropdownOpen, (newVal) => {
         class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2"
         @click="openStep1Modal(employee.employeeId)">
         <i class="fas fa-edit me-1"></i> Add Form
-      </button>
-
-      <button 
-        class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-        @click="printDetails(employee)">
-        <i class="fas fa-print me-1"></i> Print
       </button>
     </div>
   </td>

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Log; 
@@ -146,7 +145,6 @@ class MaintenancePlanControllerB extends Controller
         }
     }
     
-
     public function destroyB($id)
     {
         Log::info("Attempting to delete MaintenancePlan with ID: " . $id);

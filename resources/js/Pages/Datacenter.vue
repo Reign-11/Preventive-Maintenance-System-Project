@@ -24,6 +24,7 @@ const selectedPlan = ref(props.PlanId || '');
 const selectedDeptId = ref(props.deptId ?? null);
 const selectedCategoryId = ref(props.categoryId ?? 2); 
 console.log (departments.value)
+
 watchEffect(() => {
   if (!selectedDeptId.value && props.departments?.length > 0) {
     selectedDeptId.value = props.departments[0].DeptId;
@@ -215,10 +216,6 @@ const options = [
               <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2" 
                 @click="openStep1Modal(department.DeptId)">
                 <i class="fas fa-edit me-1"></i> Fillup Form
-              </button>
-              <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-                @click="printDetails(department)">
-                <i class="fas fa-print me-1"></i> Print
               </button>
             </div>
           </td>

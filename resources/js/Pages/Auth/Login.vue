@@ -33,24 +33,29 @@ const submit = () => {
     <GuestLayout>
         <Head title="Log in" />
 
+        <!-- Status Message -->
         <div v-if="status" class="mb-4 font-medium text-sm text-green-600">
             {{ status }}
         </div>
 
+        <!-- Log in Title -->
+        <div class="text-center text-2xl font-semibold mb-6 text-gray-800">
+            Log in to Your Account
+        </div>
+
+        <!-- Login Form -->
         <form @submit.prevent="submit">
             <div>
                 <InputLabel for="email" value="Email" />
-
                 <TextInput
                     id="email"
                     type="email"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 transition duration-300 ease-in-out hover:shadow-lg"
                     v-model="form.email"
                     required
                     autofocus
                     autocomplete="username"
                 />
-
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
 
@@ -60,21 +65,26 @@ const submit = () => {
                 <TextInput
                     id="password"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 transition duration-300 ease-in-out hover:shadow-lg"
                     v-model="form.password"
                     required
                     autocomplete="current-password"
                 />
-
                 <InputError class="mt-2" :message="form.errors.password" />
             </div>
 
-            <div class="block mt-4">
-                <label class="flex items-center">
-                    <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600">Remember me</span>
-                </label>
-            </div>
+            <div class="block mt-4 flex items-center space-x-10">  
+                <label class="flex items-center">  
+                    <Checkbox name="remember" v-model:checked="form.remember" />  
+                    <span class="ms-2 text-sm text-gray-600">Remember me</span>  
+                </label>  
+
+                <Link  
+                    :href="route('register')"  
+                    class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"  
+                >  Not yet registered?  
+                </Link>  
+                </div>  
 
             <div class="flex items-center justify-end mt-4">
                 <Link
