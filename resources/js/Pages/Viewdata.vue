@@ -1,49 +1,47 @@
 <script setup>
-import { ref, computed, defineProps, reactive, watchEffect,watch} from 'vue'; 
+import { ref, computed, defineProps, reactive, watchEffect, watch } from 'vue'; 
 import MainLayout from '@/Layouts/MainLayout.vue';
 
 const props = defineProps({
   departments: { type: Array, default: () => [] },  
   pmYear: { type: Object, default: () => ({}) },
-  YrId: { type: [String, Number], default: null }, // Changed default to null
-  PlanId: { type: [String, Number], default: null }, // Changed default to null
+  YrId: { type: [String, Number], default: null },
+  PlanId: { type: [String, Number], default: null },
   office: { type: Object, default: () => ({}) },
-  deptId: { type: [String, Number], default: null },  // Changed default to null
-  categoryId: { type: [String, Number], default: null } // Changed default to null
+  deptId: { type: [String, Number], default: null },
+  categoryId: { type: [String, Number], default: null }
 });
 
-
-const selectedDepartments = ref (null)
+const selectedDepartments = ref(null);
 const selectedPmYear = computed(() => props.pmYear ?? {});
 const departments = ref(props.departments || []);
 const selectedPlan = ref(props.PlanId || '');
 const selectedDeptId = ref(props.deptId ?? null);
-const selectedCategoryId = ref(props.categoryId ?? 2); 
-console.log (departments.value)
+const selectedCategoryId = ref(props.categoryId ?? 2);
+
 watchEffect(() => {
   if (!selectedDeptId.value && props.departments?.length > 0) {
     selectedDeptId.value = props.departments[0].DeptId;
   }
-  if (!selectedCategoryId.value && props.categories?.length > 0) {
+  if (!selectedCategoryId.value) {
     selectedCategoryId.value = 2;
   }
 });
 
 watchEffect(() => {
   selectedPlan.value = props.PlanId || '';
-  console.log("Updated PlanId:", selectedPlan.value);
+});
+
+watchEffect(() => {
+  departments.value = props.departments || [];
 });
 
 const isStep1ModalOpen = ref(false);
-
 const openStep1Modal = (checkId) => {
-  console.log("Clicked checkId:", checkId); // ✅ log the correct ID
-  selectedDepartments.value = departments.value.find(dep => dep.checkId === checkId); // ✅ match the selected department
+  selectedDepartments.value = departments.value.find(dep => dep.checkId === checkId);
   isStep1ModalOpen.value = true;
   disableBackgroundScroll();
 };
-
-
 
 const closeModal = () => {
   isStep1ModalOpen.value = false;
@@ -57,15 +55,15 @@ const disableBackgroundScroll = () => {
 const enableBackgroundScroll = () => {
   document.body.style.overflow = '';
 };
+
 const options = [
-  {  value: '1' },
-  {  value: '2' },
-  {  value: '3' }
+  { value: '1' },
+  { value: '2' },
+  { value: '3' }
 ];
 
-
-// Checklist Data
 const checklist = reactive({
+  Months: "",
   data_softsystem_checks1: "",
   data_softsystem_checks2: "",
   data_softsystem_checks3: "",
@@ -74,106 +72,146 @@ const checklist = reactive({
   data_softsystem_checks6: "",
   data_softsystem_checks7: "",
   data_softsystem_checks8: "",
-
   security_checks1: "",
   security_checks2: "",
   security_checks3: "",
   security_checks4: "",
   security_checks5: "",
-
   hardware_checks1: "",
   hardware_checks2: "",
-
   Summary: ""
 });
 
 
 
+// This is the updated printDetails function for your component
 
+const printDetails = (department) => {
+  if (!department) return;
 
-const statuses = ref({});
-const setStatus = (item, status) => {
-  statuses.value[item] = status;
-};
-const selectedMonth = ref('');
-const months = ref([
-  "January", "February", "March", "April", "May", "June", 
-  "July", "August", "September", "October", "November", "December"
-]);
-const saveChecklist = () => {
-  console.log("Saved Checklist Data:", statuses.value);
-  alert("Checklist saved successfully!");
-  closeModal();
-};
+  // Populate the checklist with department values
+  Object.keys(checklist).forEach(key => {
+    checklist[key] = department[key] || ""; // Ensure that undefined fields are populated with empty strings
+  });
 
-const printDetails = (item) => {
+  console.log('Checklist Data:', checklist); // Debugging output
+
+  // Create a deep copy of the checklist to avoid reactivity issues
+  const checklistData = JSON.parse(JSON.stringify(checklist));
+
   const modalHtml = `
     <html>
       <head>
         <title>Print Modal</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 20px; }
-          .modal-content { font-size: 16px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+          .checkmark { font-size: 18px; display: inline-block; }
         </style>
       </head>
       <body>
-        <h2>Office/User Details</h2>
-        <div class="details">
-          <p><strong>Name:</strong> ${item.name}</p>
-          <p><strong>Status:</strong> ${item.status}</p>
-        </div>
-        <div class="modal-body">
-          <p><strong>Equipment Installed:</strong> ${item.equipmentInstalled ? item.equipmentInstalled.join(', ') : 'N/A'}</p>
-          <p><strong>Operating System:</strong> ${item.osInstalled || 'N/A'}</p>
-          <p><strong>Software Installed:</strong> ${item.softwareInstalled ? item.softwareInstalled.join(', ') : 'N/A'}</p>
-          <p><strong>PC Specifications:</strong> ${JSON.stringify(item.desktopSpecs)}</p>
-        </div>
+        <h2>Preventive Maintenance Checklist</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Specification</th>
+              <th class="text-center">Good</th>
+              <th class="text-center">Near Maintenance</th>
+              <th class="text-center">N/A</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${renderGroup("Data, Software and System Checks", [
+              ["Check backups are working", checklistData.data_softsystem_checks1],
+              ["Check and update OS", checklistData.data_softsystem_checks2],
+              ["Update your control panel", checklistData.data_softsystem_checks3],
+              ["Check and update applications", checklistData.data_softsystem_checks4],
+              ["Check Remote Management Tools", checklistData.data_softsystem_checks5],
+              ["Check Server Usage", checklistData.data_softsystem_checks6],
+              ["Review user accounts", checklistData.data_softsystem_checks7],
+              ["Free up server storage space", checklistData.data_softsystem_checks8],
+            ])}
+            ${renderGroup("Security Checks", [
+              ["Change server passwords", checklistData.security_checks1],
+              ["Firewall installed", checklistData.security_checks2],
+              ["Perform a server malware scan", checklistData.security_checks3],
+              ["Check fans and power supplies", checklistData.security_checks4],
+              ["Check RAID fault tolerance", checklistData.security_checks5],
+            ])}
+            ${renderGroup("Hardware Checks", [
+              ["Check Cable Integrity", checklistData.hardware_checks1],
+              ["Check A/C unit at the facility", checklistData.hardware_checks2],
+            ])}
+            <tr>
+              <td colspan="5"><strong>Summary:</strong> ${checklistData.Summary || 'None'}</td>
+            </tr>
+          </tbody>
+        </table>
       </body>
     </html>
   `;
 
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(modalHtml);
-  printWindow.document.close();
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'absolute';
+  iframe.style.width = '1px';
+  iframe.style.height = '1px';
+  iframe.style.border = 'none';
+  document.body.appendChild(iframe);
 
-  setTimeout(() => {
-    printWindow.print();
-    printWindow.close();
-  },10); // Wait for 500ms before printin
+  const iframeDocument = iframe.contentWindow.document;
+  iframeDocument.open();
+  iframeDocument.write(modalHtml);
+  iframeDocument.close();
+
+  iframe.onload = () => {
+    setTimeout(() => {
+      iframe.contentWindow.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    }, 500);
+  };
 };
 
+// Updated renderGroup function with a clearer structure
+function renderGroup(category, items) {
+  return items.map((item, index) => {
+    const [label, value] = item;
+    return `
+      <tr>
+        ${index === 0 ? `<td rowspan="${items.length}">${category}</td>` : ''}
+        <td>${label}</td>
+        <td style="text-align:center">${renderCheck(value, '1')}</td>
+        <td style="text-align:center">${renderCheck(value, '2')}</td>
+        <td style="text-align:center">${renderCheck(value, '3')}</td>
+      </tr>
+    `;
+  }).join('');
+}
 
+// Improved renderCheck function that's more reliable
+function renderCheck(value, checkValue) {
+  // Convert to string for strict comparison 
+  const stringValue = String(value || '');
+  const stringCheckValue = String(checkValue || '');
+  
+  // More visible debug output
+  console.log(`Checking: Value "${stringValue}" against "${stringCheckValue}" - Match: ${stringValue === stringCheckValue}`);
+  
+  // Return a clear checkmark if values match
+  return stringValue === stringCheckValue ? '<span class="checkmark">✓</span>' : '';
+}
 
 watch(selectedDepartments, (newVal) => {
-  console.log("selectedDepartments changed to:", newVal);
   if (newVal) {
     for (const key in checklist) {
       checklist[key] = newVal[key] || "";
     }
-
-
-    checklist.data_softsystem_checks1 = newVal.data_softsystem_checks1 || "";
-    checklist.data_softsystem_checks2 = newVal.data_softsystem_checks2 || "";
-    checklist.data_softsystem_checks3 = newVal.data_softsystem_checks3 || "";
-    checklist.data_softsystem_checks4 = newVal.data_softsystem_checks4 || "";
-    checklist.data_softsystem_checks5 = newVal.data_softsystem_checks5 || ""; 
-    checklist.data_softsystem_checks6 = newVal.data_softsystem_checks6 || "";
-    checklist.data_softsystem_checks7 = newVal.data_softsystem_checks7 || "";
-    checklist.data_softsystem_checks8 = newVal.data_softsystem_checks8  || "";
-
-    checklist.security_checks1 = newVal.security_checks1 || "";
-    checklist.security_checks2 = newVal.security_checks2 || "";
-    checklist.security_checks3 = newVal.security_checks3 || "";
-    checklist.security_checks4 = newVal.security_checks4 || "";
-    checklist.security_checks5 = newVal.security_checks5 || "";
-
-    checklist.hardware_checks1 = newVal.hardware_checks1  || "";
-    checklist.hardware_checks2 = newVal.hardware_checks2 || "";
-
-    checklist.Summary = newVal.Summary || "";
-
-    }
-    });
+  }
+});
 
 </script>
 
@@ -212,8 +250,6 @@ watch(selectedDepartments, (newVal) => {
           <td :class="{ 'clear-status': department.status === 'Clear', 'unclear-status': department.status === 'Unclear' }">
             {{ department.status }}
           </td>
-
-       
         </tr>
       </tbody>
     </table>
@@ -229,12 +265,9 @@ watch(selectedDepartments, (newVal) => {
         <h3 class="modal-title text-center fw-bold">PREVENTIVE MAINTENANCE CHECKLIST FOR SERVERS/DATACENTER</h3>
         
         <!-- Month Dropdown (Directly Under Title) -->
-        <div class="text-center mt-2">
-        <label for="month-select" class="fw-semibold me-2">For the Month:</label>
-        <select id="month-select" v-model="selectedMonth" class="form-select d-inline-block w-auto">
-            <option value="" disabled>Select</option>
-            <option v-for="month in months" :key="month" :value="month">{{ month }}</option>
-        </select>
+       <div class="text-center mt-2">
+          <label for="month-input" class="fw-semibold me-2">For the Month:</label>
+          <input  type="text" id="month-input" v-model="checklist.Months" class="form-control d-inline-block w-auto" placeholder="Enter month" disabled>
         </div>
 
         <!-- Preventive Maintenance Checklist Table -->
@@ -267,62 +300,62 @@ watch(selectedDepartments, (newVal) => {
               <tr>
                 <td class="border px-4 py-2">Update your control panel </td>
                 <td v-for="opt in options" :key="opt.value" class="border text-center">
-                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Panel_' + opt.value" :value="opt.value" v-model="checklist.data_softsystem_checks3" disabled/>
+                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Panel_' + opt.value" :value="opt.value" v-model="checklist.data_softsystem_checks3" disabled />
                     <label class="form-check-label" :for="'Panel_' + opt.value"> </label> </div>
                   </td>
               </tr>
               <tr>
                 <td class="border px-4 py-2">Check and update applications </td>
                 <td v-for="opt in options" :key="opt.value" class="border text-center">
-                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Applications_' + opt.value" :value="opt.value" v-model="checklist.data_softsystem_checks4"disabled />
+                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Applications_' + opt.value" :value="opt.value" v-model="checklist.data_softsystem_checks4"disabled/>
                     <label class="form-check-label" :for="'Applications_' + opt.value"> </label> </div>
                   </td>
               </tr>
               <tr>
                 <td class="border px-4 py-2">Check Remote Management Tools</td>
                 <td v-for="opt in options" :key="opt.value" class="border text-center">
-                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Tools_' + opt.value" :value="opt.value" v-model="checklist.data_softsystem_checks5" disabled/>
+                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Tools_' + opt.value" :value="opt.value" v-model="checklist.data_softsystem_checks5"disabled />
                     <label class="form-check-label" :for="'Tools_' + opt.value"> </label> </div>
                   </td>
               </tr>
               <tr>
                 <td class="border px-4 py-2">Check Server Usage</td>
                 <td v-for="opt in options" :key="opt.value" class="border text-center">
-                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Usage_' + opt.value" :value="opt.value" v-model="checklist.data_softsystem_checks6"disabled />
+                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Usage_' + opt.value" :value="opt.value" v-model="checklist.data_softsystem_checks6"disabled/>
                     <label class="form-check-label" :for="'Usage_' + opt.value"> </label> </div>
                   </td>
               </tr>
               <tr>
                 <td class="border px-4 py-2">Review user acounts</td>
                 <td v-for="opt in options" :key="opt.value" class="border text-center">
-                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Account_' + opt.value" :value="opt.value" v-model="checklist.data_softsystem_checks7" disabled/>
+                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Account_' + opt.value" :value="opt.value" v-model="checklist.data_softsystem_checks7"disabled />
                     <label class="form-check-label" :for="'Account_' + opt.value"> </label> </div>
                   </td>
               </tr>
               <tr>
                 <td class="border px-4 py-2">Free up server storage space</td>
                 <td v-for="opt in options" :key="opt.value" class="border text-center">
-                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Space_' + opt.value" :value="opt.value" v-model="checklist.data_softsystem_checks8" disabled/>
+                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Space_' + opt.value" :value="opt.value" v-model="checklist.data_softsystem_checks8" disabled />
                     <label class="form-check-label" :for="'Space_' + opt.value"> </label> </div>
                   </td>
               </tr>
               <td class="border px-4 py-2" rowspan="5">Security Checks </td>
                 <td class="border px-4 py-2">Change server passwords </td>
                 <td v-for="opt in options" :key="opt.value" class="border text-center">
-                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Checks_' + opt.value" :value="opt.value" v-model="checklist.security_checks1" disabled/>
+                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Checks_' + opt.value" :value="opt.value" v-model="checklist.security_checks1" disabled>
                     <label class="form-check-label" :for="'Checks_' + opt.value"> </label> </div>
                   </td>
               <tr>
                 <td class="border px-4 py-2">Firewall installed </td>
                 <td v-for="opt in options" :key="opt.value" class="border text-center">
-                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Firewall_' + opt.value" :value="opt.value" v-model="checklist.security_checks2" disabled/>
+                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Firewall_' + opt.value" :value="opt.value" v-model="checklist.security_checks2"  disabled/>
                     <label class="form-check-label" :for="'Firewall_' + opt.value"> </label> </div>
                   </td>
               </tr>
               <tr>
                 <td class="border px-4 py-2">Perform a server malware scan </td>
                 <td v-for="opt in options" :key="opt.value" class="border text-center">
-                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Malware_' + opt.value" :value="opt.value" v-model="checklist.security_checks3"disabled />
+                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Malware_' + opt.value" :value="opt.value" v-model="checklist.security_checks3"disabled/>
                     <label class="form-check-label" :for="'Malware_' + opt.value"> </label> </div>
                   </td>
               </tr>
@@ -336,14 +369,14 @@ watch(selectedDepartments, (newVal) => {
               <tr>
                 <td class="border px-4 py-2">Check RAID fault tolerance</td>
                 <td v-for="opt in options" :key="opt.value" class="border text-center">
-                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Fault_' + opt.value" :value="opt.value" v-model="checklist.security_checks5"disabled />
+                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Fault_' + opt.value" :value="opt.value" v-model="checklist.security_checks5" disabled />
                     <label class="form-check-label" :for="'Fault_' + opt.value"> </label> </div>
                   </td>
               </tr>
               <td class="border px-4 py-2" rowspan="2">Hardware Checks </td>
                 <td class="border px-4 py-2">Check Cable Integrity </td>
                 <td v-for="opt in options" :key="opt.value" class="border text-center">
-                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware_' + opt.value" :value="opt.value" v-model="checklist.hardware_checks1" disabled/>
+                  <div class="form-check form-check-inline"><input class="form-check-input" type="radio"  :id="'Hardware_' + opt.value" :value="opt.value" v-model="checklist.hardware_checks1"disabled/>
                     <label class="form-check-label" :for="'Hardware_' + opt.value"> </label> </div>
                   </td>
               <tr>
@@ -359,9 +392,8 @@ watch(selectedDepartments, (newVal) => {
         <!-- Summary/Recommendation Section (Below Table) -->
         <div class="mt-3">
             <label for="comments" class="fw-bold">Summary/Recommendation</label>
-            <textarea id="comments" v-model="checklist.Summary" class="form-control" rows="3" placeholder="Enter any additional comments..." disabled></textarea>
+            <textarea id="comments" v-model="checklist.Summary" class="form-control" rows="3"disabled></textarea>
         </div>
-
         </div>
         <!-- Modal Body Ends -->
 
@@ -511,5 +543,4 @@ watch(selectedDepartments, (newVal) => {
 .close-btn:hover {
   background-color: #c0392b;
 }
-
 </style>

@@ -15,17 +15,23 @@ const props = defineProps({
 
 });
 
+const employees = ref([]);
+const isUpdateMode = ref(false);
+const showNextButton = ref(true);
 const currentMainId = ref(null);
+const department = ref(props.departments); // ✅ recommended
 
-const department = ref(props.departments || []);
 const mainId = ref (0)
+const departments = ref([...props.departments]);
 const selectedDepartments = ref(null);
 const pmYear = ref({}); // selected year object
 const selectedYear = ref(pmYear); // Initially set to passed `pmYear` from props
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
-
+watch(() => props.departments, (newVal) => {
+  departments.value = [...newVal];
+});
 const updateYear = async (year) => {
   pmYear.value = year;  // Set selected year
   isDropdownOpen.value = false;  // Close the dropdown
@@ -108,63 +114,260 @@ const openModal = () => {
 const iscloseModal = () => {
   isModalOpen.value = false;
 };
-
+const closeModal = () => {
+  // Reset data when closing
+  resetForm();
+  
+  // Close the modals
+  isStep1ModalOpen.value = false;
+  isStep2ModalOpen.value = false;
+  isUpdateMode.value = false;
+  currentMainId.value = null;
+};
 
 const openStep1Modal = () => {
+
+  resetForm();
+
+  isUpdateMode.value = false;
+  showNextButton.value = false; // Hide the Next button for Add Form mode
   isStep1ModalOpen.value = true;
-  const departmentData = props.departments[0]; // Access the first employee's data
-  if (departmentData) {
-    formData.officeUnit = departmentData.OfficeName || "";
-    formData.department = departmentData.department_name || "";
+
+  currentMainId.value = null; // Reset current ID since this is a new record
+
+  // Prepopulate with department data if available
+  if (props.departments && props.departments.length > 0) {
+    const departmentData = props.departments[0];
+    if (departmentData) {
+      formData.officeUnit = departmentData.OfficeName || "";
+      formData.department = departmentData.department_name || "";
+    }
   }
 };
+onMounted(() => {
+  fetchEmployees();
+});
 
+// For submitting new record (Step 1) and moving to Step 2
+const submitStep1AndGoToStep2 = (mainIdParam) => {
+  console.log("Submitting Step 1, mainId:", mainIdParam);
+  
+  // Validate that we have a mainId
+  if (!mainIdParam) {
+    console.error("No mainId provided to submitStep1AndGoToStep2");
+    return;
+  }
+  
+  // Set the currentMainId value to the passed parameter
+  currentMainId.value = mainIdParam;
 
-
-const modal1 = () => {
-
+  // Then proceed to Step 2
   isStep1ModalOpen.value = false;
   isStep2ModalOpen.value = true;
+  
 
 };
+
+
 
 const openStepModal = (mainId) => {
-  isStep1ModalOpen.value = true;
-  currentMainId.value = mainId;
-  console.log("MainId: " + currentMainId.value);
-
-  const employeeData = props.departments.find(emp => String(emp.mainId) === String(mainId));
-  if (employeeData) {
-    selectedDepartments.value = employeeData;
-  } else {
-    console.error("Employee not found with mainId:", mainId);
+  console.log("Opening edit modal for mainId:", mainId);
+  
+  if (!mainId) {
+    console.error("Cannot open edit modal without mainId");
+    return;
   }
+  
+  isUpdateMode.value = true;
+  currentMainId.value = mainId;
+  isStep1ModalOpen.value = true;
+  
+  // Find the record to edit
+  const recordData = departments.value.find(dep => String(dep.mainId) === String(mainId));
+  
+  if (recordData) {
+    selectedDepartments.value = recordData;
+    
+  
+    formData.employeeId = recordData.employeeId;
+    formData.deptId = recordData.deptId;
+    formData.OffId = recordData.OffId;
+    formData.YrId = recordData.YrId;
+    
+    // Other fields
+    formData.officeUnit = recordData.OfficeName || "";
+    formData.department = recordData.department_name || "";
+    formData.pcName = recordData.pcname || "";
+    formData.dateAcquired = recordData.date_acquired || null;
+    
+    // Hardware status
+    formData.cpu_status = recordData.cpu || 0;
+    formData.keyboard_status = recordData.keyboard_status || 0;
+    formData.printer_status = recordData.printer_status || 0;
+    formData.monitor_status = recordData.monitor_status || 0;
+    formData.mouse_status = recordData.mouse_status || 0;
+    formData.ups_status = recordData.ups_status || 0;
+    formData.avr_status = recordData.avr_status || 0;
+    
+    // Software
+    formData.windows10 = recordData.windows10 || 0;
+    formData.windows11 = recordData.windows11 || 0;
+    formData.license = recordData.license || 0;
+    formData.enrollment = recordData.enrollment || 0;
+    formData.microsoft = recordData.microsoft || 0;
+    formData.browser = recordData.browser || 0;
+    formData.anti_virus = recordData.anti_virus || 0;
+    formData.media_player = recordData.media_player || 0;
+    formData.adobe_reader = recordData.adobe_reader || 0;
+    formData.word_processor = recordData.word_processor || 0;
+    
+    // Other fields
+    formData.other_equip = recordData.other_equip || "";
+    formData.other_os = recordData.other_os || "";
+    formData.other_sys = recordData.other_sys || "";
+    
+    // Component details
+    formData.processor_details = recordData.processor_details || "";
+    formData.motherboard_details = recordData.motherboard_details || "";
+    formData.memory_details = recordData.memory_details || "";
+    formData.graphics_card_details = recordData.graphics_card_details || "";
+    formData.hard_disk_details = recordData.hard_disk_details || "";
+    formData.monitor_details = recordData.monitor_details || "";
+    formData.casing_details = recordData.casing_details || "";
+    formData.power_supply_details = recordData.power_supply_details || "";
+    formData.keyboard_details = recordData.keyboard_details || "";
+    formData.mouse_details = recordData.mouse_details || "";
+    formData.avr_details = recordData.avr_details || "";
+    formData.ups_details = recordData.ups_details || "";
+    formData.printer_details = recordData.printer_details || "";
+    formData.network_mac_ip_details = recordData.network_mac_ip_details || "";
+    
+    console.log("Form data populated:", formData);
+  } else {
+    console.error("Record not found with mainId:", mainId);
+  }
+  
 };
 
 
-const openStep2Modal = (mainId = currentMainId.value) => {
-  console.log("mainId passed to Step 2:", mainId);
+// For moving to Step 2 when editing
+const openStep2Modal = (mainId) => {
+  console.log("Opening Step 2 modal for mainId:", mainId);
 
   if (!mainId) {
-    console.error("Step 2 called without a valid mainId");
+    console.error("Step 2 called without a valid mainId:", mainId);
     return;
   }
 
-  const employeeData = props.departments.find(emp => String(emp.mainId) === String(mainId));
-  if (employeeData) {
-    selectedDepartments.value = employeeData;
+  const recordData = departments.value.find(dep => String(dep.mainId) === String(mainId));
+  console.log("Record data found:", recordData);
+
+  if (recordData) {
+    selectedDepartments.value = recordData;
+
+    // Set any additional fields needed for Step 2
     isStep1ModalOpen.value = false;
     isStep2ModalOpen.value = true;
+    
+
   } else {
-    console.error("Employee not found with mainId:", mainId);
+    console.error("Record not found with mainId:", mainId);
   }
 };
 
-const closeModal = () => {
-  isStep1ModalOpen.value = false;
-  isStep2ModalOpen.value = false;
-  enableBackgroundScroll();
+const fetchEmployees = async () => {
+  try {
+    const response = await axios.get('/api/employees');
+    employees.value = response.data || [];
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    employees.value = [];
+  }
 };
+
+// Call this function when the component mounts or when the modal opens
+
+
+
+const updateRecord = async () => {
+  try {
+    console.log("Updating Form Data:", formData);
+
+    const payload = {
+      mainId: currentMainId.value,
+      employeeId: formData.employeeId,
+      deptId: formData.deptId,
+      OffId: formData.OffId,
+      YrId: formData.YrId,
+      pcName: formData.pcName,
+      dateAcquired: formData.dateAcquired,
+      cpu_status: formData.cpu_status,
+      keyboard_status: formData.keyboard_status,
+      printer_status: formData.printer_status,
+      monitor_status: formData.monitor_status,
+      mouse_status: formData.mouse_status,
+      ups_status: formData.ups_status,
+      avr_status: formData.avr_status,
+      windows10: formData.windows10,
+      windows11: formData.windows11,
+      license: formData.license,
+      enrollment: formData.enrollment,
+      microsoft: formData.microsoft,
+      browser: formData.browser,
+      anti_virus: formData.anti_virus,
+      media_player: formData.media_player,
+      adobe_reader: formData.adobe_reader,
+      word_processor: formData.word_processor,
+      other_equip: formData.other_equip,
+      other_os: formData.other_os,
+      other_sys: formData.other_sys,
+      processor_details: formData.processor_details,
+      motherboard_details: formData.motherboard_details,
+      memory_details: formData.memory_details,
+      graphics_card_details: formData.graphics_card_details,
+      hard_disk_details: formData.hard_disk_details,
+      monitor_details: formData.monitor_details,
+      casing_details: formData.casing_details,
+      power_supply_details: formData.power_supply_details,
+      keyboard_details: formData.keyboard_details,
+      mouse_details: formData.mouse_details,
+      avr_details: formData.avr_details,
+      ups_details: formData.ups_details,
+      printer_details: formData.printer_details,
+      network_mac_ip_details: formData.network_mac_ip_details,
+    };
+
+    const response = await axios.put(`/api/preventive-maintenance/${currentMainId.value}`, payload);
+
+    if (response.data && response.data.message) {
+      // Find and update local entry
+      const index = departments.value.findIndex(dep => String(dep.mainId) === String(currentMainId.value));
+      if (index !== -1) {
+        departments.value[index] = { ...departments.value[index], ...payload };
+      }
+
+      closeModal();
+      // Optional: toast/success message
+      console.log("Update successful:", response.data.message);
+    }
+
+  } catch (error) {
+    console.error("Error updating record:", error.response?.data || error.message);
+    // Optional: display error to user
+  }
+};
+
+
+const nextToStep2 = () => {
+  // This should only be used when you're not submitting data
+  if (currentMainId.value) {
+    openStep2Modal(currentMainId.value);
+  } else {
+    console.error("Cannot proceed to Step 2 without a mainId");
+    // Maybe you want to show an error message to the user
+  }
+};
+
 
 // Disable background scrolling when modal is open
 const disableBackgroundScroll = () => {
@@ -176,9 +379,115 @@ const enableBackgroundScroll = () => {
   document.body.style.overflow = '';
 };
 
+const resetForm = () => {
+
+  formData.date = '';
+  formData.ticketnumber = '';
+  formData.equipment = '';
+  formData.officeUnit = '';
+  formData.department = '';
+  formData.dateAcquired = '';
+  formData.pcName = '';
+  
+  // Reset equipment installed checkboxes
+  formData.cpu_status = 0;
+  formData.keyboard_status = 0;
+  formData.printer_status = 0;
+  formData.monitor_status = 0;
+  formData.mouse_status = 0;
+  formData.ups_status = 0;
+  formData.avr_status = 0;
+  formData.other_equip = '';
+  
+  // Reset OS radio buttons
+  formData.windows10 = 0;
+  formData.windows11 = 0;
+  formData.other_os = '';
+  formData.license = 0;
+  
+  // Reset software checkboxes
+  formData.enrollment = 0;
+  formData.microsoft = 0;
+  formData.browser = 0;
+  formData.anti_virus = 0;
+  formData.word_processor = 0;
+  formData.adobe_reader = 0;
+  formData.media_player = 0;
+  formData.other_sys = '';
+  
+  // Reset desktop specifications
+  if (formData.desktopSpecs) {
+    Object.keys(formData.desktopSpecs).forEach(key => {
+      formData.desktopSpecs[key] = '';
+    });
+  }
+  
+  // If you're using arrays for checkboxes, reset those too
+  if (formData.equipmentInstalled) {
+    formData.equipmentInstalled = [];
+  }
+  
+  if (formData.softwareInstalled) {
+    formData.softwareInstalled = [];
+  }
+  
+  // Reset the OS selection if it's a string
+  if (typeof formData.osInstalled === 'string') {
+    formData.osInstalled = '';
+  }
+ 
+  checklist.System_Boot = null;
+  checklist.System_Log = null;
+  
+  checklist.Network_Settings1 = null;
+  checklist.Network_Settings2 = null;
+  checklist.Network_Settings3 = null;
+  checklist.Network_Settings4 = null;
+  checklist.Network_Settings5 = null;
+  checklist.Network_Settings6 = null;
+  
+  checklist.Computer_Hardware_Settings1 = null;
+  checklist.Computer_Hardware_Settings2 = null;
+  checklist.Computer_Hardware_Settings3 = null;
+  checklist.Computer_Hardware_Settings4 = null;
+  checklist.Computer_Hardware_Settings5 = null;
+  checklist.Computer_Hardware_Settings6 = null;
+  
+  checklist.Browser_Settings = null;
+  checklist.Proper_Software_Loads = null;
+  
+  checklist.Viruses_Malware1 = null;
+  checklist.Viruses_Malware2 = null;
+  
+  checklist.Clearance1 = null;
+  checklist.Clearance2 = null;
+  checklist.Clearance3 = null;
+  checklist.Clearance4 = null;
+  
+  checklist.Interiors_Cleaning1 = null;
+  checklist.Interiors_Cleaning2 = null;
+  checklist.Interiors_Cleaning3 = null;
+  checklist.Interiors_Cleaning4 = null;
+  checklist.Interiors_Cleaning5 = null;
+  
+  checklist.Peripheral_Devices1 = null;
+  checklist.Peripheral_Devices2 = null;
+  checklist.Peripheral_Devices3 = null;
+  checklist.Peripheral_Devices4 = null;
+  checklist.Peripheral_Devices5 = null;
+  checklist.Peripheral_Devices6 = null;
+  checklist.Peripheral_Devices7 = null;
+  
+  checklist.Summary = '';
+};
+
+
 // Form Data
 const formData = reactive({
+  employeeId: "",
+  disposal: "", 
   ticketnumber: "",
+  pcName: "",
   equipment:"",
   officeUnit: "",
   department: "",
@@ -207,19 +516,9 @@ const formData = reactive({
     Mouse: "",
     AVR: "",
     NetWorkMacIp: ""
-    
   },
+
 });
-
-const officeUnits = ref([
-  "Admin Office",
-  "IT Department",
-  "HR Department",
-  "Finance Office",
-  "Maintenance",
-  "Library"
-]);
-
 watch(selectedDepartments, (newVal) => {
   if (newVal) {
     console.log(newVal); // Check the new value of selectedEmployee
@@ -360,97 +659,135 @@ const updateSoftwareStatus = (option) => {
   }
 };
 
+const isLocked = ref(false);
 
+const setForDisposal = () => {
+  formData.disposal = 1;
 
-const transformChecklist = () => {
-  const result = [];
+  // Lock equipment statuses
+  formData.equipmentInstalled = [];
+  formData.cpu_status = "0";
+  formData.keyboard_status = "0";
+  formData.monitor_status = "0";
+  formData.mouse_status = "0";
+  formData.printer_status = "0";
+  formData.ups_status = "0";
+  formData.avr_status = "0";
+  formData.other_equip = "";
 
-  checklist.items.forEach(item => {
-    const lines = item.details.split('\n');
-    lines.forEach((line, idx) => {
-      result.push({
-        task: item.task,
-        details: [line], // wrap single detail in array
-        status: [item.status[idx]] // match with corresponding status
-      });
-    });
-  });
+  // Lock OS
+  formData.windows10 = "0";
+  formData.windows11 = "0";
+  formData.other_os = null;
+  formData.license = null;
 
-  return result;
+  // Lock software
+  formData.softwareInstalled = [];
+  formData.enrollment = "0";
+  formData.adobe_reader = "0";
+  formData.word_processor = "0";
+  formData.media_player = "0";
+  formData.anti_virus = "0";
+  formData.browser = "0";
+  formData.microsoft = "0";
+  formData.other_sys = "";
+
+  isLocked.value = true; // Set UI to readonly/disabled
 };
 
 
-const updateStatus = (index, i, value) => {
-  if (!checklist.items[index].status[i]) {
-    checklist.items[index].status[i] = 3; // Default to N/A
-  }
-  checklist.items[index].status[i] = value;
-};
+
 
 
 const submitForm = async () => {
   try {
-    console.log("Submitting Form Data:", formData, checklist);
-
-    // Get deptId from props.departments
-    const deptId =
-  selectedDepartments.value || (props.departments.length > 0 ? props.departments[0].deptId : null);
-
-
+    console.log("Submitting Form Data:", formData);
+    
+    // Make sure selectedDepartments is defined and has the right structure
+    const deptId = selectedDepartments.value?.deptId || 
+                  (props.departments && props.departments.length > 0 ? 
+                   props.departments[0].deptId : null);
+    
+    // Safely access desktop specs with optional chaining
+    const desktopSpecs = formData.desktopSpecs || {};
+    
     // Construct request payload
     const payload = {
+      disposal: formData.disposal,
       employeeId: null,
       deptId,
       YrId: selectedDepartments.value?.YrId || props.YrId,
-      pcName: formData.pcName,
-      ticketnumber: formData.ticketnumber,
-      equipment: formData.equipment,
-      dateAcquired: formData.dateAcquired,
-      cpu_status: formData.cpu_status,
-      keyboard_status: formData.keyboard_status,
-      printer_status: formData.printer_status,
-      monitor_status: formData.monitor_status,
-      mouse_status: formData.mouse_status,
-      ups_status: formData.ups_status,
-      avr_status: formData.avr_status,
-      windows10: formData.windows10,
-      windows11: formData.windows11,
-      license: formData.license,
-      enrollment: formData.enrollment,
-      microsoft: formData.microsoft,
-      browser: formData.browser,
-      anti_virus: formData.anti_virus,
-      word_processor: formData.word_processor,
-      adobe_reader: formData.adobe_reader,
-      media_player: formData.media_player,
-      other_equip: formData.other_equip,
-      other_os: formData.other_os,
-      other_sys: formData.other_sys,
-      processor_details: formData.desktopSpecs.Processor,
-      motherboard_details: formData.desktopSpecs.Motherboard,
-      memory_details: formData.desktopSpecs.Memory,
-      graphics_card_details: formData.desktopSpecs.GraphicCard,
-      monitor_details: formData.desktopSpecs.Monitor,
-      hard_disk_details: formData.desktopSpecs.HardDisk,
-      casing_details: formData.desktopSpecs.Casing,
-      power_supply_details: formData.desktopSpecs.PowerSupply,
-      keyboard_details: formData.desktopSpecs.Keyboard,
-      mouse_details: formData.desktopSpecs.Mouse,
-      avr_details: formData.desktopSpecs.AVR,
-      ups_details: formData.desktopSpecs.UPS,
-      printer_details: formData.desktopSpecs.Printer,
-      network_mac_ip_details: formData.desktopSpecs.NetWorkMacIp,
+      pcName: formData.pcName || '',
+      ticketnumber: formData.ticketnumber || '',
+      equipment: formData.equipment || '',
+      dateAcquired: formData.dateAcquired || '',
+      cpu_status: formData.cpu_status || 0,
+      keyboard_status: formData.keyboard_status || 0,
+      printer_status: formData.printer_status || 0,
+      monitor_status: formData.monitor_status || 0,
+      mouse_status: formData.mouse_status || 0,
+      ups_status: formData.ups_status || 0,
+      avr_status: formData.avr_status || 0,
+      windows10: formData.windows10 || 0,
+      windows11: formData.windows11 || 0,
+      license: formData.license || 0,
+      enrollment: formData.enrollment || 0,
+      microsoft: formData.microsoft || 0,
+      browser: formData.browser || 0,
+      anti_virus: formData.anti_virus || 0,
+      word_processor: formData.word_processor || 0,
+      adobe_reader: formData.adobe_reader || 0,
+      media_player: formData.media_player || 0,
+      other_equip: formData.other_equip || '',
+      other_os: formData.other_os || '',
+      other_sys: formData.other_sys || '',
+      processor_details: desktopSpecs.Processor || '',
+      motherboard_details: desktopSpecs.Motherboard || '',
+      memory_details: desktopSpecs.Memory || '',
+      graphics_card_details: desktopSpecs.GraphicCard || '',
+      monitor_details: desktopSpecs.Monitor || '',
+      hard_disk_details: desktopSpecs.HardDisk || '',
+      casing_details: desktopSpecs.Casing || '',
+      power_supply_details: desktopSpecs.PowerSupply || '',
+      keyboard_details: desktopSpecs.Keyboard || '',
+      mouse_details: desktopSpecs.Mouse || '',
+      avr_details: desktopSpecs.AVR || '',
+      ups_details: desktopSpecs.UPS || '',
+      printer_details: desktopSpecs.Printer || '',
+      network_mac_ip_details: desktopSpecs.NetWorkMacIp || '',
     };
 
     console.log("Payload:", payload);
 
     const response = await axios.post(`/api/departmentChecklist`, payload);
+    const newDepartmentData = response.data.data;
+    
+    console.log("API response data:", newDepartmentData);
+    
+    if (!newDepartmentData || !newDepartmentData.mainId) {
+      console.error("API response missing mainId:", newDepartmentData);
+      return; // Exit if no mainId
+    }
 
-    mainId.value = response.data.data.mainId
-    console.log("Response:", response.data);
-    console.log (response.data.mainId)
+    // Make sure departments is defined
+    if (departments && departments.value) {
+      // Optional: check if it's already in the list
+      const exists = departments.value.find(dep => dep.mainId === newDepartmentData.mainId);
 
-    openStep2Modal();
+      if (!exists) {
+        departments.value.push(newDepartmentData); // Add to local departments
+      }
+    }
+
+    // Set both mainId and currentMainId values
+    mainId.value = newDepartmentData.mainId;
+    currentMainId.value = newDepartmentData.mainId;
+    
+    console.log("mainId set to:", mainId.value);
+    console.log("currentMainId set to:", currentMainId.value);
+
+    // Pass the mainId to the function
+    submitStep1AndGoToStep2(newDepartmentData.mainId);
 
   } catch (error) {
     console.error("Error submitting form:", error.response?.data || error.message);
@@ -568,7 +905,7 @@ watch(selectedDepartments, (newVal) => {
 const submitChecklist = async () => {
   
   const payload = {
-    mainId: mainId.value,       
+    mainId: mainId.value,   
     YrId: selectedDepartments.value?.YrId || props.YrId,
 
     System_Boot: checklist.System_Boot,
@@ -713,7 +1050,6 @@ watch(isStatusDropdownOpen, (newVal) => {
 
 
 
-
 </script>
 
 <template>
@@ -744,20 +1080,23 @@ watch(isStatusDropdownOpen, (newVal) => {
             <div class="d-flex justify-content-center">
               <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2" 
                       @click="openStepModal(employee.mainId)">
-                <i class="fas fa-eye me-1"></i> View
+                <i class="fas fa-eye me-1"></i> Edit 
               </button>
               <button 
                 class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
                 @click="printDetails(employee)">
-                <i class="fas fa-print me-1"></i> Print
+                <i class="fas fa-eye me-1"></i> Print
               </button>
             </div>
           </td>       
-            <!-- Action button (e.g., print details) -->
-            <td class="text-center">
+
+          <td>{{ employee.disposal === '1' ? 'For Disposal' : (employee.disposal == null ? 'None' : employee.disposal) }}</td>
+              
            
-          </td>
-        </tr>
+            
+        
+              </tr>
+
       </tbody>
     </table>
 
@@ -804,19 +1143,22 @@ watch(isStatusDropdownOpen, (newVal) => {
             >
               </div>
 
-
-        <!-- MODAL -->
-
+</div>
         <!-- For Disposal Button -->
-        <button class="btn btn-danger btn-sm">For Disposal</button>
+        <button class="btn btn-danger btn-sm" @click="setForDisposal">For Disposal</button>
 
-      </div>
 
           <div class="modal-body modal-scrollable">
-            <!-- User & Date Info -->
+          
             <div class="row mb-3">
-              
-            
+              <div class="col-md-2 user-dropdown-container" v-if="isUpdateMode">
+                <label class="form-label">User</label>
+                <select class="form-select fixed-width-dropdown" v-model="formData.employeeId">
+                  <option v-for="employee in employees" :key="employee.employeeId" :value="employee.employeeId">
+                    {{ employee.emp_name }}
+                  </option>
+                </select>
+              </div>
               <div class="col-md-2">
                 <label class="form-label">Office/College/Unit</label>
                 <input type="text" class="form-control" v-model="formData.officeUnit">
@@ -835,7 +1177,7 @@ watch(isStatusDropdownOpen, (newVal) => {
               </div>
               <div class="col-md-2">
                 <label class="form-label">PC Name</label>
-                <input type="text" class="form-control" v-model="formData.pcName">
+                <input type="text" class="form-control" v-model="formData.pcName" :disabled="isLocked">
               </div>
             </div>
 
@@ -850,7 +1192,7 @@ watch(isStatusDropdownOpen, (newVal) => {
                     class="form-check-input" 
                     type="checkbox" 
                     :value="option" 
-                    v-model="formData.equipmentInstalled"
+                    v-model="formData.equipmentInstalled":disabled="isLocked"
                     @change="updateEquipmentStatus(option)" 
                   />
                   <label class="form-check-label">{{ option }}</label>
@@ -861,7 +1203,7 @@ watch(isStatusDropdownOpen, (newVal) => {
                   v-if="option === 'Other' && formData.equipmentInstalled.includes('Other')" 
                   type="text" 
                   class="form-control mt-1 ms-3" 
-                  v-model="formData.other_equip" 
+                  v-model="formData.other_equip":disabled="isLocked"
                   placeholder="Specify Other Equipment">
               </div>
             </div>
@@ -876,8 +1218,8 @@ watch(isStatusDropdownOpen, (newVal) => {
             type="radio" 
             class="form-check-input" 
             :value="option" 
-            v-model="formData.osInstalled"
-            @change="updateOsInstalled(option)" 
+            v-model="formData.osInstalled" 
+            @change="updateOsInstalled(option)" :disabled="isLocked"
           />
           <label class="form-check-label">{{ option }}</label>
         </div>
@@ -887,7 +1229,7 @@ watch(isStatusDropdownOpen, (newVal) => {
           <input 
             type="text" 
             class="form-control mt-1" 
-            v-model="formData.other_os" 
+            v-model="formData.other_os" :disabled="isLocked"
             placeholder="Specify Other OS"
           />
         </div>
@@ -900,7 +1242,7 @@ watch(isStatusDropdownOpen, (newVal) => {
               type="radio" 
               class="form-check-input" 
               :value="1" 
-              v-model.number="formData.license"
+              v-model.number="formData.license" :disabled="isLocked"
             />
             <label class="form-check-label">Licensed</label>
           </div>
@@ -909,7 +1251,7 @@ watch(isStatusDropdownOpen, (newVal) => {
               type="radio" 
               class="form-check-input" 
               :value="0" 
-              v-model.number="formData.license"
+              v-model.number="formData.license":disabled="isLocked"
             />
             <label class="form-check-label">Not Licensed</label>
           </div>
@@ -926,7 +1268,7 @@ watch(isStatusDropdownOpen, (newVal) => {
             class="form-check-input" 
             type="checkbox" 
             :value="option" 
-            v-model="formData.softwareInstalled"
+            v-model="formData.softwareInstalled" :disabled="isLocked"
             @change="updateSoftwareStatus(option)" 
           />
           <label class="form-check-label">{{ option }}</label>
@@ -937,7 +1279,7 @@ watch(isStatusDropdownOpen, (newVal) => {
           v-if="option === 'Other' && formData.softwareInstalled.includes('Other')" 
           type="text" 
           class="form-control mt-1 ms-3" 
-          v-model="formData.other_sys" 
+          v-model="formData.other_sys" :disabled="isLocked"
           placeholder="Specify Other Software">
       </div>
     </div>
@@ -954,15 +1296,21 @@ watch(isStatusDropdownOpen, (newVal) => {
                 </div>
               </div>
             </div>
-                     <!-- Modal Footer -->
-          <div class="modal-footer">
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+            <!-- Always show Close button -->
             <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
-            <button type="button" class="btn btn-primary" @click="submitForm">Save</button>
-            <button type="button" class="btn btn-secondary" @click="openStep2Modal(currentMainId.value)">Next  </button>
+            
+            <!-- Show Save button only in Add Form mode (not in Edit mode) -->
+            <button v-if="!isUpdateMode" type="button" class="btn btn-primary" @click="submitForm">Save</button>
+            
+            <!-- Show Update button only in Edit mode -->
+            <button v-if="isUpdateMode" type="button" class="btn btn-primary" @click="updateRecord">Update</button>
+            
+            <!-- Always show Next button, regardless of mode -->
+            <button type="button" class="btn btn-secondary" @click="nextToStep2">Next</button>
           </div>
           </div>
-
- 
         </div>
       </div>
     </div>
@@ -1486,4 +1834,22 @@ select {
   border-radius: 5px;
   cursor: pointer;
 }
+
+.user-dropdown-container {
+    position: relative;
+  }
+  
+  .fixed-width-dropdown {
+    width: 100%;  /* Make the select element stick to its container width */
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Force dropdown menu to match select width and handle text overflow */
+  .fixed-width-dropdown option {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 </style>

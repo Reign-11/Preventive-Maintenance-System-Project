@@ -234,7 +234,7 @@ class MaintenancePlanControllerB extends Controller
     }
     
 
-    public function departments(Request $request, int $departmentId )
+public function departments(Request $request, int $departmentId )
 {
 try {
     // Use route parameter directly
@@ -281,11 +281,24 @@ try {
     public function addDatacenter(Request $request)
 {
     try {
+        $currentTimestamp = now();
+        $day = $currentTimestamp->format('d');
+        $month = $currentTimestamp->format('m');
+        $year = $currentTimestamp->format('y');
+
+        // Generate Ticket Number
+    $submissionOrder = DB::table('tbl_datacenter')
+    ->whereDate('created_at', $currentTimestamp->toDateString())
+    ->count() + 1;
+
+        $generatedTicketNumber = str_pad($submissionOrder, 2, '0', STR_PAD_LEFT) . $day . $month . $year;
+
         $validated = $request->validate([
             'YrId' => 'required|integer',
             'OffId' => 'required|integer',
             'PlanId' => 'required|integer',
             'deptId' => 'required|integer',
+            'Months' => 'nullable|string|max:255',
 
 
             'data_softsystem_checks1' => 'nullable|integer',
@@ -306,7 +319,9 @@ try {
             'hardware_checks1' => 'nullable|integer',
             'hardware_checks2' => 'nullable|integer',
 
-            'Summary' => 'nullable|string|max:255',
+            'Summary' => 'required|string|max:255',
+
+
         ]);
 
         // Prepare parameters for the stored procedure
@@ -315,6 +330,9 @@ try {
             $validated['OffId'],
             $validated['PlanId'],
             $validated['deptId'],
+            $generatedTicketNumber,
+
+            $validated['Months'], 
 
             $validated['data_softsystem_checks1'],
             $validated['data_softsystem_checks2'],
@@ -335,13 +353,14 @@ try {
             $validated['hardware_checks2'],
 
             $validated['Summary'],
+
         ];
 
         // Log the parameters
         \Log::info('Parameters passed to InsertChecklist: ', $parameters);
 
         // Call Stored Procedure
-        DB::statement("CALL InsertChecklist(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
+        DB::statement("CALL InsertChecklist(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
 
         return response()->json([
             'message' => 'Data inserted successfully',
@@ -353,5 +372,13 @@ try {
         ], 500);
     }
 }
-    
+
+public function getAvailableMonths($PlanId, $departmentId, $OffId)
+{
+    \Log::info("Fetching months for planId: {$PlanId}");
+
+    $months = DB::select('CALL GetMonthsWithData(?,?,?)', [$PlanId, $departmentId, $OffId]);
+    return response()->json($months);
+}
+
 }

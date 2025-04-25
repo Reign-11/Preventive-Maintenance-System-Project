@@ -169,7 +169,7 @@ const saveOnEnter = async (plan) => {
       PlanId: plan.PlanId ?? null,
       YrId: Number(selectedYear.value),
       OffId: Number(plan.OffId),
-      CatId: Number(plan.CatId ?? 1),
+      CatId: Number(plan.CatId ?? 3),
       PrevId: plan.PrevId ?? null,
     };
 
@@ -377,18 +377,23 @@ const prevPage = () => {
             <span class="badge bg-warning text-white">M</span> Monthly
           </div>
 
-          <div class="d-flex justify-content-center gap-3 mt-2 no-print">
-            <button class="btn btn-success"><i class="fas fa-save"></i> Save</button>
-            <button class="btn btn-warning"><i class="fas fa-lock"></i> Lock</button>
-            <button class="btn btn-info" @click="printTable">
-              <i class="fas fa-print"></i> Print
-            </button>
-          </div>
+          <!-- Action Buttons -->
+          <div class="d-flex justify-content-center gap-4 mt-3">
+              <button class="btn btn-success rounded-pill shadow-sm px-4 py-2" style="font-size: 16px;">
+                <i class="fas fa-save"></i> Save
+              </button>
+              <button class="btn btn-warning rounded-pill shadow-sm px-4 py-2" style="font-size: 16px;">
+                <i class="fas fa-lock"></i> Lock
+              </button>
+              <button class="btn btn-info rounded-pill shadow-sm px-4 py-2" @click="printTable" style="font-size: 16px;">
+                <i class="fas fa-print"></i> Print
+              </button>
+            </div>
 
           <!-- Year Selection -->
           <div class="mt-2">
             <label for="year">Select Year:</label>
-            <select v-model="selectedYear">
+            <select v-model="selectedYear" class="form-select w-auto rounded"> 
               <option v-for="year in years" :key="year.YrId" :value="year.YrId">
                 {{ year.Name }}
               </option>

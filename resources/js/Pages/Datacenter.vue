@@ -13,7 +13,6 @@ const props = defineProps({
   categoryId: { type: [String, Number], default: null } // Changed default to null
 });
 
-const deptId = ref('');
 
 const selectedDepartments = ref (null)
 const selectedPmYear = computed(() => props.pmYear ?? {});
@@ -23,6 +22,37 @@ const departments = ref(props.departments || []);
 const selectedPlan = ref(props.PlanId || '');
 const selectedDeptId = ref(props.deptId ?? null);
 const selectedCategoryId = ref(props.categoryId ?? 2); 
+const getPlanId = () => {
+  return props.departments.length > 0 ? props.departments[0].PlanId : null;
+};
+
+const selectedMonth = ref('');
+const months = ref([]);
+const hasLoadedMonths = ref(false);
+const deptId = ref('');
+
+const fetchMonths = async () => {
+  const PlanId = getPlanId();
+  // Make sure deptId is a simple value, not an object
+  const departmentId = typeof deptId.value === 'object' ? deptId.value.id || '' : deptId.value;
+  const OffId = selectedDepartments.value?.OffId || '';
+  
+  console.log("Debug values:", { PlanId, departmentId, OffId }); // Add this for debugging
+  
+  if (!PlanId || !departmentId || !OffId) {
+    console.warn("Missing required parameters for fetchMonths:", { PlanId, departmentId, OffId });
+    return;
+  }
+
+  try {
+    const response = await axios.get(`/api/getAvailableMonths/${PlanId}/${departmentId}/${OffId}`);
+    months.value = response.data.map(item => item.MonthName);
+    hasLoadedMonths.value = true;
+  } catch (error) {
+    console.error("Failed to fetch months:", error);
+  }
+};
+
 console.log (departments.value)
 watchEffect(() => {
   if (!selectedDeptId.value && props.departments?.length > 0) {
@@ -97,7 +127,8 @@ const submitChecklist = async () => {
       YrId: props.YrId,
       OffId: selectedDepartments.value?.OffId || '',
       PlanId: selectedDepartments.value?.PlanId || '',
-      deptId: deptId.value, // UNWRAP ref
+      deptId: deptId.value,
+      Months: selectedMonth.value,
 
       data_softsystem_checks1: checklist.data_softsystem_checks1,
       data_softsystem_checks2: checklist.data_softsystem_checks2,
@@ -118,6 +149,7 @@ const submitChecklist = async () => {
       hardware_checks2: checklist.hardware_checks2,
 
       Summary: checklist.Summary,
+
     };
 
     // Optionally: clean checklist before submitting if it might be reactive
@@ -127,29 +159,48 @@ const submitChecklist = async () => {
 
     console.log("Checklist submitted:", response.data);
     alert("Checklist submitted successfully!");
+    
+    // Reset form data
+    resetForm();
+    
+    // Reset selected month
+    const submittedMonth = selectedMonth.value;
+    selectedMonth.value = '';
+    
+    // Remove the submitted month from the dropdown
+    months.value = months.value.filter(month => month !== submittedMonth);
+    
+    // Alternatively, completely refresh the months list
+    // This is more thorough but makes an extra API call
+    hasLoadedMonths.value = false;
+    fetchMonths();
+    closeModal();
   } catch (error) {
     console.error("Submission error:", error.response?.data || error.message);
     alert("Something went wrong during submission.");
   }
 };
 
-const statuses = ref({});
-const setStatus = (item, status) => {
-  statuses.value[item] = status;
-};
-const selectedMonth = ref('');
-const months = ref([
-  "January", "February", "March", "April", "May", "June", 
-  "July", "August", "September", "October", "November", "December"
-]);
-const saveChecklist = () => {
-  console.log("Saved Checklist Data:", statuses.value);
-  alert("Checklist saved successfully!");
-  closeModal();
+
+
+
+
+// Reset form function
+const resetForm = () => {
+  // Reset all checklist values
+  Object.keys(checklist).forEach(key => {
+    if (typeof checklist[key] === 'number') {
+      checklist[key] = 0;
+    } else if (typeof checklist[key] === 'string') {
+      checklist[key] = '';
+    }
+  });
 };
 
+
+
 const printDetails = (item) => {
-  const modalHtml = `
+   const modalHtml = `
     <html>
       <head>
         <title>Print Modal</title>
@@ -216,10 +267,7 @@ const options = [
                 @click="openStep1Modal(department.DeptId)">
                 <i class="fas fa-edit me-1"></i> Fillup Form
               </button>
-              <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-                @click="printDetails(department)">
-                <i class="fas fa-print me-1"></i> Print
-              </button>
+            
             </div>
           </td>
 
@@ -256,13 +304,19 @@ const options = [
         <h3 class="modal-title text-center fw-bold">PREVENTIVE MAINTENANCE CHECKLIST FOR SERVERS/DATACENTER</h3>
         
         <!-- Month Dropdown (Directly Under Title) -->
-        <div class="text-center mt-2">
-        <label for="month-select" class="fw-semibold me-2">For the Month:</label>
-        <select id="month-select" v-model="selectedMonth" class="form-select d-inline-block w-auto">
-            <option value="" disabled>Select</option>
-            <option v-for="month in months" :key="month" :value="month">{{ month }}</option>
-        </select>
-        </div>
+ <!-- Month Dropdown (Directly Under Title) -->
+<div class="text-center mt-2">
+  <label for="month-select" class="fw-semibold me-2">For the Month:</label>
+  <select
+    id="month-select"
+    v-model="selectedMonth"
+    class="form-select d-inline-block w-auto"
+    @click="fetchMonths(selectedPlan.PlanId)"
+  >
+    <option value="" disabled>Select</option>
+    <option v-for="month in months" :key="month" :value="month">{{ month }}</option>
+  </select>
+</div>
 
         <!-- Preventive Maintenance Checklist Table -->
         <table class="table table-bordered mt-3">
@@ -512,7 +566,7 @@ const options = [
   justify-content: center;
   gap: 15px; /* Adds space between the buttons */
   margin-top: 15px;
-}
+} 
 
 .save-btn, .close-btn {
   background-color: #2ecc71; /* Save button color */

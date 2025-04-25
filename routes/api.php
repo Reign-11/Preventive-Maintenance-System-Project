@@ -40,6 +40,9 @@ Route::post('/insertChecklist', [MaintenancePlanController::class, 'insertCheckl
 
 Route::get('/getChecklistByYrId/{YrId}', [MaintenancePlanController::class, 'getChecklistByYrId']);
 
+Route::put('/preventive-maintenance/{mainId}', [MaintenancePlanController::class, 'updatePreventiveMaintenance']);
+
+Route::get('/employees', [MaintenancePlanController::class, 'getAllEmployees']);
 
 
 
@@ -64,6 +67,9 @@ Route::post('/add-checkilist', [MaintenancePlanControllerB::class, 'addCollegeB'
 
 Route::post('/addDatacenter', [MaintenancePlanControllerB::class, 'addDatacenter']);
 
+Route::get('/getAvailableMonths/{PlanId}/{departmentId}/{OffId}', [MaintenancePlanControllerB::class, 'getAvailableMonths']);
+
+
 
 
 // SET c
@@ -82,3 +88,5 @@ Route::post('/add-collegesC', [MaintenancePlanControllerC::class, 'addCollegeC']
 Route::get('/officesC', [MaintenancePlanControllerC::class, 'getOfficeC']);
 
 Route::delete('/delete-maintenance-planC/{id}', [MaintenancePlanControllerC::class, 'destroyC']);
+
+Route::post('/checklistC', [MaintenancePlanControllerC::class, 'checklistC']);

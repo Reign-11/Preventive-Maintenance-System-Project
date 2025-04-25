@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { onMounted } from 'vue';
 import feather from 'feather-icons';
 
@@ -95,7 +95,7 @@ onMounted(() => {
                 <div class="row">
                     <!-- Computing Units Card - Fixed missing icon -->
                     <div class="col-xl-4 mb-4">
-                        <a class="card lift h-100 border-left-lg border-left-success" href="/main">
+                        <Link class="card lift h-100 border-left-lg border-left-success" :href="('main')">
                             <div class="card-body d-flex justify-content-center flex-column">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div class="me-3">
@@ -110,12 +110,13 @@ onMounted(() => {
                                     <span class="badge bg-warning-soft text-warning rounded-pill ms-2">2 Pending Tasks</span>
                                 </div> -->
                             </div>
-                        </a>
+                        </Link>
                     </div>
 
                     <!-- Data Center Card - Improved consistency -->
                     <div class="col-xl-4 mb-4">
-                        <a class="card lift h-100 border-left-lg border-left-success" href="/setb">
+                        
+                        <Link class="card lift h-100 border-left-lg border-left-success" :href="('setb')">
                             <div class="card-body d-flex justify-content-center flex-column">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div class="me-3">
@@ -130,12 +131,12 @@ onMounted(() => {
                                     <span class="badge bg-success-soft text-success rounded-pill ms-2">All Tasks Complete</span>
                                 </div> -->
                             </div>
-                        </a>
-                    </div>
+                        </Link>
+                        </div>
 
                     <!-- Network Card - Updated with relevant content -->
                     <div class="col-xl-4 mb-4">
-                        <a class="card lift h-100 border-left-lg border-left-success" href="/setc">
+                        <Link class="card lift h-100 border-left-lg border-left-success" :href="('setc')">
                             <div class="card-body d-flex justify-content-center flex-column">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div class="me-3">
@@ -150,7 +151,7 @@ onMounted(() => {
                                     <span class="badge bg-danger-soft text-danger rounded-pill ms-2">1 Critical Task</span>
                                 </div> -->
                             </div>
-                        </a>
+                        </Link>
                     </div>
                 </div>
              </div>

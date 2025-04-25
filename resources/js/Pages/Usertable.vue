@@ -18,7 +18,7 @@ const props = defineProps({
 
 });
 
-const mainId = ref (0)
+
 const employee = ref(props.employee || []);
 const pmYear = ref({}); // selected year object
 const selectedYear = ref(pmYear); // Initially set to passed `pmYear` from props
@@ -182,13 +182,13 @@ const formData = reactive({
   license : null,
   other_os: null,
   softwareInstalled: [],
-  enrollment: "1",
-  adobe_reader: "1",
-  word_processor: "1",
-  media_player: "1",
-  anti_virus: "1",
-  browser: "1",
-  microsoft: "1",
+  enrollment: "0",
+  adobe_reader: "0",
+  word_processor: "0",
+  media_player: "0",
+  anti_virus: "0",
+  browser: "0",
+  microsoft: "0",
   other_sys: "",
   desktopSpecs: {
     Processor: "",
@@ -220,9 +220,9 @@ watch(selectedEmployee, (newVal) => {
 const isLocked = ref(false);
 
 const setForDisposal = () => {
-  formData.disposal = 1;
 
-  // Lock equipment statuses
+  formData.disposal = "1";
+
   formData.equipmentInstalled = [];
   formData.cpu_status = "0";
   formData.keyboard_status = "0";
@@ -300,16 +300,6 @@ const updateEquipmentStatus = (option) => {
 const updateSoftwareStatus = (option) => {
   if (formData.softwareInstalled.includes(option)) {
     // If checked, mark status as "0"
-    if (option === "Enrollment System") formData.enrollment = "0";
-    if (option === "Adobe Reader") formData.adobe_reader = "0";
-    if (option === "Word Processor") formData.word_processor = "0";
-    if (option === "Media Player") formData.media_player = "0";
-    if (option === "Anti-Virus") formData.anti_virus = "0";
-    if (option === "Browser") formData.browser = "0";
-    if (option === "Microsoft") formData.microsoft = "0";
-    if (option === "Other") formData.other_sys = ""; // Keep user input empty
-  } else {
-    // If unchecked, mark status as "1"
     if (option === "Enrollment System") formData.enrollment = "1";
     if (option === "Adobe Reader") formData.adobe_reader = "1";
     if (option === "Word Processor") formData.word_processor = "1";
@@ -317,6 +307,16 @@ const updateSoftwareStatus = (option) => {
     if (option === "Anti-Virus") formData.anti_virus = "1";
     if (option === "Browser") formData.browser = "1";
     if (option === "Microsoft") formData.microsoft = "1";
+    if (option === "Other") formData.other_sys = ""; // Keep user input empty
+  } else {
+    // If unchecked, mark status as "1"
+    if (option === "Enrollment System") formData.enrollment = "0";
+    if (option === "Adobe Reader") formData.adobe_reader = "0";
+    if (option === "Word Processor") formData.word_processor = "0";
+    if (option === "Media Player") formData.media_player = "0";
+    if (option === "Anti-Virus") formData.anti_virus = "0";
+    if (option === "Browser") formData.browser = "0";
+    if (option === "Microsoft") formData.microsoft = "0";
     if (option === "Other") formData.other_sys = ""; // Still allow input
   }
 };
@@ -438,7 +438,7 @@ const submitForm = async () => {
 
     // Send the data to the Laravel backend
     const response = await axios.post(`/api/employeeChecklist/${employeeId}`, payload);
-    mainId.value = response.data.data.mainId
+    selectedEmployee.value.mainId = response.data.data.mainId;
     console.log("Response:", response.data);
     console.log (response.data.mainId)
     
@@ -453,8 +453,8 @@ const submitForm = async () => {
 const submitChecklist = async () => {
   
   const payload = {
-    mainId: mainId.value,       
-    YrId: selectedEmployee.value.YrId,
+    mainId: selectedEmployee.value.mainId,   
+     YrId: selectedEmployee.value.YrId,
 
     System_Boot: checklist.System_Boot,
     System_Log: checklist.System_Log,
@@ -549,7 +549,6 @@ const printDetails = (item) => {
 };
 
 // Add User Modal Control
-const isAddUserModalOpen = ref(false);
 
 // New User Data
 
@@ -904,8 +903,7 @@ watch(isStatusDropdownOpen, (newVal) => {
     <!-- Modal Footer -->
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
-        <button type="button" class="btn btn-primary" @click="submitForm">Save</button>
-        <button type="button" class="btn btn-secondary" @click="openStep2Modal()">Next  </button>
+        <button type="button" class="btn btn-primary" @click="submitForm()">Save</button>
       </div>
       </div>
       </div>

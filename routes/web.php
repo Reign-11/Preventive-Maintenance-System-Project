@@ -31,6 +31,10 @@ Route::get('/', function () {
     ]);
 });
 
+Route::get('/', function () {  
+    return redirect()->route('login');  
+}); 
+
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -89,5 +93,10 @@ Route::get('/prevoffice/{officeId}', [MaintenancePlanControllerC::class, 'prev']
  Route::get('/viewdata/{departmentId}', [MaintenancePlanControllerB::class, 'departments'])
     ->middleware(['auth', 'verified'])
     ->name('viewdata');
+
+
+Route::get('/network/{departmentId}', [MaintenancePlanControllerC::class, 'networks'])
+    ->middleware(['auth', 'verified'])
+    ->name('network');
 
 require __DIR__.'/auth.php';

@@ -379,7 +379,7 @@ watch(selectedEmployee, (newVal) => {
             <th>Actions</th>
             <th>Status</th>
             <th>DATE</th>
-    
+     
           </tr>
         </thead>
         <tbody>
@@ -396,8 +396,8 @@ watch(selectedEmployee, (newVal) => {
       </button>
     </div>
   </td>
-
-  <td :class="{ 'clear-status': 'Clear', 'unclear-status': 'Unclear' }"></td>
+  <td>{{ emp.disposal === '1' ? 'For Disposal' : (emp.disposal == null ? 'None' : emp.disposal) }}</td>
+ 
   <td>{{ formatDate(emp.date) }}</td>
 </tr>
 
@@ -450,7 +450,6 @@ watch(selectedEmployee, (newVal) => {
         <!-- MODAL -->
 
         <!-- For Disposal Button -->
-        <button class="btn btn-danger btn-sm">For Disposal</button>
 
       </div>
 

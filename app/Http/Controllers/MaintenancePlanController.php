@@ -296,6 +296,7 @@ class MaintenancePlanController extends Controller
 public function employees(Request $request, int $employeeId)
 {
     try {
+        
         // Extract query params
         $yrId = $request->query('YrId');  
         $PlanId = $request->query('PlanId'); 
@@ -307,16 +308,17 @@ public function employees(Request $request, int $employeeId)
         $employed = DB::select('CALL GetEquipmentDetailsByEmployeeId(?)', [$employeeId]);
         Log::info("📢 Raw Employees Data Before Filtering:", $employed);
 
-        // Filter Employee based on PlanId, YrId, OfficeId, Dept, CatId, and employeeId
-        $employees = array_filter($employed, function ($emp) use ($PlanId, $yrId, $officeId, $departmentId, $categoryId, $employeeId) {
-            return 
-                $emp->PlanId == $PlanId &&
-                $emp->YrId == $yrId &&
-                $emp->OffId == $officeId &&
-                $emp->DeptId == $departmentId &&
-                ($emp->CatId == $categoryId || is_null($emp->CatId)) &&
-                $emp->employeeId == $employeeId;
-        });
+    // Filter Employee based on PlanId, YrId, OfficeId, Dept, CatId, and employeeId, excluding null employeeId
+    $employees = array_filter($employed, function ($emp) use ($yrId, $officeId, $departmentId, $categoryId, $employeeId) {
+    return 
+        $emp->employeeId !== null && 
+        $emp->YrId == $yrId &&
+        $emp->OffId == $officeId &&
+        $emp->DeptId == $departmentId &&
+        ($emp->CatId == $categoryId || $emp->CatId) &&
+        $emp->employeeId == $employeeId;
+});
+
 
         $employees = array_values($employees);
         Log::info("📢 Filtered Employees:", $employees);
@@ -330,7 +332,7 @@ public function employees(Request $request, int $employeeId)
             'YrId' => $yrId ?? '',
             'employeeId' => $employeeId ?? '',
             'PlanId' => $PlanId ?? '', 
-            'departmentId' => $departmentId ?? '',  // ✅ Fix variable name here
+            'departmentId' => $departmentId ?? '', 
             'categoryId' => $categoryId ?? 1,
             'pmYear' => $pmYearData ? (array) $pmYearData : ['Name' => '', 'Description' => ''],
         ]);
@@ -671,14 +673,14 @@ try {
 
     $dept = DB::select('CALL GetDepartmentPlanDetails(?)', [$departmentId]);
 
-    $depts = array_filter($dept, function ($depart) use ($PlanId, $yrId, $officeId, $departmentId,$categoryId) {
-        return $depart-> PlanId == $PlanId 
-        && $depart-> YrId == $yrId
-        && $depart-> OffId == $officeId
-        && $depart-> deptId == $departmentId
-        &&  ($depart->CatId == $categoryId || is_null($depart->CatId));
+    $depts = array_filter($dept, function ($depart) use ($PlanId, $yrId, $officeId, $departmentId, $categoryId) {
+        return (!$PlanId || $depart->PlanId == $PlanId) 
+            && (!$yrId || $depart->YrId == $yrId)
+            && (!$officeId || $depart->OffId == $officeId)
+            && $depart->deptId == $departmentId
+            && (!$categoryId || $depart->CatId == $categoryId);
     });
-
+    
 
     $depts = array_values ($depts);
 
@@ -724,7 +726,7 @@ public function departmentChecklist(Request $request)
             'employeeId' => 'nullable|integer',
             'deptId' => 'required|integer', 
             'YrId' => 'required|integer',
-            'pcName' => 'required|string|max:100',
+            'pcName' => 'nullable|string|max:100',
             'equipment' => 'required|string|max:50',
             'dateAcquired' => 'required|date',
             'cpu_status' => 'nullable|integer',
@@ -761,6 +763,8 @@ public function departmentChecklist(Request $request)
             'ups_details' => 'nullable|string|max:255',
             'printer_details' => 'nullable|string|max:255',
             'network_mac_ip_details' => 'nullable|string|max:255',
+            'disposal' => 'nullable|integer|max:255',
+
         ]);
 
         // Prepare parameters for the stored procedure
@@ -806,13 +810,15 @@ public function departmentChecklist(Request $request)
             $validated['ups_details'],
             $validated['printer_details'],
             $validated['network_mac_ip_details'],
+            $validated['disposal'],
+
         ];
 
         // Log the parameters
         \Log::info('Parameters passed to stored procedure: ', $parameters);
 
         // Call the Stored Procedure
-        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)", $parameters);
+        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)", $parameters);
 
         $savedData = DB::table('tbl_preventive_maintainance')
         ->where('ticketnumber', $generatedTicketNumber)
@@ -846,6 +852,109 @@ public function getChecklistByYrId($YrId)
     }
 }
 
+public function updatePreventiveMaintenance(Request $request, $mainId)
+{
+    $validated = $request->validate([
+        'mainId' => 'required|integer',
+        'employeeId' => 'nullable|integer',
+        'deptId' => 'required|integer',
+        'OffId' => 'required|integer',
+        'YrId' => 'required|integer',
+        'pcName' => 'nullable|string',
+        'dateAcquired' => 'nullable|date',
+        'cpu_status' => 'nullable|integer',
+        'keyboard_status' => 'nullable|integer',
+        'printer_status' => 'nullable|integer',
+        'monitor_status' => 'nullable|integer',
+        'mouse_status' => 'nullable|integer',
+        'ups_status' => 'nullable|integer',
+        'avr_status' => 'nullable|integer',
+        'windows10' => 'nullable|integer',
+        'windows11' => 'nullable|integer',
+        'license' => 'nullable|integer',
+        'enrollment' => 'nullable|integer',
+        'microsoft' => 'nullable|integer',
+        'browser' => 'nullable|integer',
+        'anti_virus' => 'nullable|integer',
+        'media_player' => 'nullable|integer',
+        'adobe_reader' => 'nullable|integer',
+        'word_processor' => 'nullable|integer',
+        'other_equip' => 'nullable|string',
+        'other_os' => 'nullable|string',
+        'other_sys' => 'nullable|string',
+        'processor_details' => 'nullable|string',
+        'motherboard_details' => 'nullable|string',
+        'memory_details' => 'nullable|string',
+        'graphics_card_details' => 'nullable|string',
+        'hard_disk_details' => 'nullable|string',
+        'monitor_details' => 'nullable|string',
+        'casing_details' => 'nullable|string',
+        'power_supply_details' => 'nullable|string',
+        'keyboard_details' => 'nullable|string',
+        'mouse_details' => 'nullable|string',
+        'avr_details' => 'nullable|string',
+        'ups_details' => 'nullable|string',
+        'printer_details' => 'nullable|string',
+        'network_mac_ip_details' => 'nullable|string',
+    ]);
+
+    DB::statement('CALL UpdatePreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+        $validated['mainId'],
+        $validated['employeeId'],
+        $validated['deptId'],
+        $validated['OffId'],
+        $validated['YrId'],
+        $validated['pcName'],
+        $validated['dateAcquired'],
+        $validated['cpu_status'],
+        $validated['keyboard_status'],
+        $validated['printer_status'],
+        $validated['monitor_status'],
+        $validated['mouse_status'],
+        $validated['ups_status'],
+        $validated['avr_status'],
+        $validated['windows10'],
+        $validated['windows11'],
+        $validated['license'],
+        $validated['enrollment'],
+        $validated['microsoft'],
+        $validated['browser'],
+        $validated['anti_virus'],
+        $validated['media_player'],
+        $validated['adobe_reader'],
+        $validated['word_processor'],
+        $validated['other_equip'],
+        $validated['other_os'],
+        $validated['other_sys'],
+        $validated['processor_details'],
+        $validated['motherboard_details'],
+        $validated['memory_details'],
+        $validated['graphics_card_details'],
+        $validated['hard_disk_details'],
+        $validated['monitor_details'],
+        $validated['casing_details'],
+        $validated['power_supply_details'],
+        $validated['keyboard_details'],
+        $validated['mouse_details'],
+        $validated['avr_details'],
+        $validated['ups_details'],
+        $validated['printer_details'],
+        $validated['network_mac_ip_details'],
+    ]);
+
+    return response()->json(['message' => 'Preventive maintenance record updated successfully.']);
+}
+
+public function getAllEmployees()
+{
+    $employees = DB::table('tbl_employee')
+        ->where('is_Active', 1)
+        ->where('is_Deleted', 0)
+        ->select('employeeId', 'emp_name')
+        ->get();
+        
+    return response()->json($employees);
+}
 }
 
 
