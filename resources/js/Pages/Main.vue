@@ -4,8 +4,6 @@ import MainLayout from '@/Layouts/MainLayout.vue';
 import axios from "axios";
 import { Link } from '@inertiajs/vue3';
 
-
-
 //  Reactive properties
 const years = ref([]);
 const selectedYear = ref(new Date().getFullYear());
@@ -13,10 +11,15 @@ const maintenancePlans = ref([]);
 const selectedYearDescription = ref("");
 const isFetchingData = ref(false);
 const selectedYearName = ref("");
-const offices = ref([]); // Store the list of offices for the dropdown
-const selectedOffice= ref(null); //  Holds selected value
-const selectedParentOffice = ref(null); // Define this to avoid ReferenceError
-const addedOffices = ref([]); //  Fix: Declare addedOffices as a reactive array
+const offices = ref([]); 
+const selectedOffice= ref(null); 
+const selectedParentOffice = ref(null); 
+const addedOffices = ref([]); 
+const plan = ref([])
+const selectYear = ref(null)
+const isPrinting = ref(false);
+const isLocked = ref(false);
+const lockedYears = ref({}); 
 
 //  External Scripts
 const files = [
@@ -48,6 +51,39 @@ const openModal = () => {
   if (modalElement) {
     const modalInstance = new bootstrap.Modal(modalElement);
     modalInstance.show();
+  }
+};
+
+const openSaveModal = () => {
+  const modalElement = document.getElementById("saveYearModal");
+  if (modalElement) {
+    const modalInstance = new bootstrap.Modal(modalElement);
+    modalInstance.show();
+  }
+};
+
+const saveAllPlans = async () => {
+  if (!selectedYear.value) {
+    alert('Please select a year before saving.');
+    return;
+  }
+
+  try {
+    const response = await axios.post('/api/duplicate', {
+      oldYrId: selectYear.value,   // <-- Define this correctly (I'll show below)
+      oldCatId: 1,
+      newYrId: selectedYear.value
+ 
+  
+    });
+
+    alert('Plans duplicated successfully!');
+  
+  
+
+  } catch (error) {
+    console.error(error);
+    alert('Failed to duplicate plans. Please try again.');
   }
 };
 
@@ -124,7 +160,6 @@ const countOccurrences = (type) => {
   }, 0);
 };
 
-
 //  Computed properties to track limits
 const countA = computed(() => countOccurrences('A'));
 const countSA = computed(() => countOccurrences('SA'));
@@ -149,6 +184,7 @@ const handleInput = (plan, month) => {
 
 const saveOnEnter = async (plan) => {
   try {
+    if (isLocked.value) return;
     console.log(`🔹 Saving Plan ID: ${plan?.PlanId} for ${selectedYear.value}`);
 
     await nextTick(); // Ensure the DOM is updated
@@ -179,9 +215,7 @@ const saveOnEnter = async (plan) => {
     });
 
     console.log("📩 Sending Data:", payload);
-
     const response = await axios.post("/api/save-maintenance-plan", payload);
-
     console.log(" Maintenance plan saved successfully", response.data);
 
     // Update the PlanId if it's newly created
@@ -190,6 +224,9 @@ const saveOnEnter = async (plan) => {
       console.log("🔄 Plan ID updated:", plan.PlanId);
     }
 
+    toast.success("✅ Maintenance plan saved successfully!"); 
+
+
   } catch (error) {
     console.error("❌ Error in saveOnEnter:", error);
     alert(error.response?.data?.error || "Failed to save data.");
@@ -197,7 +234,6 @@ const saveOnEnter = async (plan) => {
 };
 
 // Add College (POST Request to Laravel API)
-
 const addOffice = async () => {
   if (!selectedOffice.value) {
     alert("Please select an office.");
@@ -217,7 +253,7 @@ const addOffice = async () => {
 
   const requestData = {
     OfficeName: selectedOfficeData.OfficeName,
-    ParentOffId: selectedParentOffice?.value || null, // ✅ Ensure defined
+    ParentOffId: selectedParentOffice?.value || null, 
     YrId: selectedYear.value,
     CatId: 1,
   };
@@ -265,7 +301,6 @@ watch(maintenancePlans, (newValue) => {
   });
 }, { deep: true });
 
-
 //  Watcher for real-time updates (but skip if fetching data)
 watch(maintenancePlans, (newValue) => {
   if (isFetchingData.value || !selectedYear.value || !newValue.length) return;
@@ -293,12 +328,9 @@ watch(selectedYear, async (newYearId) => {
   }
 
   const selected = years.value.find(year => year.YrId === Number(newYearId));
-  
   selectedYearName.value = selected?.Name ?? "";
   selectedYearDescription.value = selected?.Description ?? "";
-
   console.log("📌 Updated Header:", selectedYearName.value, selectedYearDescription.value);
-
   // Fetch data for the selected year
   await fetchData();
 });
@@ -319,7 +351,19 @@ const months = ref([
 ]);
 
 const printTable = () => {
-  window.print();
+  // Set printing mode to true - this will use all plans instead of paginated ones
+  isPrinting.value = true;
+  
+  // Add a small delay to ensure the DOM updates before printing
+  setTimeout(() => {
+    // Trigger the print dialog
+    window.print();
+    
+    // Reset printing mode after printing is done
+    setTimeout(() => {
+      isPrinting.value = false;
+    }, 1000);
+  }, 300);
 };
 
 const deleteOffice = async (planId) => {
@@ -350,8 +394,8 @@ const deleteOffice = async (planId) => {
 };
 
 // Reactive variables for pagination
-const entriesPerPage = ref(10); // Default to 10 entries per page
-const currentPage = ref(1); // Start at page 1
+const entriesPerPage = ref(5); 
+const currentPage = ref(1); // 
 
 const paginatedPlans = computed(() => {
   const start = (currentPage.value - 1) * entriesPerPage.value;
@@ -379,6 +423,27 @@ const prevPage = () => {
     currentPage.value--;
   }
 };
+
+const detachPlan = async (PlanId) => {
+  try {
+    await axios.post(`/api/detach/${PlanId}`);
+    alert('Plan detached successfully!');
+    // Optionally remove from table
+    plan.value = plan.value.filter(plan => plan.PlanId !== PlanId);
+  } catch (error) {
+    console.error(error);
+    alert('Failed to detach the plan.');
+  }
+};
+
+const toggleLock = () => {
+  const year = selectedYear.value;
+  lockedYears.value[year] = !lockedYears.value[year];
+};
+
+const isYearLocked = (plan) => {
+  return !!lockedYears.value[plan.YrId]; // locked if true
+};
 </script>
 
 <template>
@@ -388,8 +453,10 @@ const prevPage = () => {
         <!-- Header Section -->
         <div class="text-center">
           <h2 class="fw-bold">
-            {{ selectedYearName }} {{ selectedYearDescription ? ` - ${selectedYearDescription}` : '' }}
+            {{ selectedYearName }} 
+            <span v-if="selectedYearDescription" style="color: black;"> - {{ selectedYearDescription }}</span>
           </h2>
+
           <!-- Legend -->
           <div class="mt-2">
             <strong>Legend:</strong>
@@ -400,20 +467,44 @@ const prevPage = () => {
           </div>
 
           <!-- Action Buttons -->
-          <div class="d-flex justify-content-center gap-4 mt-3">
-              <button class="btn btn-success rounded-pill shadow-sm px-4 py-2" style="font-size: 16px;">
-                <i class="fas fa-save"></i> Save
-              </button>
-              <button class="btn btn-warning rounded-pill shadow-sm px-4 py-2" style="font-size: 16px;">
-                <i class="fas fa-lock"></i> Lock
-              </button>
-              <button class="btn btn-info rounded-pill shadow-sm px-4 py-2" @click="printTable" style="font-size: 16px;">
-                <i class="fas fa-print"></i> Print
-              </button>
+          <div class="d-flex justify-content-center gap-4 mt-3 no-print">
+            <button class="btn btn-success rounded-pill shadow-sm px-4 py-2 no-print" @click="openSaveModal">
+              <i class="fas fa-save"></i> Save
+            </button>
+            <button class="btn btn-warning rounded-pill shadow-sm px-4 py-2"style="font-size: 16px;"
+            @click="toggleLock"> <i class="fas fa-lock"></i>{{ lockedYears[selectedYear] ? 'Unlock' : 'Lock' }}
+            </button>
+            <button class="btn btn-info rounded-pill shadow-sm px-4 py-2" @click="printTable" style="font-size: 16px;">
+              <i class="fas fa-print"></i> Print
+            </button>
+          </div>
+
+            <div class="modal fade" id="saveYearModal" tabindex="-1" aria-labelledby="saveYearModalLabel" >
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="saveYearModalLabel">Select Year</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="saveYearDropdown" class="form-label">Select Year:</label>
+                    <select id="saveYearDropdown" v-model="selectYear" class="form-control">
+                      <option v-for="year in years" :key="year.YrId" :value="year.YrId">{{ year.Name }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary"data-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-primary" @click="saveAllPlans">Save</button>
+                </div>
+              </div>
             </div>
+          </div>
 
           <!-- Year Selection -->
-          <div class="mt-2">
+          <div class="mt-2 no-print">
             <label for="year">Select Year:</label>
             <select v-model="selectedYear" class="form-select w-auto rounded"> 
               <option v-for="year in years" :key="year.YrId" :value="year.YrId">
@@ -425,12 +516,12 @@ const prevPage = () => {
 
         <!-- "Set A" Title -->
         <div class="text-success fw-bold fs-3 text-center mt-2">Set A</div>
-
+        
         <!-- Table Section -->
         <div class="card mt-2">
-       <div class="card-body">
-      <!-- Top Controls --> 
-      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="card-body">
+        <!-- Top Controls --> 
+        <div class="d-flex justify-content-between align-items-center mb-3 no-print">
         <!-- Add College Button -->
         <button class="btn btn-success btn-lg fw-bold px-4 py-2 no-print" @click="openModal">
           <i class="fas fa-file-signature"></i> Add College/Office
@@ -449,7 +540,6 @@ const prevPage = () => {
         </div>
       </div>
 
-
       <!-- Data Table -->
       <div class="datatable text-center table-responsive">
         <table class="table table-bordered table-hover" width="100%" cellspacing="0">
@@ -457,18 +547,21 @@ const prevPage = () => {
             <tr>
               <th>Colleges</th>
               <th v-for="month in months" :key="month">{{ month }}</th>
-              <th class="no-print">Actions</th> <!-- Added Actions Column -->
+              <th class="no-print">Actions</th> 
             </tr>
           </thead>
           <tbody>
-            <tr v-for="plan in paginatedPlans" :key="plan.PlanId">
+            <tr v-for="plan in isPrinting ? maintenancePlans : paginatedPlans" :key="plan.PlanId">
               <td>{{ plan.OffName ?? 'N/A' }}</td>
               <td v-for="month in months" :key="month">
                 <input 
+                  v-if="!isPrinting"
                   v-model="plan[month]" 
                   @keyup.enter="saveOnEnter(plan, month)" 
-                  :disabled="plan.isSaving || !isInputAllowed(plan[month])"
+                  :disabled="plan.isSaving || !isInputAllowed(plan[month]) || isYearLocked(plan)"
                 />
+                <!-- When printing, show just the value -->
+                <span v-if="isPrinting">{{ plan[month] }}</span>
                 <span v-if="plan.isSaving">Saving...</span>
               </td>
               <td class="no-print text-center">
@@ -479,9 +572,9 @@ const prevPage = () => {
                     <i class="fas fa-eye me-1"></i> View
                   </Link>
                   <!-- Delete Button -->
-                  <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="deleteOffice(plan.PlanId)">
-                    <i class="fas fa-trash me-1"></i> Delete
-                  </button>
+                    <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="detachPlan(plan.PlanId)">
+    <i class="fas fa-unlink me-1"></i> Detach
+  </button>
                 </div>
               </td>
             </tr>
@@ -489,7 +582,7 @@ const prevPage = () => {
         </table>
 
         <!-- Pagination -->
-        <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="d-flex justify-content-between align-items-center mt-3 no-print">
           <div class="dataTables_paginate paging_simple_numbers" id="dataTable_paginate">
             <ul class="pagination justify-content-end">
               <!-- Previous Button -->
@@ -516,12 +609,12 @@ const prevPage = () => {
 
     <!-- Bootstrap Modal -->
     <div class="modal fade" id="addCollegeModal" aria-labelledby="exampleModalLabel" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header"> 
               <h5 class="modal-title">Add College</h5>
                <!-- Close button -->
-              <button type="button" class="btn-close" @click="closeModal" aria-label="Close"></button>
+              <button type="button" class="btn-close" data-dismiss="modal"></button>
             </div>
 
             <div class="modal-body">
@@ -547,7 +640,7 @@ const prevPage = () => {
             <div class="modal-footer">
               <!-- Close Button to dismiss modal -->
               <button type="button" class="btn btn-danger"  data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-success" @click="addOffice">Save</button>
+              <button type="button" class="btn btn-success" data-dismiss="modal" @click="addOffice">Save</button>
             </div>
           </div>
         </div>
@@ -577,12 +670,79 @@ button {
   display: block;
 }
 
+/* Print-specific styles */
 @media print {
-    a {
-        text-decoration: none !important;
-        color: black;
-        pointer-events: none;
-    }
+  /* Hide elements that shouldn't be printed */
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure the table takes full width and breaks across pages properly */
+  .table {
+    width: 100% !important;
+    page-break-inside: auto;
+  }
+  
+  /* Allow rows to break across pages */
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  
+  /* Style table to remove input boxes appearance */
+  td {
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+  }
+  
+  /* Remove background colors that might not print well */
+  .table-success {
+    background-color: #f2f2f2 !important;
+    color: black !important;
+  }
+  
+  /* Ensure text is black for better printing */
+  body {
+    color: black !important;
+  }
+  
+  /* Remove any shadows or decorative elements */
+  .shadow-sm, .card {
+    box-shadow: none !important;
+  }
+  
+  /* Make sure the Set A title is visible */
+  .text-success.fw-bold.fs-3 {
+    color: black !important;
+    font-weight: bold !important;
+  }
+  
+  /* Remove card styling but keep content */
+  .card {
+    border: none !important;
+  }
+  
+  .card-body {
+    padding: 0 !important;
+  }
+  
+  /* Ensure the table is readable */
+  .table-responsive {
+    overflow-x: visible !important;
+    white-space: normal !important;
+  }
+}
+@media print {
+  /* These styles ONLY apply during printing */
+  .badge {
+    background-color: transparent !important;
+    color: black !important;
+    padding: 0 !important;
+    margin: 0 3px !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-weight: bold !important;
+  }
 }
 
 .table-responsive {
@@ -590,6 +750,26 @@ button {
   overflow-x: auto;
   white-space: nowrap;
 }
+
+.badge-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    font-size: 1.1rem;
+  }
+
+  .badge {
+    padding: 5px 15px;
+    font-size: 1rem;
+    border-radius: 25px;
+  }
+
+  .btn {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
 </style>
-
-

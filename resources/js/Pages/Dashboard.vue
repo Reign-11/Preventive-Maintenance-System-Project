@@ -1,5 +1,5 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+// import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted } from 'vue';
 import feather from 'feather-icons';
@@ -57,7 +57,7 @@ onMounted(() => {
 <template>
     <Head title="Dashboard" />
 
-    <AuthenticatedLayout>
+    <!-- <AuthenticatedLayout> -->
         <main>
             <header class="page-header page-header-dark pb-10" 
                 style="background: linear-gradient(to bottom, #cbf1dd, #a4d4ae); position: relative;">
@@ -174,6 +174,5 @@ onMounted(() => {
                 </div>
             </div>
 
-        </main>
-    </AuthenticatedLayout>
+        </main> 
 </template>

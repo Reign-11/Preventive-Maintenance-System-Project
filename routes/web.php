@@ -95,7 +95,7 @@ Route::get('/prevoffice/{officeId}', [MaintenancePlanControllerC::class, 'prev']
     ->name('viewdata');
 
 
-Route::get('/network/{departmentId}', [MaintenancePlanControllerC::class, 'networks'])
+Route::get('/network/{departmentId}', [MaintenancePlanControllerC::class, 'network'])
     ->middleware(['auth', 'verified'])
     ->name('network');
 

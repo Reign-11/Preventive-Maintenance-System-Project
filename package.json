@@ -20,8 +20,10 @@
     "dependencies": {
         "feather-icons": "^4.29.2",
         "pinia": "^3.0.1",
+        "sweetalert2": "^11.19.1",
         "tail": "^2.2.6",
         "vue-router": "^4.5.0",
+        "vue-toastification": "^1.7.14",
         "ziggy": "^2.4.0"
     }
 }

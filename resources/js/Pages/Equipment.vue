@@ -104,6 +104,24 @@ const isStep2ModalOpen = ref(false);
 const selectedOption = ref("Office");
 const isModalOpen = ref(false);  
 const isLoading = ref(false);
+const isDisposalModalOpen = ref(false);
+
+const openDisposalModal = () => {
+  isDisposalModalOpen.value = true;
+};
+const closeDisposalModal = () => {
+  isDisposalModalOpen.value = false;
+};
+
+const confirmDisposal = () => {
+  
+  setForDisposal();
+  
+  // Close the modal
+  closeDisposalModal();
+  
+};
+
 
 
 const openModal = () => {
@@ -1145,8 +1163,7 @@ watch(isStatusDropdownOpen, (newVal) => {
 
 </div>
         <!-- For Disposal Button -->
-        <button class="btn btn-danger btn-sm" @click="setForDisposal">For Disposal</button>
-
+        <button class="btn btn-danger btn-sm" @click="openDisposalModal">For Disposal</button>
 
           <div class="modal-body modal-scrollable">
           
@@ -1671,6 +1688,25 @@ watch(isStatusDropdownOpen, (newVal) => {
         </div>
         </div>
       </div>
+
+      <div v-if="isDisposalModalOpen">
+        <div class="modal d-block">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                 <h5 class="modal-title">Confirm Disposal</h5>
+                    <button type="button" class="btn-close" @click="closeDisposalModal"></button></div>
+            <div class="modal-body">
+                  <p>Are you sure you want to mark this equipment for disposal?</p> </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="closeDisposalModal">No, Cancel</button>
+              <button type="button" class="btn btn-danger" @click="confirmDisposal">Yes, Proceed</button>
+            </div>
+            </div>
+            </div>
+            </div>
+      <div class="modal-backdrop show"></div>
+    </div>
   </MainLayout>
   </template>
 

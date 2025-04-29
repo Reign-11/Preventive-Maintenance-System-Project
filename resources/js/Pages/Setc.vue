@@ -15,6 +15,10 @@ const offices = ref([]); // Store the list of offices for the dropdown
 const selectedOffice= ref(null); // ✅ Holds selected value
 const selectedParentOffice = ref(null); // ✅ Define this to avoid ReferenceError
 const addedOffices = ref([]); // ✅ Fix: Declare addedOffices as a reactive array
+const selectYear = ref(null)
+const plan = ref([])
+const isLocked = ref(false);
+const lockedYears = ref({}); 
 
 // ✅ External Scripts
 const files = [
@@ -148,6 +152,7 @@ const handleInput = (plan, month) => {
 
 const saveOnEnter = async (plan) => {
   try {
+    if (isLocked.value) return;
     console.log(`🔹 Saving Plan ID: ${plan?.PlanId} for ${selectedYear.value}`);
 
     await nextTick(); // Ensure the DOM is updated
@@ -348,11 +353,64 @@ const nextPage = () => {
     currentPage.value++;
   }
 };
-
 const prevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--;
   }
+};
+
+const openSaveModal = () => {
+  const modalElement = document.getElementById("saveYearModal");
+  if (modalElement) {
+    const modalInstance = new bootstrap.Modal(modalElement);
+    modalInstance.show();
+  }
+};
+const saveAllPlans = async () => {
+  if (!selectedYear.value) {
+    alert('Please select a year before saving.');
+    return;
+  }
+
+  try {
+    const response = await axios.post('/api/copy', {
+      oldYrId: selectYear.value,   // <-- Define this correctly (I'll show below)
+      oldCatId: 3,
+      newYrId: selectedYear.value
+ 
+  
+    });
+
+    alert('Plans duplicated successfully!');
+  
+  
+
+  } catch (error) {
+    console.error(error);
+    alert('Failed to duplicate plans. Please try again.');
+  }
+};
+
+
+const detachPlan = async (PlanId) => {
+  try {
+    await axios.post(`/api/detaches/${PlanId}`);
+    alert('Plan detach successfully!');
+    // Optionally remove from table
+    plan.value = plan.value.filter(plan => plan.PlanId !== PlanId);
+  } catch (error) {
+    console.error(error);
+    alert('Failed to detach the plan.');
+  }
+};
+
+const toggleLock = () => {
+  const year = selectedYear.value;
+  lockedYears.value[year] = !lockedYears.value[year];
+};
+
+const isYearLocked = (plan) => {
+  return !!lockedYears.value[plan.YrId]; // locked if true
 };
 
 </script>
@@ -377,18 +435,43 @@ const prevPage = () => {
             <span class="badge bg-warning text-white">M</span> Monthly
           </div>
 
-          <!-- Action Buttons -->
-          <div class="d-flex justify-content-center gap-4 mt-3">
-              <button class="btn btn-success rounded-pill shadow-sm px-4 py-2" style="font-size: 16px;">
-                <i class="fas fa-save"></i> Save
-              </button>
-              <button class="btn btn-warning rounded-pill shadow-sm px-4 py-2" style="font-size: 16px;">
-                <i class="fas fa-lock"></i> Lock
-              </button>
-              <button class="btn btn-info rounded-pill shadow-sm px-4 py-2" @click="printTable" style="font-size: 16px;">
-                <i class="fas fa-print"></i> Print
-              </button>
+        
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-center gap-4 mt-3 no-print">
+            <button class="btn btn-success rounded-pill shadow-sm px-4 py-2 no-print" @click="openSaveModal">
+              <i class="fas fa-save"></i> Save
+            </button>
+            <button class="btn btn-warning rounded-pill shadow-sm px-4 py-2"style="font-size: 16px;"
+            @click="toggleLock"> <i class="fas fa-lock"></i>{{ lockedYears[selectedYear] ? 'Unlock' : 'Lock' }}
+            </button>
+            <button class="btn btn-info rounded-pill shadow-sm px-4 py-2" @click="printTable" style="font-size: 16px;">
+              <i class="fas fa-print"></i> Print
+            </button>
+          </div>
+
+            <div class="modal fade" id="saveYearModal" tabindex="-1" aria-labelledby="saveYearModalLabel" >
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="saveYearModalLabel">Select Year</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="saveYearDropdown" class="form-label">Select Year:</label>
+                    <select id="saveYearDropdown" v-model="selectYear" class="form-control">
+                      <option v-for="year in years" :key="year.YrId" :value="year.YrId">{{ year.Name }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary"data-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-primary" @click="saveAllPlans">Save</button>
+                </div>
+              </div>
             </div>
+          </div>
 
           <!-- Year Selection -->
           <div class="mt-2">
@@ -445,7 +528,7 @@ const prevPage = () => {
                 <input 
                   v-model="plan[month]" 
                   @keyup.enter="saveOnEnter(plan, month)" 
-                  :disabled="plan.isSaving || !isInputAllowed(plan[month])"
+                  :disabled="plan.isSaving || !isInputAllowed(plan[month])  || isYearLocked(plan)"
                 />
                 <span v-if="plan.isSaving">Saving...</span>
               </td>
@@ -457,9 +540,9 @@ const prevPage = () => {
                     <i class="fas fa-eye me-1"></i> View
                   </Link>
                   <!-- Delete Button -->
-                  <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="deleteOffice(plan.PlanId)">
-                    <i class="fas fa-trash me-1"></i> Delete
-                  </button>
+                  <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="detachPlan(plan.PlanId)">
+             <i class="fas fa-unlink me-1"></i> Detach
+              </button>
                 </div>
               </td>
             </tr>
@@ -494,7 +577,7 @@ const prevPage = () => {
 
     <!-- Bootstrap Modal -->
     <div class="modal fade" id="addCollegeModal" aria-labelledby="exampleModalLabel" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title">Add College</h5>
@@ -525,7 +608,7 @@ const prevPage = () => {
             <div class="modal-footer">
               <!-- Close Button to dismiss modal -->
               <button type="button" class="btn btn-danger"  data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-success" @click="addOffice">Save</button>
+              <button type="button" class="btn btn-success" data-dismiss="modal" @click="addOffice">Save</button>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, defineProps, reactive, watch,inject} from 'vue'; 
 import MainLayout from '@/Layouts/MainLayout.vue';
+import PrintService from '../../css/PrintService.js'; 
 
 const props = defineProps({
   employees: { type: Array, default: () => [] },
@@ -32,8 +33,12 @@ console.log('Initial employees:', employees.value);
 const selectedEmployee = ref(null);
 const isStep2ModalOpen = ref(false)
 
+  
 
 const isStep1ModalOpen = ref(false);
+
+
+
 
 const openStep1Modal = (mainId) => {
   isStep1ModalOpen.value = true;
@@ -356,6 +361,37 @@ watch(selectedEmployee, (newVal) => {
 
     checklist.Summary = newVal.Summary || "";
   }
+
+  const printDetails = async (emp) => {
+  // Get employee data
+  const employeeData = props.employees.find(e => String(e.mainId) === String(emp.mainId));
+  if (!employeeData) {
+    console.error("Employee not found for printing with mainId:", emp.mainId);
+    return;
+  }
+  
+  // Set the selected employee to populate form data
+  selectedEmployee.value = employeeData;
+  
+  // Wait a moment for the reactive data to update
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Ensure all checklist values are strings
+  const printReadyChecklist = {};
+  for (const key in checklist) {
+    printReadyChecklist[key] = checklist[key] ? String(checklist[key]) : '';
+  }
+  
+  // Debug what's being printed
+  console.log("Printing with data:", {
+    employeeData,
+    formData: {...formData},
+    checklist: printReadyChecklist
+  });
+  
+  // Use the print service with properly formatted checklist
+  PrintService.printPreventiveMaintenance(employeeData, formData, printReadyChecklist);
+};
 });
 
 
@@ -388,15 +424,20 @@ watch(selectedEmployee, (newVal) => {
   <td>{{ emp.pcName }}</td>
   <td>{{ emp.equipmentId }}</td>
 
-  <td class="text-center">
-    <div class="d-flex justify-content-center">
-      <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-              @click="openStep1Modal(emp.mainId)">
-        <i class="fas fa-eye me-1"></i> View
-      </button>
-    </div>
-  </td>
-  <td>{{ emp.disposal === '1' ? 'For Disposal' : (emp.disposal == null ? 'None' : emp.disposal) }}</td>
+    <td class="text-center">
+      <div class="d-flex justify-content-center">
+        <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto mx-2" 
+                @click="openStep1Modal(emp.mainId)">
+          <i class="fas fa-eye me-1"></i> View
+        </button>
+        <button 
+          class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
+            @click="printDetails(emp)">
+            <i class="fas fa-print me-1"></i> Print
+        </button>
+      </div>
+    </td>
+    <td>{{ emp.disposal === '1' ? 'For Disposal' : (emp.disposal == null ? 'None' : emp.disposal) }}</td>
  
   <td>{{ formatDate(emp.date) }}</td>
 </tr>
@@ -404,6 +445,8 @@ watch(selectedEmployee, (newVal) => {
         </tbody>
       </table>
 
+
+      
       <!-- Modal -->
       <div v-if="isStep1ModalOpen" class="modal fade show d-block">
       <div class="modal-dialog modal-xl" role="document">

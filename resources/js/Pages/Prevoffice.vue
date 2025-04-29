@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount,defineProps, reactive,watch} from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import { Link } from '@inertiajs/vue3';
+
 const props = defineProps({
   departments: { type: Array, default: () => [] },  
   pmYear: { type: Object, default: () => ({}) },
@@ -16,13 +17,12 @@ const props = defineProps({
 const isStep1ModalOpen = ref(false);
 const editedItem = ref({}); 
 const selectedPlan = ref(props.PlanId || '');
-const selectedOfficeId = ref(props.office?.OffId || '');
-const selectedYear = ref(props.YrId || '');
-
 const selectedDepartments = ref (null)
+const selectedYear = ref(props.YrId || '');
+const selectedOfficeId = ref(props.office?.OffId || '');
 
-const openStep1Modal = (deptId) => {
-  const selectedDepartment = props.departments.find(dep => dep.deptId == deptId);
+const openStep1Modal = (DeptId) => {
+  const selectedDepartment = props.departments.find(dep => dep.DeptId == DeptId);
 
   if (selectedDepartment) {
     selectedDepartments.value = selectedDepartment; // ✅ This is important!
@@ -192,9 +192,9 @@ watch(() => formData.desktopSpecs.DHCP, (val) => {
 });
 
 
-// Options
-const equipmentOptions = ['Router', 'Switch', 'Access Point', 'Modem', 'Network Cable', 'Patch Panel', 'Other'];
-const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Client', 'Network Configuration Tool', 'Manageable Software', 'Anti Virus', 'Other'];
+  // Options
+  const equipmentOptions = ['Router', 'Switch', 'Access Point', 'Modem', 'Network Cable', 'Patch Panel', 'Other'];
+  const softwareOptions = ['Network Monitoring Tool', 'Firewall Software', 'VPN Client', 'Network Configuration Tool', 'Manageable Software', 'Anti Virus', 'Other'];
 
 
 
@@ -211,7 +211,7 @@ const submitForm = async () => {
     // Optional: log selected department
     console.log("Selected Department:", selectedDepartments.value);
 
-    // Construct request payload
+    // Construct request payload  
     const payload = {
   Offid: selectedDepartments.value.OffId, 
   deptId: selectedDepartments.value.DeptId,
@@ -286,25 +286,29 @@ if (formData.desktopSpecs.DHCP === "Yes") {
             <th>Office</th>
             <th>Actions</th>
             <th>Status</th>
-            <th>View Depts</th>
-            </tr>
+            <th>Show ticket</th>
+            <!-- <th>Print Details</th> -->
+          </tr>
         </thead>
         <tbody>
-          <tr v-for="department in departments" :key="department.deptId">
+          <tr v-for="department in departments" :key="department.DeptId">
             <td>{{ department.department_name }}</td>
             <td class="text-center">
               <div class="d-flex justify-content-center">
               <button class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto" 
-              @click="openStep1Modal(department.deptId)">
+              @click="openStep1Modal(department.DeptId  )">
               <i class="fas fa-edit me-1"></i>Fillup Form</button>
             </div>
             </td>
             <td :class="{ 'clear-status': 'Clear', 'unclear-status':'Unclear' }">              
             </td>
+
+             <!-- Show Ticket Column -->
           <td class="text-center">
+      
             <Link 
               :href="route('network', { 
-                departmentId:department.DeptId , 
+                departmentId: department.DeptId , 
                 officeId: selectedOfficeId, 
                 YrId: selectedYear,
                 PlanId: selectedPlan
@@ -312,10 +316,9 @@ if (formData.desktopSpecs.DHCP === "Yes") {
               class="btn btn-sm btn-outline-primary w-auto mx-2">
               <i class="fas fa-eye me-1"></i> View 
             </Link>
-          
           </td>
-        </tr>
 
+          </tr>
         </tbody>
       </table>
     </div>
@@ -424,30 +427,30 @@ if (formData.desktopSpecs.DHCP === "Yes") {
 
             <!-- Software Installed -->
             <div class="card p-3 mt-3">
-    <h6 class="fw-bold">Software Application Installed:</h6>
-    <div class="row">
-      <div v-for="(option, index) in softwareOptions" :key="index" class="col-md-3">
-        <div class="form-check">
-          <input 
-            class="form-check-input" 
-            type="checkbox" 
-            :value="option" 
-            v-model="formData.softwareInstalled" 
-            @change="updateSoftwareStatus(option)" 
-          />
-          <label class="form-check-label">{{ option }}</label>
-        </div>
+            <h6 class="fw-bold">Software Application Installed:</h6>
+            <div class="row">
+              <div v-for="(option, index) in softwareOptions" :key="index" class="col-md-3">
+                <div class="form-check">
+                  <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    :value="option" 
+                    v-model="formData.softwareInstalled" 
+                    @change="updateSoftwareStatus(option)" 
+                  />
+                  <label class="form-check-label">{{ option }}</label>
+                </div>
 
-        <!-- Input Field for 'Other' Software -->
-        <input 
-          v-if="option === 'Other' && formData.softwareInstalled.includes('Other')" 
-          type="text" 
-          class="form-control mt-1 ms-3" 
-          v-model="formData.other_software" 
-          placeholder="Specify Other Software">
-      </div>
-    </div>
-  </div>
+                <!-- Input Field for 'Other' Software -->
+                <input 
+                  v-if="option === 'Other' && formData.softwareInstalled.includes('Other')" 
+                  type="text" 
+                  class="form-control mt-1 ms-3" 
+                  v-model="formData.other_software" 
+                  placeholder="Specify Other Software">
+              </div>
+            </div>
+          </div>
 
             <!-- Network Specifications -->
             <div class="card p-3 mt-3">
@@ -473,18 +476,14 @@ if (formData.desktopSpecs.DHCP === "Yes") {
                 </div>
                 
 
-<div class="col-md-2">
-  <label class="form-label">DHCP</label>
-  <select class="form-control" v-model="formData.desktopSpecs.DHCP">
-    <option disabled value="">Select</option>
-    <option value="Yes">Yes</option>
-    <option value="No">No</option>
-  </select>
-</div>
-
-
-
-                
+                <div class="col-md-2">
+                  <label class="form-label">DHCP</label>
+                  <select class="form-control" v-model="formData.desktopSpecs.DHCP">
+                    <option disabled value="">Select</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>     
               </div>
             </div>
 
