@@ -67,20 +67,14 @@ const saveAllPlans = async () => {
     alert('Please select a year before saving.');
     return;
   }
-
   try {
     const response = await axios.post('/api/duplicate', {
       oldYrId: selectYear.value,   // <-- Define this correctly (I'll show below)
       oldCatId: 1,
       newYrId: selectedYear.value
- 
-  
     });
 
     alert('Plans duplicated successfully!');
-  
-  
-
   } catch (error) {
     console.error(error);
     alert('Failed to duplicate plans. Please try again.');
@@ -175,13 +169,6 @@ const isInputAllowed = (type) => {
   return true;
 };
 
-// Function to ensure input restrictions
-const handleInput = (plan, month) => {
-  if (plan[month] !== null && plan[month] !== "") {
-    plan[`${month}Temp`] = plan[month];
-  }
-};
-
 const saveOnEnter = async (plan) => {
   try {
     if (isLocked.value) return;
@@ -223,10 +210,6 @@ const saveOnEnter = async (plan) => {
       plan.PlanId = response.data.PlanId;
       console.log("🔄 Plan ID updated:", plan.PlanId);
     }
-
-    toast.success("✅ Maintenance plan saved successfully!"); 
-
-
   } catch (error) {
     console.error("❌ Error in saveOnEnter:", error);
     alert(error.response?.data?.error || "Failed to save data.");
@@ -366,32 +349,6 @@ const printTable = () => {
   }, 300);
 };
 
-const deleteOffice = async (planId) => {
-  if (!planId) {
-    alert("Invalid Office ID.");
-    return;
-  }
-
-  if (!confirm("Are you sure you want to delete this office?")) {
-    return;
-  }
-
-  try {
-    console.log(`🗑 Deleting Office with Plan ID: ${planId}`);
-
-    // Make DELETE request to API
-    await axios.delete(`/api/delete-maintenance-plan/${planId}`);
-
-    //  Filter out deleted plan from `maintenancePlans`
-    maintenancePlans.value = maintenancePlans.value.filter(plan => plan.PlanId !== planId);
-
-    console.log(" Office deleted successfully.");
-    alert("Office deleted successfully!");
-  } catch (error) {
-    console.error(" Error deleting office:", error);
-    alert(error.response?.data?.message || "Failed to delete office.");
-  }
-};
 
 // Reactive variables for pagination
 const entriesPerPage = ref(5); 
@@ -444,6 +401,7 @@ const toggleLock = () => {
 const isYearLocked = (plan) => {
   return !!lockedYears.value[plan.YrId]; // locked if true
 };
+
 </script>
 
 <template>
@@ -573,8 +531,7 @@ const isYearLocked = (plan) => {
                   </Link>
                   <!-- Delete Button -->
                     <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="detachPlan(plan.PlanId)">
-    <i class="fas fa-unlink me-1"></i> Detach
-  </button>
+                <i class="fas fa-unlink me-1"></i> Detach </button>
                 </div>
               </td>
             </tr>

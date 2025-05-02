@@ -86,6 +86,13 @@ const checklist = reactive({
 
 // This is the updated printDetails function for your component
 
+// Helper function to get logo path
+const getLogoPath = () => {
+  // In a web application, we need to use a relative URL from the web root
+  return '/assets/cmu1.png';
+};
+
+// This is the updated printDetails function with the CMU header
 const printDetails = (department) => {
   if (!department) return;
 
@@ -109,13 +116,98 @@ const printDetails = (department) => {
           th, td { border: 1px solid #000; padding: 8px; text-align: left; }
           th { background-color: #f2f2f2; }
           .checkmark { font-size: 18px; display: inline-block; }
+          .signature-container { display: flex; justify-content: space-between; margin-top: 20px; }
+          .signature-box { width: 45%; }
+          .signature-line { border-bottom: 1px solid #000; margin: 25px 0 5px 0; }
+          
+          /* Added styles for logo */
+          .cmu-header {
+            width: 100%;
+            margin-bottom: 0;
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #555;
+          }
+          
+          .cmu-logo-img {
+            max-height: 70px;
+            width: auto;
+            margin-right: 10px;
+          }
+
+          .university-info {
+            display: flex;
+            flex-direction: column;
+          }
+
+          .republic-text {
+            font-size: 12px;
+            color: #333;
+            margin-bottom: 2px;
+          }
+
+          .university-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+            text-transform: uppercase;
+          }
+
+          .university-address {
+            font-size: 12px;
+            color: #333;
+            margin-top: 2px;
+            font-style: italic;
+          }
+
+          .office-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 8px;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+          }
+
+          .report-title-header {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 3px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            text-align: center;
+          }
+          
+          .month-header {
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+          }
         </style>
       </head>
       <body>
-        <h2>Preventive Maintenance Checklist</h2>
+        <!-- University Header with Logo -->
+        <div class="cmu-header">
+          <img src="${getLogoPath()}" alt="Central Mindanao University" class="cmu-logo-img" />
+          <div class="university-info">
+            <div class="republic-text">Republic of the Philippines</div>
+            <div class="university-name">CENTRAL MINDANAO UNIVERSITY</div>
+            <div class="university-address">Musuan, Maramag, Bukidnon</div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 8px;">
+          <div class="office-title">MANAGEMENT INFORMATION SYSTEM OFFICE</div>
+          <div class="report-title-header">PREVENTIVE MAINTENANCE CHECKLIST for SERVERS/DATACENTER</div>
+          <div class="month-header">For the Month of ${checklistData.Months }</div>
+        </div>
+    
         <table>
           <thead>
-            <tr>
+            <tr> 
               <th>Category</th>
               <th>Specification</th>
               <th class="text-center">Good</th>
@@ -146,9 +238,25 @@ const printDetails = (department) => {
               ["Check A/C unit at the facility", checklistData.hardware_checks2],
             ])}
             <tr>
-              <td colspan="5"><strong>Summary:</strong> ${checklistData.Summary || 'None'}</td>
+              <td colspan="5"><strong>Summary/Recommendation:</strong> ${checklistData.Summary || 'None'}</td>
             </tr>
           </tbody>
+        </table>
+        
+        <!-- Added Signature Section with proper spacing -->
+        <table style="border: none; margin-top: 30px; width: 100%;">
+          <tr style="border: none;">
+            <td style="border: none; width: 50%; text-align: left;"><strong>Checked by:</strong></td>
+            <td style="border: none; width: 50%; text-align: left;"><strong>Noted by:</strong></td>
+          </tr>
+          <tr style="border: none;">
+            <td style="border: none; padding-top: 20px;"><div style="border-bottom: 1px solid #000; width: 80%;"></div></td>
+            <td style="border: none; padding-top: 20px;"><div style="border-bottom: 1px solid #000; width: 80%;"></div></td>
+          </tr>
+          <tr style="border: none;">
+            <td style="border: none; padding-top: 5px;">Technical Staff</td>
+            <td style="border: none; padding-top: 5px;">Director, Office of Digital Transformation</td>
+          </tr>
         </table>
       </body>
     </html>
@@ -198,12 +306,13 @@ function renderCheck(value, checkValue) {
   const stringValue = String(value || '');
   const stringCheckValue = String(checkValue || '');
   
-  // More visible debug output
+  // Debug output
   console.log(`Checking: Value "${stringValue}" against "${stringCheckValue}" - Match: ${stringValue === stringCheckValue}`);
   
   // Return a clear checkmark if values match
   return stringValue === stringCheckValue ? '<span class="checkmark">✓</span>' : '';
 }
+
 
 watch(selectedDepartments, (newVal) => {
   if (newVal) {

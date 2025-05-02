@@ -394,6 +394,37 @@ watch(selectedEmployee, (newVal) => {
 };
 });
 
+const printDetails = async (emp) => {
+  // Get employee data
+  const employeeData = props.employees.find(e => String(e.mainId) === String(emp.mainId));
+  if (!employeeData) {
+    console.error("Employee not found for printing with mainId:", emp.mainId);
+    return;
+  }
+  
+  // Set the selected employee to populate form data
+  selectedEmployee.value = employeeData;
+  
+  // Wait a moment for the reactive data to update
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Ensure all checklist values are strings
+  const printReadyChecklist = {};
+  for (const key in checklist) {
+    printReadyChecklist[key] = checklist[key] ? String(checklist[key]) : '';
+  }
+  
+  // Debug what's being printed
+  console.log("Printing with data:", {
+    employeeData,
+    formData: {...formData},
+    checklist: printReadyChecklist
+  });
+  
+  // Use the print service with properly formatted checklist
+  PrintService.printPreventiveMaintenance(employeeData, formData, printReadyChecklist);
+};
+
 
 </script>
 

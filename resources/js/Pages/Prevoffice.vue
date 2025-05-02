@@ -254,7 +254,7 @@ if (formData.desktopSpecs.DHCP === "Yes") {
   payload.ipv6_details = formData.desktopSpecs.IPv6;
   payload.gateway_details = null;
 } else if (formData.desktopSpecs.DHCP === "No") {
-  payload.gateway_details = formData.desktopSpecs.Gateway;
+  payload.gateway_details = formData.desktopSpecs.Gateway; 
   payload.ipv4_details = null;
   payload.ipv6_details = null;
 }

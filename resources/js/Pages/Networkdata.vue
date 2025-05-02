@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed,onBeforeUnmount,onMounted ,defineProps, reactive, watch } from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
+import PrintServices from '../../css/PrintServiceC';
 
 const props = defineProps({
   departments: { type: Array, default: () => [] },  
@@ -14,6 +15,7 @@ const props = defineProps({
 
 const isStep1ModalOpen = ref(false);
 const selectedDepartments = ref (null)
+const isPrinting = ref(false);
 
 const openStep1Modal = (routeId) => {
   const selectedDepartment = props.departments.find(route => route.routeId == routeId);
@@ -223,6 +225,43 @@ watch(() => formData.desktopSpecs.DHCP, (val) => {
     delete formData.desktopSpecs.IPv6;
   }
 });
+
+
+const printNetworkDetails = async (dept) => {
+  // Get department data
+  const departmentData = props.departments.find(d => String(d.routeId) === String(dept.routeId));
+  if (!departmentData) {
+    console.error("Department not found for printing with routeId:", dept.routeId);
+    return;
+  }
+  
+  // Set the selected department to populate form data
+  selectedDepartments.value = departmentData;
+  
+  // Wait a moment for the reactive data to update
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Debug what's being printed
+  console.log("Printing network form with data:", {
+    departmentData,
+    formData: {...formData}
+  });
+  
+  // Use the print service
+  PrintServices.printNetworkForm(formData);
+};
+
+// Update the existing print function
+const printDepartmentTable = () => {
+  // Add ID to table if needed
+  const tableElement = document.querySelector('.data-table');
+  if (!tableElement.id) {
+    tableElement.id = 'departments-table';
+  }
+  
+  // Use your existing PrintServiceC
+  PrintServices.printElementById('departments-table', 'Network Departments');
+};
 </script>
 
 <template>
@@ -252,7 +291,14 @@ watch(() => formData.desktopSpecs.DHCP, (val) => {
                 @click="openStep1Modal(department.routeId)">
                 <i class="fas fa-edit me-1"></i> View Form
               </button>
+
+              <button
+                  class="btn btn-sm btn-outline-primary d-flex align-items-center w-auto"
+                  @click="printNetworkDetails(department)">
+                  <i class="fas fa-print me-1"></i> Print
+                </button>
             </div>
+            
           </td>
 
           <!-- Status Column -->

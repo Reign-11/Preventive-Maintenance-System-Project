@@ -2,6 +2,7 @@
 import { ref, computed, watch,defineProps, reactive,onMounted} from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import axios from "axios";
+import PrintServiceB from '../../css/PrintServiceB.js';
 
 const props = defineProps({
   departments: { type: Array, default: () => [] },  
@@ -984,42 +985,9 @@ const submitChecklist = async () => {
 };
 
 
-
-
-
   // BUTTON PRINT 
-const printDetails = (item) => {
-
-  // Dynamically create modal content for the specific item
-  const modalHtml = `
-    <html>
-      <head>
-        <title>Print Modal</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          .modal-content { font-size: 16px; }
-        </style>
-      </head>
-      <body>
-        <h2>${selectedOption.value === 'Office' ? 'Office' : 'User'} Details</h2>
-        <div class="details">
-          <p><strong>Name:</strong> ${item.name}</p>
-          <p><strong>Status:</strong> ${item.status}</p>
-        </div>
-        <div class="modal-body">
-          <p><strong>Equipment Installed:</strong> ${item.equipmentInstalled ? item.equipmentInstalled.join(', ') : 'N/A'}</p>
-          <p><strong>Operating System:</strong> ${item.osInstalled || 'N/A'}</p>
-          <p><strong>Software Installed:</strong> ${item.softwareInstalled ? item.softwareInstalled.join(', ') : 'N/A'}</p>
-          <p><strong>PC Specifications:</strong> ${JSON.stringify(item.desktopSpecs)}</p>
-        </div>
-      </body>
-    </html>
-  `;
-
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(modalHtml);
-  printWindow.document.close();
-  printWindow.print();
+  const printDetails = (item) => {
+  PrintServiceB.printEquipmentDetails(item, true, true);
 };
 
 const isDropdownOpen = ref(false);
