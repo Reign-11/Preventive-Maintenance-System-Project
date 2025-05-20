@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use Http\Model\User;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -28,14 +29,31 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
-    {
-        $request->authenticate();
+   
+public function store(Request $request)
+{
+    $credentials = $request->only('email', 'password');
 
+    if (Auth::attempt($credentials, $request->filled('remember'))) {
         $request->session()->regenerate();
 
-        return redirect()->intended(RouteServiceProvider::HOME);
+        $user = Auth::user();
+
+        // Clear session just in case
+        session()->forget('url.intended');
+
+        // Redirect based on user role
+        if ($user->role === 'Admin') {
+            return redirect()->route('/admin');
+        }
+
+        return redirect()->route('dashboard');
     }
+
+    return back()->withErrors([
+        'email' => 'These credentials do not match our records.',
+    ]);
+}
 
     /**
      * Destroy an authenticated session.

@@ -1,11 +1,16 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers; 
 
 use Illuminate\Support\Facades\Log; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Str;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\File; 
+use Illuminate\Support\Facades\Storage;
 
 class MaintenancePlanController extends Controller
 {
@@ -43,7 +48,7 @@ class MaintenancePlanController extends Controller
     {
         try {
             Log::info("Received data:", $request->all());
-
+    
             $data = $request->validate([
                 'PlanId'    => 'nullable|integer',
                 'YrId'      => 'required|integer|exists:tbl_pmyear,YrId',
@@ -62,12 +67,24 @@ class MaintenancePlanController extends Controller
                 'November'  => 'nullable|string|max:10',
                 'December'  => 'nullable|string|max:10',
             ]);
-
+    
+            // Ensure all month values are lowercase before saving
+            $months = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            
+            foreach ($months as $month) {
+                if (isset($data[$month]) && $data[$month] !== '') {
+                    $data[$month] = strtolower($data[$month]);
+                }
+            }
+    
             $prevPlan = DB::table('tbl_premainplan')->latest('PrevId')->first();
             $PrevId = $prevPlan ? $prevPlan->PrevId : 0; 
-
+    
             Log::info("Validated data with PrevId:", array_merge($data, ['PrevId' => $PrevId]));
-
+    
             DB::statement("CALL ValidateAndManagePlanDetails(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
                 $data['PlanId'] ?? null,
                 $data['YrId'],
@@ -87,15 +104,16 @@ class MaintenancePlanController extends Controller
                 $data['November'] ?? '',
                 $data['December'] ?? '',
             ]);
-
-            return response()->json(["message" => "Plan saved successfully"], 200);
+    
+            return response()->json([
+                "message" => "Plan saved successfully",
+                "PlanId" => $data['PlanId'] ?? DB::getPdo()->lastInsertId()
+            ], 200);
         } catch (\Throwable $e) {
             Log::error("Error saving plan:", ['error' => $e->getMessage()]);
             return response()->json(["error" => $e->getMessage()], 500);
         }
     }
-
-
     
     public function addCollege(Request $request)
     {
@@ -146,6 +164,7 @@ class MaintenancePlanController extends Controller
         }
     }
     
+
     public function duplicate(Request $request)
     {
         // Validate the incoming request
@@ -198,15 +217,13 @@ class MaintenancePlanController extends Controller
         }
     }
 
-
-    
     public function index(Request $request, int $officeId)
     {
         try {
             $yrId = $request->query('YrId');  
             $deptId = $request->query('departmentId'); 
             $PlanId  = $request->query('PlanId'); 
-            $categoryId = $request->query('CatId', 1); // Default categoryId to 1
+            $categoryId = $request->query('CatId', 1); 
 
 
             Log::info('Yrd Data:', ['data' => $yrId]);
@@ -221,7 +238,10 @@ class MaintenancePlanController extends Controller
 
             // Filter departments based on PlanId, YrId, and OfficeId
             $departments = array_filter($departmentData, function ($department) use ($PlanId, $yrId, $officeId,$categoryId) {
-                return $department->PlanId == $PlanId && $department->YrId == $yrId && $department->OffId == $officeId  &&  ($department->CatId == $categoryId || is_null($department->CatId));  ;
+                return 
+                $department->PlanId == $PlanId && 
+                $department->YrId == $yrId && 
+                $department->OffId == $officeId  &&  ($department->CatId == $categoryId || is_null($department->CatId));  ;
             });
     
             // Re-index to ensure departments is a clean array (not an object)
@@ -257,8 +277,6 @@ class MaintenancePlanController extends Controller
         }
     }
     
-     
-
     public function employee(Request $request, int $departmentId )
     {
     try {
@@ -268,16 +286,13 @@ class MaintenancePlanController extends Controller
         $officeId  = $request->query('officeId'); 
         $employeeId = $request->query('employeeId');  
         $categoryId = $request->query('CatId', 1); 
-
-
         $department = DB::table('tbl_department')->where('deptId', $departmentId)->first();
 
         // Fetch employees using the stored procedure
         $employees = DB::select('CALL GetEmployeesByDepartment(?)', [$departmentId]);
         Log::info("📢 Raw Employees Data Before Filtering:", $employees);
 
-            // Filter Employee based on PlanId, YrId, OfficeId, And Department
-
+        // Filter Employee based on PlanId, YrId, OfficeId, And Department
         $employee = array_filter($employees, function ($emp) use ($PlanId, $yrId, $officeId, $departmentId,$categoryId) {
             return $emp-> PlanId == $PlanId && $emp-> YrId == $yrId && $emp-> OffId == $officeId && $emp-> DeptId == $departmentId &&  ($emp->CatId == $categoryId || is_null($emp->CatId));
         });
@@ -309,42 +324,38 @@ class MaintenancePlanController extends Controller
     }
 }
 
-
 public function employees(Request $request, int $employeeId)
 {
     try {
-        
-        // Extract query params
         $yrId = $request->query('YrId');  
         $PlanId = $request->query('PlanId'); 
         $officeId = $request->query('officeId'); 
-        $categoryId = $request->query('CatId', 1)   ; 
+        $categoryId = $request->query('CatId', 1); 
         $departmentId = $request->query('DeptId'); 
 
-        // Fetch employees using the stored procedure
         $employed = DB::select('CALL GetEquipmentDetailsByEmployeeId(?)', [$employeeId]);
-        Log::info("📢 Raw Employees Data Before Filtering:", $employed);
 
-    // Filter Employee based on PlanId, YrId, OfficeId, Dept, CatId, and employeeId, excluding null employeeId
-    $employees = array_filter($employed, function ($emp) use ($yrId, $officeId, $departmentId, $categoryId, $employeeId) {
-    return 
-        $emp->employeeId !== null && 
-        $emp->YrId == $yrId &&
-        $emp->OffId == $officeId &&
-        $emp->DeptId == $departmentId &&
-        ($emp->CatId == $categoryId || $emp->CatId) &&
-        $emp->employeeId == $employeeId;
-});
-
+        $employees = array_filter($employed, function ($emp) use ($yrId, $officeId, $departmentId, $categoryId, $employeeId) {
+            return 
+                $emp->employeeId !== null && 
+                $emp->YrId == $yrId &&
+                $emp->OffId == $officeId &&
+                $emp->DeptId == $departmentId &&
+                ($emp->CatId == $categoryId || $emp->CatId) &&
+                $emp->employeeId == $employeeId;
+        });
 
         $employees = array_values($employees);
-        Log::info("📢 Filtered Employees:", $employees);
 
-        // Get PM Year
+        // ✅ Get image path from the first employee record
+        $imagePath = $employees[0]->image ?? null;
+        $imageUrl = $imagePath ? asset('storage/' . $imagePath) : null;
+
         $pmYearData = DB::table('tbl_pmyear')->where('YrId', $yrId)->first();
 
         return Inertia::render('Employees', [
             'employees' => $employees,
+            'imageUrl' => $imageUrl, // ✅ Pass the image URL here
             'officeId' => $officeId ?? '',
             'YrId' => $yrId ?? '',
             'employeeId' => $employeeId ?? '',
@@ -441,9 +452,18 @@ public function employeeChecklist(Request $request)
             'printer_details' => 'nullable|string|max:255',
             'network_mac_ip_details' => 'nullable|string|max:255',
             'disposal' => 'nullable|integer|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:50000',
+            'technician' => 'nullable|string|max:255',
 
-            
         ]);
+        $imagePath = null;
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $dynamicFolder = 'uploads/preventive/' . now()->format('Y/m');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imagePath = $image->storeAs($dynamicFolder, $imageName, 'public');
+        }
 
         // Prepare parameters for the stored procedure
         $parameters = [
@@ -488,6 +508,9 @@ public function employeeChecklist(Request $request)
             $validated['printer_details'],
             $validated['network_mac_ip_details'],
             $validated['disposal'] , 
+            $imagePath,
+            $validated['technician'] , 
+
 
         ];
 
@@ -495,7 +518,7 @@ public function employeeChecklist(Request $request)
         \Log::info('Parameters passed to stored procedure: ', $parameters);
 
         // Call Stored Procedure
-        DB::statement("CALL InsertPreventiveMaintenanceChecklist(?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)", $parameters);
+        DB::statement("CALL InsertPreventiveMaintenanceChecklist(?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
 
         // Get the saved record using the ticket number
         $savedData = DB::table('tbl_preventive_maintainance')
@@ -510,6 +533,7 @@ public function employeeChecklist(Request $request)
         return response()->json(['error' => $e->getMessage()], 500);
     }
 }
+
 
 
 
@@ -675,54 +699,53 @@ public function insertChecklist(Request $request)
     }
 }
 
-
-
-public function department(Request $request, int $departmentId )
+public function department(Request $request, int $departmentId)
 {
-try {
-    // Use route parameter directly
-    $yrId = $request->query('YrId');  
-    $PlanId  = $request->query('PlanId'); 
-    $officeId  = $request->query('officeId'); 
-    $categoryId = $request->query('CatId', 1); 
+    try {
+        $yrId = $request->query('YrId');  
+        $PlanId = $request->query('PlanId'); 
+        $officeId = $request->query('officeId'); 
+        $categoryId = $request->query('CatId', 1); 
 
+        // Call stored procedure to fetch department plan details
+        $dept = DB::select('CALL GetDepartmentPlanDetails(?)', [$departmentId]);
 
+        // Filter based on provided query params
+        $depts = array_filter($dept, function ($depart) use ($PlanId, $yrId, $officeId, $departmentId, $categoryId) {
+            return (!$PlanId || $depart->PlanId == $PlanId)
+                && (!$yrId || $depart->YrId == $yrId)
+                && (!$officeId || $depart->OffId == $officeId)
+                && $depart->deptId == $departmentId
+                && (!$categoryId || $depart->CatId == $categoryId);
+        });
 
-    $dept = DB::select('CALL GetDepartmentPlanDetails(?)', [$departmentId]);
-
-    $depts = array_filter($dept, function ($depart) use ($PlanId, $yrId, $officeId, $departmentId, $categoryId) {
-        return (!$PlanId || $depart->PlanId == $PlanId) 
-            && (!$yrId || $depart->YrId == $yrId)
-            && (!$officeId || $depart->OffId == $officeId)
-            && $depart->deptId == $departmentId
-            && (!$categoryId || $depart->CatId == $categoryId);
-    });
-    
-
-    $depts = array_values ($depts);
-
-    $pmYearData = DB::table('tbl_pmyear')->get();
-
-
-    return Inertia::render('Equipment', [
-        'departments' => $depts,
-        'YrId' => $yrId ?? '',
-        'PlanId' => $PlanId ?? '',
-        'officeId' => $officeId ?? '',
-        'CatId' => $categoryId ?? 1,
-        'pmYearList' => $pmYearData, 
-        'pmYear' => $pmYearData->first() ? (array) $pmYearData->first() : ['Name' => '', 'Description' => ''],
-
-    ]);
-
-} catch (\Exception $e) {
-    Log::error("❌ Error fetching department:", ['error' => $e->getMessage()]);
-    return redirect()->back()->withErrors(['error' => 'Failed to fetch department data']);
-}
-}
-
+        // Re-index array
+        $depts = array_values($depts);
 
   
+        $imagePath = $depts[0]->image ?? null;
+        $imageUrl = $imagePath ? asset('storage/' . $imagePath) : null;
+
+        // Get all PM Year data
+        $pmYearData = DB::table('tbl_pmyear')->get();
+
+        return Inertia::render('Equipment', [
+            'imageUrl' => $imageUrl,
+            'departments' => $depts,
+            'YrId' => $yrId ?? '',
+            'PlanId' => $PlanId ?? '',
+            'officeId' => $officeId ?? '',
+            'CatId' => $categoryId ?? 1,
+            'pmYearList' => $pmYearData,
+            'pmYear' => $pmYearData->first() ? (array) $pmYearData->first() : ['Name' => '', 'Description' => ''],
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error("❌ Error fetching department:", ['error' => $e->getMessage()]);
+        return redirect()->back()->withErrors(['error' => 'Failed to fetch department data']);
+    }
+}             
+
 public function departmentChecklist(Request $request)
 {
     try {
@@ -781,9 +804,19 @@ public function departmentChecklist(Request $request)
             'printer_details' => 'nullable|string|max:255',
             'network_mac_ip_details' => 'nullable|string|max:255',
             'disposal' => 'nullable|integer|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'technician' => 'nullable|string|max:255',
 
         ]);
 
+        $imagePath = null;
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $dynamicFolder = 'uploads/preventive/' . now()->format('Y/m');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imagePath = $image->storeAs($dynamicFolder, $imageName, 'public');
+        }
         // Prepare parameters for the stored procedure
         $parameters = [
             $validated['employeeId'] ?? null,
@@ -828,6 +861,8 @@ public function departmentChecklist(Request $request)
             $validated['printer_details'],
             $validated['network_mac_ip_details'],
             $validated['disposal'],
+            $imagePath ,
+            $validated['technician'],
 
         ];
 
@@ -835,7 +870,7 @@ public function departmentChecklist(Request $request)
         \Log::info('Parameters passed to stored procedure: ', $parameters);
 
         // Call the Stored Procedure
-        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)", $parameters);
+        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
 
         $savedData = DB::table('tbl_preventive_maintainance')
         ->where('ticketnumber', $generatedTicketNumber)
@@ -849,7 +884,6 @@ public function departmentChecklist(Request $request)
         return response()->json(['error' => $e->getMessage()], 500);
     }
 }
-
 
 public function getChecklistByYrId($YrId)
 {
@@ -868,6 +902,8 @@ public function getChecklistByYrId($YrId)
         ], 500);
     }
 }
+
+
 
 public function updatePreventiveMaintenance(Request $request, $mainId)
 {
@@ -971,6 +1007,56 @@ public function getAllEmployees()
         ->get();
         
     return response()->json($employees);
+}
+
+public function getMonthlyCounts()
+{
+    try {
+        $results = DB::select('CALL GetMonthlySubmissionCounts()');
+
+        $grouped = [];
+
+        foreach ($results as $row) {
+            $monthShort = substr($row->month_name, 0, 3); // 'January' → 'Jan'
+
+            if (!isset($grouped[$monthShort])) {
+                $grouped[$monthShort] = [
+                    'month' => $monthShort,
+                    'SetA' => 0,
+                    'SetB' => 0,
+                    'SetC' => 0,
+                ];
+            }
+
+            $grouped[$monthShort][$row->category] = $row->total;
+        }
+
+        return response()->json(array_values($grouped)); // indexed array for Vue
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to retrieve data', 'details' => $e->getMessage()], 500);
+    }
+}
+
+public function getCategoryTaskCount(Request $request)
+{
+    $catId = $request->query('CatId', 1); 
+
+    $count = DB::table('tbl_premainplan_details')
+        ->where('CatId', $catId)
+        ->count('OffId');
+
+    return response()->json(['count' => $count]);
+}
+
+public function getTechnicians()
+{
+    $technicians = DB::table('tbl_technician')
+        ->where('is_Active', 1)
+        ->where('is_Deleted', 0)
+        ->select('techId', 'Name')
+        ->get();
+
+    return response()->json($technicians);
 }
 }
 

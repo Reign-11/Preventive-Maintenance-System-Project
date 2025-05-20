@@ -9,7 +9,9 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\MaintenancePlanController;
 use App\Http\Controllers\MaintenancePlanControllerB;
 use App\Http\Controllers\MaintenancePlanControllerC;
-
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\AdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,19 +37,6 @@ Route::get('/', function () {
     return redirect()->route('login');  
 }); 
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::get('/main', function () {
-    return Inertia::render('Main');
-})->middleware(['auth', 'verified'])->name('main');
-Route::get('/setb', function () {
-    return Inertia::render('Setb');
-})->middleware(['auth', 'verified'])->name('setb');
-Route::get('/setc', function () {
-    return Inertia::render('Setc');
-})->middleware(['auth', 'verified'])->name('setc');
 
 
 
@@ -57,46 +46,48 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::get('/preventive-maintenance', function () {
-    return Inertia::render('PreventiveMaintenance');
-})->middleware(['auth', 'verified'])->name('preventive-maintenance');
+Route::middleware(['auth', 'verified', 'role:User'])->group(function () {
+
+    Route::get('/preventive-maintenance', function () {
+        return Inertia::render('PreventiveMaintenance');
+    })->name('preventive-maintenance');
+
+    Route::get('/officeuser/{officeId}', [MaintenancePlanController::class, 'index'])->name('officeuser');
+
+    Route::get('/equipment/{departmentId}', [MaintenancePlanController::class, 'department'])->name('equipment');
+
+    Route::get('/department-employees/{departmentId}', [MaintenancePlanController::class, 'employee'])->name('department-employees');
+
+    Route::get('/employees/{employeeId}', [MaintenancePlanController::class, 'employees'])->name('employees');
+
+    Route::get('/datacenter/{officeId}', [MaintenancePlanControllerB::class, 'data'])->name('datacenter');
+
+    Route::get('/prevoffice/{officeId}', [MaintenancePlanControllerC::class, 'prev'])->name('prevoffice');
+
+    Route::get('/viewdata/{departmentId}', [MaintenancePlanControllerB::class, 'departments'])->name('viewdata');
+
+    Route::get('/network/{departmentId}', [MaintenancePlanControllerC::class, 'network'])->name('network');
+
+    Route::get('/dashboard', function () {  return Inertia::render('Dashboard'); })->name('dashboard');
+
+    Route::get('/main', function () {return Inertia::render('Main'); })->name('main');
+
+    Route::get('/setb', function () { return Inertia::render('Setb'); })->name('setb');
+
+    Route::get('/setc', function () {return Inertia::render('Setc'); })->name('setc');
 
 
-Route::get('/officeuser/{officeId}', [MaintenancePlanController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('officeuser');
+});
+
+    Route::middleware(['auth', 'verified', 'role:Admin'])->group(function () {
+
+    Route::get('/admin', function () {return Inertia::render('Admin'); })->name('admin');
+
+    Route::get('/addoffice', function () { return Inertia::render('AddOffice'); })->name('addoffice');
+
+    Route::get('/addyear', function () { return Inertia::render('AddYear'); })->name('addyear');
+
+
+});
     
-
-Route::get('/equipment/{departmentId}', [MaintenancePlanController::class, 'department'])
-    ->middleware(['auth', 'verified'])
-    ->name('equipment');
-
-
-
-Route::get('/department-employees/{departmentId}', [MaintenancePlanController::class, 'employee'])
-    ->middleware(['auth', 'verified'])
-    ->name('department-employees');
-
-Route::get('/employees/{employeeId}', [MaintenancePlanController::class, 'employees'])
-    ->middleware(['auth', 'verified'])
-    ->name('employees');
-
-Route::get('/datacenter/{officeId}', [MaintenancePlanControllerB::class, 'data'])
-    ->middleware(['auth', 'verified'])
-    ->name('datacenter');
-
-Route::get('/prevoffice/{officeId}', [MaintenancePlanControllerC::class, 'prev'])
-    ->middleware(['auth', 'verified'])
-    ->name('prevoffice');
-
-
- Route::get('/viewdata/{departmentId}', [MaintenancePlanControllerB::class, 'departments'])
-    ->middleware(['auth', 'verified'])
-    ->name('viewdata');
-
-
-Route::get('/network/{departmentId}', [MaintenancePlanControllerC::class, 'network'])
-    ->middleware(['auth', 'verified'])
-    ->name('network');
-
 require __DIR__.'/auth.php';

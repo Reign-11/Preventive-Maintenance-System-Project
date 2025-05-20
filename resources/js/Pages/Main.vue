@@ -4,48 +4,48 @@ import MainLayout from '@/Layouts/MainLayout.vue';
 import axios from "axios";
 import { Link } from '@inertiajs/vue3';
 
-//  Reactive properties
+// Reactive properties
 const years = ref([]);
 const selectedYear = ref(new Date().getFullYear());
 const maintenancePlans = ref([]);
 const selectedYearDescription = ref("");
 const isFetchingData = ref(false);
 const selectedYearName = ref("");
-const offices = ref([]); 
-const selectedOffice= ref(null); 
-const selectedParentOffice = ref(null); 
-const addedOffices = ref([]); 
-const plan = ref([])
-const selectYear = ref(null)
-const isPrinting = ref(false);
+const offices = ref([]); // Store the list of offices for the dropdown
+const selectedOffice = ref(null); // Holds selected value
+const selectedParentOffice = ref(null); // Define this to avoid ReferenceError
+const addedOffices = ref([]); // Fix: Declare addedOffices as a reactive array
+const plan = ref([]);
+const selectYear = ref(null);
 const isLocked = ref(false);
-const lockedYears = ref({}); 
+const lockedYears = ref({});
+const isPrinting = ref(false);
 
-//  External Scripts
+// External Scripts
 const files = [
-    '/script/jquery-3.5.1.min.js',  
-    '/script/jquery.dataTables.min.js', 
-    '/script/dataTables.bootstrap4.min.js', 
-    '/script/bootstrap.bundle.min.js', 
-    '/script/all.min.js', 
-    '/script/feather.min.js',
-    '/script/scripts.js',
-    '/script/moment.min.js'
+  '/script/jquery-3.5.1.min.js',  
+  '/script/jquery.dataTables.min.js', 
+  '/script/dataTables.bootstrap4.min.js', 
+  '/script/bootstrap.bundle.min.js', 
+  '/script/all.min.js', 
+  '/script/feather.min.js',
+  '/script/scripts.js',
+  '/script/moment.min.js'
 ];
 
-//  Load external scripts dynamically
+// Load external scripts dynamically
 const loadScripts = (fileList) => {
-    fileList.forEach(file => {
-        if (!document.querySelector(`script[src="${file}"]`)) {
-            let script = document.createElement("script");
-            script.src = file;
-            script.async = true;
-            document.head.appendChild(script);
-        }
-    });
+  fileList.forEach(file => {
+    if (!document.querySelector(`script[src="${file}"]`)) {
+      let script = document.createElement("script");
+      script.src = file;
+      script.async = true;
+      document.head.appendChild(script);
+    }
+  });
 };
 
-//  Open Modal
+// Open Modal
 const openModal = () => {
   const modalElement = document.getElementById("addCollegeModal");
   if (modalElement) {
@@ -54,11 +54,25 @@ const openModal = () => {
   }
 };
 
-const openSaveModal = () => {
-  const modalElement = document.getElementById("saveYearModal");
-  if (modalElement) {
-    const modalInstance = new bootstrap.Modal(modalElement);
-    modalInstance.show();
+// Fetch offices for the dropdown
+const fetchOffices = async () => {
+  try {
+    console.log("📡 Fetching offices...");
+    const response = await axios.get("/api/offices");
+    console.log(" Response:", response.data);
+    offices.value = response.data; // Ensure this is reactive
+  } catch (error) {
+    console.error("❌ Error fetching offices:", error);
+  }
+};
+
+// Fetch available years
+const fetchYears = async () => {
+  try {
+    const response = await axios.get("/api/years");
+    years.value = response.data;
+  } catch (error) {
+    console.error("Error fetching years:", error);
   }
 };
 
@@ -69,7 +83,7 @@ const saveAllPlans = async () => {
   }
   try {
     const response = await axios.post('/api/duplicate', {
-      oldYrId: selectYear.value,   // <-- Define this correctly (I'll show below)
+      oldYrId: selectYear.value,
       oldCatId: 1,
       newYrId: selectedYear.value
     });
@@ -81,30 +95,7 @@ const saveAllPlans = async () => {
   }
 };
 
-//  Fetch offices for the dropdown
-const fetchOffices = async () => {
-  try {
-    console.log("📡 Fetching offices...");
-    const response = await axios.get("/api/offices");
-    console.log(" Response:", response.data);
-
-    offices.value = response.data; // Ensure this is reactive
-  } catch (error) {
-    console.error("❌ Error fetching offices:", error);
-  }
-};
-
-//  Fetch available years
-const fetchYears = async () => {
-  try {
-    const response = await axios.get("/api/years");
-    years.value = response.data;
-  } catch (error) {
-    console.error("Error fetching years:", error);
-  }
-};
-
-//  Fetch maintenance plans
+// Fetch maintenance plans
 const fetchData = async () => {
   if (!selectedYear.value) {
     maintenancePlans.value = [];
@@ -125,60 +116,132 @@ const fetchData = async () => {
       return;
     }
 
-    maintenancePlans.value = response.data.map(plan => ({
-      ...plan,
-      JanuaryTemp: plan.January ?? "",
-      FebruaryTemp: plan.February ?? "",
-      MarchTemp: plan.March ?? "",
-      AprilTemp: plan.April ?? "",
-      MayTemp: plan.May ?? "",
-      JuneTemp: plan.June ?? "",
-      JulyTemp: plan.July ?? "",
-      AugustTemp: plan.August ?? "",
-      SeptemberTemp: plan.September ?? "",
-      OctoberTemp: plan.October ?? "",
-      NovemberTemp: plan.November ?? "",
-      DecemberTemp: plan.December ?? "",
-    }));
+    // Transform lowercase database values to uppercase for display
+    maintenancePlans.value = response.data.map(plan => {
+      const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      
+      const transformedPlan = { ...plan };
+      
+      // Transform each month's value to uppercase for display
+      months.forEach(month => {
+        if (transformedPlan[month]) {
+          transformedPlan[month] = transformedPlan[month].toUpperCase();
+        }
+        
+        // Remove any readonly or temp flags that might cause issues
+        delete transformedPlan[`${month}Readonly`];
+        delete transformedPlan[`${month}Temp`];
+      });
+      
+      // Initialize isSaving flag to false
+      transformedPlan.isSaving = false;
+      
+      return transformedPlan;
+    });
   } catch (error) {
     console.error("❌ Error fetching maintenance plans:", error);
     alert(error.response?.data?.message || "Failed to fetch data.");
+  } finally {
+    isFetchingData.value = false;
   }
-
-  isFetchingData.value = false;
 };
-
-const countOccurrences = (type) => {
-  return maintenancePlans.value.reduce((count, plan) => {
-    return count + Object.values(plan).filter(value => value === type).length;
-  }, 0);
-};
-
-//  Computed properties to track limits
-const countA = computed(() => countOccurrences('A'));
-const countSA = computed(() => countOccurrences('SA'));
-const countQA = computed(() => countOccurrences('QA'));
-const countM = computed(() => countOccurrences('M'));
 
 // Function to check if input is allowed
-const isInputAllowed = (type) => {
-  if (type === 'A') return countA.value < 1;
-  if (type === 'SA') return countSA.value < 2;
-  if (type === 'QA') return countQA.value < 4;
-  if (type === 'M') return countM.value < 12;
+const isInputAllowed = (type, plan, month) => {
+  // If it's the current value in this cell, always allow it (editing existing value)
+  if (plan && month && plan[month] && plan[month].toUpperCase() === type) {
+    return true;
+  }
+  
+  if (!type) return true;
+  // Convert to uppercase for consistency
+  const upperType = typeof type === 'string' ? type.toUpperCase() : type;
+  
+  // Count totals excluding the current cell being edited
+  let adjustedCount = 0;
+  
+  if (upperType === 'A') {
+    // Count A values excluding the current cell if it's being edited
+    adjustedCount = maintenancePlans.value.reduce((count, p) => {
+      return count + Object.entries(p)
+        .filter(([key, value]) => 
+          ["January", "February", "March", "April", "May", "June", "July", 
+           "August", "September", "October", "November", "December"].includes(key) &&
+          typeof value === 'string' && 
+          value.toUpperCase() === 'A' && 
+          !(p === plan && key === month)
+        )
+        .length;
+    }, 0);
+    return adjustedCount < 1;
+  }
+  
+  if (upperType === 'SA') {
+    // Similar approach for SA
+    adjustedCount = maintenancePlans.value.reduce((count, p) => {
+      return count + Object.entries(p)
+        .filter(([key, value]) => 
+          ["January", "February", "March", "April", "May", "June", "July", 
+           "August", "September", "October", "November", "December"].includes(key) &&
+          typeof value === 'string' && 
+          value.toUpperCase() === 'SA' && 
+          !(p === plan && key === month)
+        )
+        .length;
+    }, 0);
+    return adjustedCount < 2;
+  }
+  
+  if (upperType === 'QA') {
+    // Similar approach for QA
+    adjustedCount = maintenancePlans.value.reduce((count, p) => {
+      return count + Object.entries(p)
+        .filter(([key, value]) => 
+          ["January", "February", "March", "April", "May", "June", "July", 
+           "August", "September", "October", "November", "December"].includes(key) &&
+          typeof value === 'string' && 
+          value.toUpperCase() === 'QA' && 
+          !(p === plan && key === month)
+        )
+        .length;
+    }, 0);
+    return adjustedCount < 4;
+  }
+  
+  if (upperType === 'M') {
+    // Similar approach for M
+    adjustedCount = maintenancePlans.value.reduce((count, p) => {
+      return count + Object.entries(p)
+        .filter(([key, value]) => 
+          ["January", "February", "March", "April", "May", "June", "July", 
+           "August", "September", "October", "November", "December"].includes(key) &&
+          typeof value === 'string' && 
+          value.toUpperCase() === 'M' && 
+          !(p === plan && key === month)
+        )
+        .length;
+    }, 0);
+    return adjustedCount < 12;
+  }
+  
   return true;
 };
 
-const saveOnEnter = async (plan) => {
+const saveOnEnter = async (plan, triggerMonth = null) => {
   try {
-    if (isLocked.value) return;
     console.log(`🔹 Saving Plan ID: ${plan?.PlanId} for ${selectedYear.value}`);
+    // Set saving state
+    plan.isSaving = true;
 
     await nextTick(); // Ensure the DOM is updated
 
     if (!plan || typeof plan !== "object") {
       console.error("❌ Error: Plan is undefined or not an object!", { plan });
       alert("❌ Error: Plan data is missing.");
+      plan.isSaving = false;
       return;
     }
 
@@ -197,22 +260,41 @@ const saveOnEnter = async (plan) => {
       PrevId: plan.PrevId ?? null,
     };
 
+    // Transform all month values to lowercase for saving to database
     months.forEach((month) => {
-      payload[month] = plan[month] ?? null;
+      if (plan[month]) {
+        payload[month] = plan[month].toLowerCase();
+      } else {
+        payload[month] = null;
+      }
     });
 
     console.log("📩 Sending Data:", payload);
+
     const response = await axios.post("/api/save-maintenance-plan", payload);
-    console.log(" Maintenance plan saved successfully", response.data);
+
+    console.log("✅ Maintenance plan saved successfully", response.data);
 
     // Update the PlanId if it's newly created
     if (!plan.PlanId && response.data.PlanId) {
       plan.PlanId = response.data.PlanId;
       console.log("🔄 Plan ID updated:", plan.PlanId);
     }
+
+    // Important: Make sure values are in uppercase for display
+    months.forEach((month) => {
+      if (plan[month]) {
+        plan[month] = plan[month].toUpperCase();
+      }
+    });
+
+    alert("Plan saved successfully!");
   } catch (error) {
     console.error("❌ Error in saveOnEnter:", error);
     alert(error.response?.data?.error || "Failed to save data.");
+  } finally {
+    // Always reset the saving state, even on error
+    plan.isSaving = false;
   }
 };
 
@@ -236,7 +318,7 @@ const addOffice = async () => {
 
   const requestData = {
     OfficeName: selectedOfficeData.OfficeName,
-    ParentOffId: selectedParentOffice?.value || null, 
+    ParentOffId: selectedParentOffice?.value || null,
     YrId: selectedYear.value,
     CatId: 1,
   };
@@ -249,10 +331,10 @@ const addOffice = async () => {
 
     alert("Office added successfully!");
 
-    // ✅ Add office to prevent duplicates
+    // Add office to prevent duplicates
     addedOffices.value.push(selectedOffice.value);
     
-    // ✅ Remove added office from dropdown
+    // Remove added office from dropdown
     offices.value = offices.value.filter(office => office.OffId !== selectedOffice.value);
 
     // Reset selection
@@ -269,31 +351,14 @@ const addOffice = async () => {
   }
 };
 
-//  Watcher for updates
+// Watcher for updates
 watch(maintenancePlans, (newValue) => {
   if (isFetchingData.value || !selectedYear.value || !newValue.length) return;
 
   newValue.forEach(plan => {
     Object.keys(plan).forEach(month => {
       if (month.endsWith("Temp")) {
-        if (plan[month.replace("Temp", "")]) {
-          plan[`${month.replace("Temp", "")}Readonly`] = true;
-        }
-      }
-    });
-  });
-}, { deep: true });
-
-//  Watcher for real-time updates (but skip if fetching data)
-watch(maintenancePlans, (newValue) => {
-  if (isFetchingData.value || !selectedYear.value || !newValue.length) return;
-
-  newValue.forEach(plan => {
-    Object.keys(plan).forEach(month => {
-      if (["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].includes(month)) {
-        if (plan[month]) {
-          plan[`${month}Readonly`] = true;
-        }
+        plan[month] = plan[month.replace("Temp", "")] ?? "";
       }
     });
   });
@@ -311,16 +376,19 @@ watch(selectedYear, async (newYearId) => {
   }
 
   const selected = years.value.find(year => year.YrId === Number(newYearId));
+  
   selectedYearName.value = selected?.Name ?? "";
   selectedYearDescription.value = selected?.Description ?? "";
+
   console.log("📌 Updated Header:", selectedYearName.value, selectedYearDescription.value);
+
   // Fetch data for the selected year
   await fetchData();
 });
 
-//On component mount
+// On component mount
 onMounted(async () => {
-    await fetchOffices()
+  await fetchOffices();
   await fetchYears();
   if (years.value.length > 0) {
     selectedYear.value = years.value[0].YrId;
@@ -349,10 +417,20 @@ const printTable = () => {
   }, 300);
 };
 
+// Add this function to properly close the modal
+const closeModal = () => {
+  const modalElement = document.getElementById("addCollegeModal");
+  if (modalElement) {
+    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+    if (modalInstance) {
+      modalInstance.hide();
+    }
+  }
+};
 
 // Reactive variables for pagination
-const entriesPerPage = ref(5); 
-const currentPage = ref(1); // 
+const entriesPerPage = ref(5); // Default to 10 entries per page
+const currentPage = ref(1); // Start at page 1
 
 const paginatedPlans = computed(() => {
   const start = (currentPage.value - 1) * entriesPerPage.value;
@@ -381,6 +459,14 @@ const prevPage = () => {
   }
 };
 
+const openSaveModal = () => {
+  const modalElement = document.getElementById("saveYearModal");
+  if (modalElement) {
+    const modalInstance = new bootstrap.Modal(modalElement);
+    modalInstance.show();
+  }
+};
+
 const detachPlan = async (PlanId) => {
   try {
     await axios.post(`/api/detach/${PlanId}`);
@@ -402,6 +488,9 @@ const isYearLocked = (plan) => {
   return !!lockedYears.value[plan.YrId]; // locked if true
 };
 
+function obfuscate(id) {
+  return parseInt(id * 250 + 5675675).toString(33);
+}
 </script>
 
 <template>
@@ -429,22 +518,22 @@ const isYearLocked = (plan) => {
             <button class="btn btn-success rounded-pill shadow-sm px-4 py-2 no-print" @click="openSaveModal">
               <i class="fas fa-save"></i> Save
             </button>
-            <button class="btn btn-warning rounded-pill shadow-sm px-4 py-2"style="font-size: 16px;"
-            @click="toggleLock"> <i class="fas fa-lock"></i>{{ lockedYears[selectedYear] ? 'Unlock' : 'Lock' }}
+            <button class="btn btn-warning rounded-pill shadow-sm px-4 py-2" style="font-size: 16px;" @click="toggleLock">
+              <i class="fas fa-lock"></i> {{ lockedYears[selectedYear] ? 'Unlock' : 'Lock' }}
             </button>
             <button class="btn btn-info rounded-pill shadow-sm px-4 py-2" @click="printTable" style="font-size: 16px;">
               <i class="fas fa-print"></i> Print
             </button>
           </div>
 
-            <div class="modal fade" id="saveYearModal" tabindex="-1" aria-labelledby="saveYearModalLabel" >
+          <!-- Save Year Modal -->
+          <div class="modal fade" id="saveYearModal" tabindex="-1" aria-labelledby="saveYearModalLabel">
             <div class="modal-dialog modal-dialog-centered">
               <div class="modal-content">
                 <div class="modal-header">
                   <h5 class="modal-title" id="saveYearModalLabel">Select Year</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-
                 <div class="modal-body">
                   <div class="mb-3">
                     <label for="saveYearDropdown" class="form-label">Select Year:</label>
@@ -454,7 +543,7 @@ const isYearLocked = (plan) => {
                   </div>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary"data-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                   <button type="button" class="btn btn-primary" @click="saveAllPlans">Save</button>
                 </div>
               </div>
@@ -477,101 +566,131 @@ const isYearLocked = (plan) => {
         
         <!-- Table Section -->
         <div class="card mt-2">
-        <div class="card-body">
-        <!-- Top Controls --> 
-        <div class="d-flex justify-content-between align-items-center mb-3 no-print">
-        <!-- Add College Button -->
-        <button class="btn btn-success btn-lg fw-bold px-4 py-2 no-print" @click="openModal">
-          <i class="fas fa-file-signature"></i> Add College/Office
-        </button>
+          <div class="card-body">
+            <!-- Top Controls --> 
+            <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+              <!-- Add College Button -->
+              <button class="btn btn-success btn-lg fw-bold px-4 py-2 no-print" @click="openModal">
+                <i class="fas fa-file-signature"></i> Add College/Office
+              </button>
 
-        <!-- Entries Dropdown -->
-        <div class="d-flex align-items-center">
-          <label for="entries" class="me-2">Show</label>
-          <select id="entries" class="form-select w-auto rounded" v-model="entriesPerPage">
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="15">15</option>
-            <option value="20">20</option>
-          </select>
-          <label for="entries" class="ms-2">entries</label>
-        </div>
-      </div>
+              <!-- Entries Dropdown -->
+              <div class="d-flex align-items-center">
+                <label for="entries" class="me-2">Show</label>
+                <select id="entries" class="form-select w-auto rounded" v-model="entriesPerPage">
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="15">15</option>
+                  <option value="20">20</option>
+                </select>
+                <label for="entries" class="ms-2">entries</label>
+              </div>
+            </div>
 
-      <!-- Data Table -->
-      <div class="datatable text-center table-responsive">
-        <table class="table table-bordered table-hover" width="100%" cellspacing="0">
-          <thead class="table-success">
-            <tr>
-              <th>Colleges</th>
-              <th v-for="month in months" :key="month">{{ month }}</th>
-              <th class="no-print">Actions</th> 
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="plan in isPrinting ? maintenancePlans : paginatedPlans" :key="plan.PlanId">
-              <td>{{ plan.OffName ?? 'N/A' }}</td>
-              <td v-for="month in months" :key="month">
-                <input 
-                  v-if="!isPrinting"
-                  v-model="plan[month]" 
-                  @keyup.enter="saveOnEnter(plan, month)" 
-                  :disabled="plan.isSaving || !isInputAllowed(plan[month]) || isYearLocked(plan)"
-                />
-                <!-- When printing, show just the value -->
-                <span v-if="isPrinting">{{ plan[month] }}</span>
-                <span v-if="plan.isSaving">Saving...</span>
-              </td>
-              <td class="no-print text-center">
-                <div class="d-flex justify-content-center gap-2">
-                  <!-- View Button -->
-                  <Link :href="route('officeuser', { officeId: plan?.OffId, YrId: selectedYear, PlanId: plan?.PlanId , CatId: plan?.CatId})"
-                    class="btn btn-sm btn-outline-primary d-flex align-items-center">
-                    <i class="fas fa-eye me-1"></i> View
-                  </Link>
-                  <!-- Delete Button -->
-                    <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="detachPlan(plan.PlanId)">
-                <i class="fas fa-unlink me-1"></i> Detach </button>
+            <!-- Data Table -->
+            <div class="datatable text-center table-responsive">
+              <table class="table table-bordered table-hover sticky-table" width="100%" cellspacing="0">
+                <thead>
+                  <tr class="custom-header-bg">
+                    <th class="py-3 text-center fw-bold fs-6 border-bottom border-2">Colleges</th>
+                    <th v-for="month in months" :key="month" class="py-3 text-center fw-bold fs-6 border-bottom border-2">{{ month }}</th>
+                    <th class="py-3 text-center fw-bold fs-6 border-bottom border-2 no-print">Actions</th> 
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="plan in isPrinting ? maintenancePlans : paginatedPlans" :key="plan.PlanId">
+                    <td>{{ plan.OffName ?? 'N/A' }}</td>
+                    <td v-for="month in months" :key="month">
+                      <!-- Show input box only when not printing -->
+                      <div class="position-relative">
+                        <input 
+                          v-if="!isPrinting"
+                          v-model="plan[month]"
+                          @input="e => { 
+                            // Convert to uppercase immediately for display
+                            if (e.target.value) {
+                              plan[month] = e.target.value.toUpperCase();
+                            }
+                          }" 
+                          @keyup.enter="saveOnEnter(plan, month)" 
+                          :disabled="plan.isSaving || !isInputAllowed(plan[month], plan, month) || isYearLocked(plan)"
+                          class="form-control form-control-sm text-center text-uppercase fw-bold"
+                          :class="{
+                            'border-primary bg-light-blue text-primary': plan[month]?.toUpperCase() === 'A',
+                            'border-success bg-light-green text-success': plan[month]?.toUpperCase() === 'SA',
+                            'border-warning bg-light-yellow text-dark': plan[month]?.toUpperCase() === 'QA' || plan[month]?.toUpperCase() === 'M',
+                          }"
+                          style="width: 50px; margin: 0 auto; font-size: 14px;"
+                        />
+                        <!-- When printing, show just the value (uppercase) -->
+                        <span v-if="isPrinting">{{ plan[month]?.toUpperCase() }}</span>
+                      </div>
+                    </td>
+                    <td class="no-print text-center">
+                      <div class="d-flex justify-content-center gap-2">
+                        <!-- View Button -->
+                        <Link 
+                          :href="route('officeuser', { 
+                            officeId: plan?.OffId, 
+                            YrId: selectedYear, 
+                            PlanId: plan?.PlanId, 
+                            CatId: plan?.CatId
+                          })"
+                          class="btn btn-sm btn-outline-primary d-flex align-items-center">
+                          <i class="fas fa-eye me-1"></i> View
+                        </Link>
+                        <!-- Delete Button -->
+                        <button 
+                          class="btn btn-sm btn-outline-danger d-flex align-items-center" 
+                          @click="detachPlan(plan.PlanId)">
+                          <i class="fas fa-unlink me-1"></i> Detach
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Pagination -->
+              <div class="d-flex justify-content-between align-items-center mt-3 no-print">
+                <div class="dataTables_paginate paging_simple_numbers" id="dataTable_paginate">
+                  <ul class="pagination justify-content-end">
+                    <!-- Previous Button -->
+                    <li class="paginate_button page-item previous" :class="{'disabled': currentPage === 1}">
+                      <a href="#" @click.prevent="prevPage" class="page-link">Previous</a>
+                    </li>
+
+                    <!-- Page Numbers -->
+                    <li class="paginate_button page-item" v-for="page in totalPages" :key="page">
+                      <a 
+                        href="#" 
+                        @click.prevent="goToPage(page)" 
+                        :class="{'active': currentPage === page}" 
+                        class="page-link">
+                        {{ page }}
+                      </a>
+                    </li>
+
+                    <!-- Next Button -->
+                    <li class="paginate_button page-item next" :class="{'disabled': currentPage === totalPages}">
+                      <a href="#" @click.prevent="nextPage" class="page-link">Next</a>
+                    </li>
+                  </ul>
                 </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Pagination -->
-        <div class="d-flex justify-content-between align-items-center mt-3 no-print">
-          <div class="dataTables_paginate paging_simple_numbers" id="dataTable_paginate">
-            <ul class="pagination justify-content-end">
-              <!-- Previous Button -->
-              <li class="paginate_button page-item previous" :class="{'disabled': currentPage === 1}">
-                <a href="#" @click.prevent="prevPage" class="page-link">Previous</a>
-              </li>
-
-              <!-- Page Numbers -->
-              <li class="paginate_button page-item" v-for="page in totalPages" :key="page">
-                <a href="#" @click.prevent="goToPage(page)" :class="{'active': currentPage === page}" class="page-link">{{ page }}</a>
-              </li>
-
-              <!-- Next Button -->
-              <li class="paginate_button page-item next" :class="{'disabled': currentPage === totalPages}">
-                <a href="#" @click.prevent="nextPage" class="page-link">Next</a>
-              </li>
-            </ul>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-  </div>
 
-    <!-- Bootstrap Modal -->
-    <div class="modal fade" id="addCollegeModal" aria-labelledby="exampleModalLabel" tabindex="-1" aria-hidden="true">
+      <!-- Add College Modal -->
+      <div class="modal fade" id="addCollegeModal" aria-labelledby="exampleModalLabel" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
-            <div class="modal-header"> 
+            <div class="modal-header">
               <h5 class="modal-title">Add College</h5>
-               <!-- Close button -->
-              <button type="button" class="btn-close" data-dismiss="modal"></button>
+              <!-- Close button -->
+              <button type="button" class="btn-close" @click="closeModal" aria-label="Close"></button>
             </div>
 
             <div class="modal-body">
@@ -596,7 +715,7 @@ const isYearLocked = (plan) => {
 
             <div class="modal-footer">
               <!-- Close Button to dismiss modal -->
-              <button type="button" class="btn btn-danger"  data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
               <button type="button" class="btn btn-success" data-dismiss="modal" @click="addOffice">Save</button>
             </div>
           </div>
@@ -688,7 +807,20 @@ button {
     overflow-x: visible !important;
     white-space: normal !important;
   }
+
+  .custom-header-bg {
+    background-color: #f2f2f2 !important;
+    color: black !important;
+  }
+
+  .sticky-table th:first-child,
+  .sticky-table td:first-child {
+    position: static;
+    background-color: transparent !important;
+    box-shadow: none;
+  }
 }
+
 @media print {
   /* These styles ONLY apply during printing */
   .badge {
@@ -709,24 +841,71 @@ button {
 }
 
 .badge-container {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    font-size: 1.1rem;
-  }
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  font-size: 1.1rem;
+}
 
-  .badge {
-    padding: 5px 15px;
-    font-size: 1rem;
-    border-radius: 25px;
-  }
+.badge {
+  padding: 5px 15px;
+  font-size: 1rem;
+  border-radius: 25px;
+}
 
-  .btn {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
+.btn {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
-  .btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  }
-</style>
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+input.text-uppercase {
+  text-transform: uppercase;
+}
+
+/* Style to show that a field is being saved */
+tr:has(span.saving-indicator) {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+/* Table fillable styles */
+.bg-light-green {
+  background-color: rgba(25, 135, 84, 0.1) !important;
+}
+
+.bg-light-blue {
+  background-color: rgba(13, 110, 253, 0.1) !important;
+}
+
+.bg-light-yellow {
+  background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+.custom-header-bg {
+  background: linear-gradient(135deg, #198754, #146c43);
+  color: white;
+}
+
+/* Make the first column sticky */
+.sticky-table {
+  position: relative;
+}
+
+.sticky-table th:first-child,
+.sticky-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background-color: white; /* Match your table background */
+  box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1); /* Optional: adds shadow for visual separation */
+}
+
+.sticky-table th:first-child {
+  z-index: 3;
+  background-color: #198754; /* Match your header gradient */
+  color: white;
+}
+</style scoped>

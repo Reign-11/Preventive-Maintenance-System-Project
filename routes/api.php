@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MaintenancePlanController; 
 use App\Http\Controllers\MaintenancePlanControllerB; 
 use App\Http\Controllers\MaintenancePlanControllerC; 
+use Illuminate\Support\Facades\Crypt;
+use App\Http\Controllers\AdminController;
+
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
@@ -24,6 +27,10 @@ Route::post('/add-colleges', [MaintenancePlanController::class, 'addCollege']);
 Route::get('/offices', [MaintenancePlanController::class, 'getOffice']);
 
 Route::delete('/delete-maintenance-plan/{id}', [MaintenancePlanController::class, 'destroy']);
+
+Route::get('/monthly-counts', [MaintenancePlanController::class, 'getMonthlyCounts']);
+
+Route::get('/maintenance-category-count', [MaintenancePlanController::class, 'getCategoryTaskCount']);
 
 
 Route::get('/pmyear-latest', [MaintenancePlanController::class, 'latest']);
@@ -47,6 +54,8 @@ Route::get('/employees', [MaintenancePlanController::class, 'getAllEmployees']);
 Route::post('/duplicate', [MaintenancePlanController::class, 'duplicate']);
 
 Route::post('/detach/{id}', [MaintenancePlanController::class, 'detach']);
+
+Route::get('/technicians', [MaintenancePlanController::class, 'getTechnicians']);
 
 
 // SET B
@@ -100,3 +109,16 @@ Route::post('/checklistC', [MaintenancePlanControllerC::class, 'checklistC']);
 Route::post('/copy', [MaintenancePlanControllerC::class, 'copy']);
 
 Route::post('/detaches/{id}', [MaintenancePlanControllerC::class, 'detacheS']);
+
+
+
+// Admin 
+
+Route::get('/offices-with-departments', [AdminController::class, 'getOfficesAndDepartments']);
+
+Route::post('/AddOffice', [AdminController::class, 'AddOffice']);
+
+Route::get('/getYears', [AdminController::class, 'getPmYears']);
+
+Route::post('/add-year', [AdminController::class, 'AddYear']);
+

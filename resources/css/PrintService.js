@@ -1,16 +1,17 @@
 /**
- * Formats a date to a readable string
+ * Formats a date to a readable string in day month year format
  * @param {string|Date} dateStr - Date to format
  * @returns {string} Formatted date string
  */
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  return new Date(dateStr).toLocaleDateString('en-GB', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
 };
+
 
 /**
  * Converts status codes to HTML-formatted status labels
@@ -53,6 +54,8 @@ const getPrintStyles = () => {
     body {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
+      margin: 0;
+      padding: 0;
     }
     .no-print {
       display: none !important;
@@ -66,6 +69,20 @@ const getPrintStyles = () => {
     .avoid-break {
       page-break-inside: avoid;
     }
+    
+    /* Footer positioning for printing */
+    .footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      border-top: 1px solid #000;
+      padding-top: 5px;
+    }
+    
+    /* Ensure content doesn't overlap with footer */
+    .content {
+      margin-bottom: 40px; /* Adjust based on footer height */
+    }
   }
 
   body {
@@ -74,6 +91,8 @@ const getPrintStyles = () => {
     padding: 20px;
     color: #333;
     line-height: 1.5;
+    position: relative;
+    counter-reset: page 1;
   }
 
   .print-header {
@@ -111,11 +130,12 @@ const getPrintStyles = () => {
   .ticket-info {
     font-size: 16px;
     margin: 5px 0;
-    text-align: center;
+  
   }
   
   .ticket-info-container {
-    text-align: center;
+    display: flex
+    justify-content : space-between;
     margin-bottom: 12px;
   }
 
@@ -285,68 +305,56 @@ const getPrintStyles = () => {
     text-align: center;
   }
   
-  .page-footer {
+  /* Fixed footer styles */
+  .footer {
     position: fixed;
     bottom: 0;
+    left: 0;
     width: 100%;
     font-size: 12px;
     text-align: center;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #000;
     padding-top: 5px;
+    background-color: white;
   }
   
-  .page-number:after {
-    content: counter(page);
+  /* Counter styling for page numbers */
+  .footer-content {
+    width: 100%;
   }
   
-  .checkmark {
-    font-weight: bold;
-    font-size: 14px;
-  }
-    .avoid-break {
-  page-break-inside: avoid !important;
-  break-inside: avoid !important;
-  display: block;
-}
-.section {
-  page-break-inside: avoid !important;
-  break-inside: avoid !important;
-}
-
- .content {
-    padding: 40px;
-    padding-bottom: 100px; 
-  }
-
-  @media print {
+  /* Page number counter */
   @page {
-    margin-bottom: 50px;
+    counter-increment: page;
   }
-
-  body {
-    position: relative;
-  }
-
-  .footer {
-    position: running(footer);
-  }
-
-  @page {
-    @bottom-center {
-      content: element(footer);
-    }
-  }
-
+  
   .pageNumber::after {
     content: counter(page);
   }
-
-  .totalPages::after {
-    content: counter(pages);
+  
+  
+  .content {
+    padding: 20px;
+    padding-bottom: 60px; /* Provide space for footer */
+  }
+  
+  .avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    display: block;
+  }
+  
+  .section {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  
+  /* Make sure the signatures section doesn't break */
+  .signatures-container {
+    page-break-inside: avoid !important;
   }
 `;
 };
-
 
 /**
  * Returns the path to the logo image
@@ -820,7 +828,7 @@ const generateChecklistSection = (checklist) => {
 };
 
 /**
- * Main function to print employee preventive maintenance details with adjusted header
+ * Main function to print employee preventive maintenance details with fixed footer
  * @param {Object} employee - Employee data object
  * @param {Object} formData - Form data object
  * @param {Object} checklist - Checklist data object
@@ -832,6 +840,7 @@ const printPreventiveMaintenance = (employee, formData, checklist) => {
   document.body.appendChild(iframe);
   
   // Get the iframe document
+  const fixedFooterDate = "12 February 2024";
   const iframeDoc = iframe.contentWindow.document;
   
   const printContent = `
@@ -841,29 +850,40 @@ const printPreventiveMaintenance = (employee, formData, checklist) => {
   <title>Preventive Maintenance Record - ${employee.emp_name || ''}</title>
   <style>
     ${getPrintStyles()}
-
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
+    
+    /* Additional styles for fixed page numbering */
+    .page {
+      position: relative;
+      page-break-after: always;
+      margin-bottom: 60px; /* Space for footer */
     }
-
-    .content {
-      flex: 1;
+    
+    .page:last-child {
+      page-break-after: avoid;
     }
-
-    .footer {
-      padding: 20px 0 0;
+    
+    .page-footer {
+      position: absolute;
+      bottom: -40px;
+      left: 0;
+      width: 100%;
+      border-top: 1px solid #000;
+      padding-top: 5px;
+      background-color: white;
       font-size: 12px;
-      margin-top: auto;
+    }
+    
+    @media print {
+      .page {
+        height: calc(100vh - 80px);
+      }
     }
   </style>
 </head>
 <body>
-  <div class="content">
-    <!-- Header and Body Content -->
+  <!-- First Page with footer -->
+  <div class="page">
+    <!-- Header and First Page Content -->
     <div class="cmu-header">
       <img src="${getLogoPath()}" alt="Central Mindanao University" class="cmu-logo-img" />
       <div class="university-info">
@@ -878,8 +898,9 @@ const printPreventiveMaintenance = (employee, formData, checklist) => {
       <div class="report-title-header">PREVENTIVE MAINTENANCE CHECKLIST</div>
     </div>
 
-    <div class="ticket-info-container">
-      <div class="ticket-info">Ticket #: ${employee.ticketnumber || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp; Date: ${formatDate(employee.date) || formatDate(new Date())}</div>
+    <div style="display: flex; justify-content: space-between;">
+      <div style="text-align: left; font-size: 14px;">Ticket #: ${employee.ticketnumber || 'N/A'}</div>
+      <div style="text-align: right; font-size: 14px;">Date: ${formatDate(employee.date) || formatDate(new Date())}</div>
     </div>
 
     ${generateBasicInfoSection(formData)}
@@ -887,52 +908,76 @@ const printPreventiveMaintenance = (employee, formData, checklist) => {
     ${generateOsSection(formData)}
     ${generateSoftwareSection(formData)}
     ${generateSpecsSection(formData)}
-    ${generateChecklistSection(checklist)}
-  </div>
-
-  <!-- Sticky Footer Section -->
-  <div class="footer">
-  <table style="width: 100%; border: none; margin-top: 30px;">
-    <tr>
-      <!-- Checked by -->
-      <td style="width: 45%; vertical-align: top; border: none; padding-right: 5%;">
-        <div style="margin-bottom: 5px;"><strong>Checked by:</strong></div>
-        <!-- Increased margin-top and adjusted width for the signature line -->
-        <div style="margin-top: 20px; border-bottom: 1px solid #000; width: 60%; margin: auto; height: 40px;"></div>
-        <div style="text-align: center; margin-top: 5px;">Signature over Printed Name</div>
-        <div style="text-align: center;">Technician</div>
-      </td>
-
-      <!-- Conforme -->
-      <td style="width: 45%; vertical-align: top; border: none;">
-        <div style="margin-bottom: 5px;"><strong>Conforme:</strong></div>
-        <!-- Increased margin-top and adjusted width for the signature line -->
-        <div style="margin-top: 20px; border-bottom: 1px solid #000; width: 60%; margin: auto; height: 40px;"></div>
-        <div style="text-align: center; margin-top: 5px;">Signature over Printed Name</div>
-        <div style="text-align: center;">End User</div>
-      </td>
-    </tr>
-  </table>
+    
+    <!-- First page footer -->
+    <div class="page-footer">
+      <table style="width: 100%; border: none;">
+        <tr>
+          <td style="width: 25%; text-align: left;">CMU-F-4-DTO-002</td>
+          <td style="width: 30%; text-align: center;">${fixedFooterDate}</td>
+          <td style="width: 25%; text-align: right;">Rev. 1</td>
+          <td style="width: 20%; text-align: right;">Page 1 of 2</td>
+        </tr>
+      </table>
     </div>
   </div>
+  
+  <!-- Second Page with footer -->
+  <div class="page">
+    <!-- Second Page Content (Checklist) -->
+    ${generateChecklistSection(checklist)}
+  
+    <!-- Signatures Section -->
+    <div class="signatures-container">
+      <table style="width: 100%; border: none; margin-top: 20px;">
+        <tr>
+          <!-- Checked by -->
+          <td style="width: 45%; vertical-align: top; border: none; padding-right: 5%;">
+            <div style="margin-bottom: 15px;"><strong>Checked by:</strong></div>
+            <div style="text-align: center;">
+            <div style="width: 90%; margin: 0 auto; margin-bottom: 20px; height: 40px;"></div>
+              <div style="width: 90%; margin: 0 auto; text-align: center; height: auto; min-height: 24px; line-height: 1.2; text-transform: uppercase; font-size: 16px; font-weight: 500; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                ${formData.technician}
+              </div>
+              <div style="border-top: 1px solid #333; width: 90%; margin: 0 auto;"></div>
+              <div style="text-align: center; margin-top: 4px; color: #333;">Signature over Printed Name</div>
+              <div style="text-align: center; color: #333;">Technician</div>
+            </div>
+          </td>
 
-  <!-- Line above footer -->
-  <hr style="border: 1px solid #000; margin: 0;">
-    <div class="footer" style="display: block;">
-    <table style="width: 100%; border: none;">
-    <tr>
-      <td style="width: 25%; text-align: left;">CMU-F-4-DTO-002</td>
-      <td style="width: 30%; text-align: center;">${formatDate(new Date())}</td>
-      <td style="width: 25%; text-align: right;">Rev. 1</td>
-      <td style="width: 20%; text-align: right;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></td>
-    </tr>
-  </table>
-</div>
+          <!-- Conforme -->
+          <td style="width: 45%; vertical-align: top; border: none;">
+            <div style="margin-bottom: 15px;"><strong>Conforme:</strong></div>
+            <div style="text-align: center;">
+            <div style="width: 90%; margin: 0 auto; margin-bottom: 20px; height: 40px;"></div>
+              <div style="width: 90%; margin: 0 auto; text-align: center; height: auto; min-height: 28px; line-height: 1.2; text-transform: uppercase; font-size: 16px; font-weight: 500; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                ${formData.userOperator || ' '}
+              </div>
+              <div style="border-top: 1px solid #333; width: 90%; margin: 0 auto;"></div>
+              <div style="text-align: center; margin-top: 4px; color: #333;">Signature over Printed Name</div>
+              <div style="text-align: center; color: #333;">End User</div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    
+    <!-- Second page footer -->
+    <div class="page-footer">
+      <table style="width: 100%; border: none;">
+        <tr>
+          <td style="width: 25%; text-align: left;">CMU-F-4-DTO-002</td>
+          <td style="width: 30%; text-align: center;">${fixedFooterDate}</td>
+          <td style="width: 25%; text-align: right;">Rev. 1</td>
+          <td style="width: 20%; text-align: right;">Page 2 of 2</td>
+        </tr>
+      </table>
+    </div>
+  </div>
 </body>
 </html>
 `;
 
-  
   // Write HTML to the iframe
   iframeDoc.open();
   iframeDoc.write(printContent);
@@ -943,7 +988,7 @@ const printPreventiveMaintenance = (employee, formData, checklist) => {
     // Start printing
     iframe.contentWindow.print();
     
-    // Remove the iframe after printing (with a delay to ensure printing completes)
+    // Remove the iframe after printing
     setTimeout(() => {
       document.body.removeChild(iframe);
     }, 1000);
@@ -995,6 +1040,7 @@ const printInPage = (employee, formData, checklist) => {
       ${generateEquipmentSection(formData)}
       ${generateOsSection(formData)}
       ${generateSoftwareSection(formData)}
+      <div class="page-break"></div>
       ${generateSpecsSection(formData)}
       ${generateChecklistSection(checklist)}
       
@@ -1007,7 +1053,7 @@ const printInPage = (employee, formData, checklist) => {
         <div class="signature-item">
           <div class="signature-line">
             <div class="signature-title">Technician's Signature</div>
-            <div>${employee.technician_name || ''}</div>
+            <div>${formData.technician || ''}</div>
           </div>
         </div>
         <div class="signature-item">

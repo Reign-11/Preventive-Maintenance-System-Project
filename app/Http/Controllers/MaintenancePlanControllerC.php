@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Crypt;
 
 class MaintenancePlanControllerC extends Controller
 {
@@ -288,6 +289,9 @@ class MaintenancePlanControllerC extends Controller
             'ipv4_details' => 'nullable|string|max:255',
             'ipv6_details' => 'nullable|string|max:25',
         ]);
+        if (!empty($validated['password_details'])) {
+            $validated['password_details'] = Crypt::encryptString($validated['password_details']);
+        }
 
         DB::statement('CALL InsertPremainPlanSetC(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
             $validated['Offid'],

@@ -1,26 +1,57 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
-import feather from 'feather-icons';
+import axios from 'axios';
+
 
 // Sample data for analytics - added completed tasks per category
 const maintenanceStats = ref({
-    completedTasks: 87,
     categoryTasks: {
-        computing: 32,
-        dataCenter: 24,
-        network: 31
+        computing: 0,
+        data: 0 ,
+        network:0
     }
 });
 
-const monthlyIssues = ref([
-    { month: 'Jan', computing: 7, dataCenter: 3, network: 5 },
-    { month: 'Feb', computing: 5, dataCenter: 2, network: 8 },
-    { month: 'Mar', computing: 6, dataCenter: 4, network: 6 },
-    { month: 'Apr', computing: 4, dataCenter: 3, network: 7 },
-    { month: 'May', computing: 3, dataCenter: 1, network: 5 }
-]);
 
+const monthlyIssues = ref([]);
+    const lastUpdated = ref('');
+
+    onMounted(async () => {
+    loadAssets(files);
+    
+    try {
+        // Fetch category task counts
+        const computing = await axios.get('/api/maintenance-category-count', { params: { CatId: 1 } });
+        maintenanceStats.value.categoryTasks.computing = computing.data.count;
+
+        const dataCenter = await axios.get('/api/maintenance-category-count', { params: { CatId: 2 } });
+        maintenanceStats.value.categoryTasks.dataCenter = dataCenter.data.count;
+
+        const network = await axios.get('/api/maintenance-category-count', { params: { CatId: 3 } });
+        maintenanceStats.value.categoryTasks.network = network.data.count;
+
+        // Fetch monthly issues
+        const { data } = await axios.get('/api/monthly-counts');
+        monthlyIssues.value = data;
+
+        // Update timestamp
+        const now = new Date();
+        const options = { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' };
+        lastUpdated.value = `Updated on ${now.toLocaleDateString(undefined, options)}`;
+
+        // Wait for assets like Chart.js to load
+        setTimeout(() => {
+            if (typeof window.feather !== 'undefined') {
+                window.feather.replace();
+            }
+            initCharts(); // Safe to call now
+        }, 500);
+
+    } catch (error) {
+        console.error('Initialization failed:', error);
+    }
+});
 // Existing files to load
 const files = [
     '/script/jquery-3.5.1.min.js', 
@@ -69,8 +100,8 @@ function initCharts() {
                 labels: monthlyIssues.value.map(data => data.month),
                 datasets: [
                     {
-                        label: 'Computing Units',
-                        data: monthlyIssues.value.map(data => data.computing),
+                        label: 'Set A',
+                        data: monthlyIssues.value.map(data => data.SetA),
                         backgroundColor: 'rgba(0, 172, 105, 0.8)',
                         borderWidth: 0,
                         borderRadius: 4,
@@ -78,8 +109,8 @@ function initCharts() {
                         categoryPercentage: 0.8
                     },
                     {
-                        label: 'Data Center',
-                        data: monthlyIssues.value.map(data => data.dataCenter),
+                        label: 'Set B',
+                        data: monthlyIssues.value.map(data => data.SetB),
                         backgroundColor: 'rgba(0, 172, 105, 0.5)',
                         borderWidth: 0,
                         borderRadius: 4,
@@ -87,8 +118,8 @@ function initCharts() {
                         categoryPercentage: 0.8
                     },
                     {
-                        label: 'Network',
-                        data: monthlyIssues.value.map(data => data.network),
+                        label: 'Set C',
+                        data: monthlyIssues.value.map(data => data.SetC),
                         backgroundColor: 'rgba(0, 172, 105, 0.3)',
                         borderWidth: 0,
                         borderRadius: 4,
@@ -251,8 +282,7 @@ onMounted(() => {
                             </div>
                             <div class="mt-3">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="badge bg-success-soft text-success rounded-pill">12 Devices</span>
-                                    <span class="badge bg-success-soft text-success rounded-pill">{{ maintenanceStats.categoryTasks.computing }} Completed Tasks</span>
+                                        <span class="badge bg-success-soft text-success rounded-pill">{{ maintenanceStats.categoryTasks.computing }} Offices/College  Involved</span>
                                 </div>
                                 <div class="progress rounded-pill" style="height: 0.5rem">
                                     <div class="progress-bar bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
@@ -276,8 +306,8 @@ onMounted(() => {
                             </div>
                             <div class="mt-3">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="badge bg-success-soft text-success rounded-pill">8 Systems</span>
-                                    <span class="badge bg-success-soft text-success rounded-pill">{{ maintenanceStats.categoryTasks.dataCenter }} Completed Tasks</span>
+                                   
+                                    <span class="badge bg-success-soft text-success rounded-pill">{{ maintenanceStats.categoryTasks.dataCenter }} Offices/College  Involved</span>
                                 </div>
                                 <div class="progress rounded-pill" style="height: 0.5rem">
                                     <div class="progress-bar bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
@@ -301,8 +331,8 @@ onMounted(() => {
                             </div>
                             <div class="mt-3">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="badge bg-success-soft text-success rounded-pill">16 Devices</span>
-                                    <span class="badge bg-success-soft text-success rounded-pill">{{ maintenanceStats.categoryTasks.network }} Completed Tasks</span>
+                                    
+                                    <span class="badge bg-success-soft text-success rounded-pill">{{ maintenanceStats.categoryTasks.network }} Offices/College  Involved</span>
                                 </div>
                                 <div class="progress rounded-pill" style="height: 0.5rem">
                                     <div class="progress-bar bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
@@ -320,19 +350,13 @@ onMounted(() => {
                         <div class="card-header d-flex justify-content-between align-items-center" style="background-color: rgba(0, 172, 105, 0.1); border-bottom: 2px solid #00ac69;">
                             <div class="d-flex align-items-center">
                                 <i class="feather-lg text-success me-2" data-feather="bar-chart-2"></i>
-                                <h5 class="my-0 text-success">Preventive Maintenence Trend</h5>
+                                <h5 class="my-0 text-success">Preventive Maintenence Task Completed</h5>
                             </div>
                             <div class="dropdown no-caret">
                                 <button class="btn btn-transparent-dark btn-icon dropdown-toggle" id="areaChartDropdownExample" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <i data-feather="more-vertical"></i>
                                 </button>
-                                <div class="dropdown-menu dropdown-menu-end animated--fade-in-up" aria-labelledby="areaChartDropdownExample">
-                                    <a class="dropdown-item" href="#!">Last 7 Days</a>
-                                    <a class="dropdown-item" href="#!">Last 30 Days</a>
-                                    <a class="dropdown-item" href="#!">Last 90 Days</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="#!">All Time</a>
-                                </div>
+                             
                             </div>
                         </div>
                         <div class="card-body">
@@ -341,7 +365,7 @@ onMounted(() => {
                             </div>
                         </div>
                         <div class="card-footer small text-muted d-flex justify-content-between align-items-center">
-                            <div>Updated today at 11:59 AM</div>
+                            <div>{{ lastUpdated }}</div>
                         </div>
                     </div>
                 </div>

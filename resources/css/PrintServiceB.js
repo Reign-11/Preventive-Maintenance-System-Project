@@ -34,6 +34,7 @@ const getStatusLabel = (statusCode) => {
     case '3':
       return '<span style="color: #7f8c8d; font-style: italic;">N/A</span>';
     default:
+      // Return a visible indication of an unexpected value
       return '<span style="color: #95a5a6;">Not Checked</span>';
   }
 };
@@ -44,280 +45,323 @@ const getStatusLabel = (statusCode) => {
  */
 const getPrintStyles = () => {
   return `
-    @media print {
-      @page {
-        size: legal;
-        margin: 1cm;
-      }
-      body {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-      .no-print {
-        display: none !important;
-      }
+  @media print {
+    @page {
+      size: legal;
+      margin: 0.8cm;
     }
-    
     body {
-      font-family: Arial, sans-serif;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
       margin: 0;
-      padding: 20px;
-      color: #333;
-      line-height: 1.5;
+      padding: 0;
+      counter-reset: page 1;
     }
-    
-    .print-header {
-      text-align: center;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #333;
-      padding-bottom: 10px;
-      position: relative;
+    .pageNumber:after {
+      content: counter(page);
     }
-    
-    .organization-header {
-      text-align: center;
-      margin-bottom: 10px;
+    .no-print {
+      display: none !important;
     }
-    
-    .university-logo {
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto 10px;
-      display: block;
-    }
-    
-    .organization-header h1 {
-      margin: 0;
-      font-size: 22px;
-      color: #333;
-    }
-    
-    .organization-header h2 {
-      margin: 5px 0;
-      font-size: 18px;
-      color: #333;
-    }
-    
-    .report-title {
-      font-size: 24px;
-      font-weight: bold;
-      color: #333;
-      margin: 15px 0 5px;
-    }
-    
-    .ticket-info-container {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    
-    .ticket-info {
-      font-size: 16px;
-      margin: 5px 0;
-    }
-    
     .section {
-      margin-bottom: 20px;
-      page-break-inside: avoid;
-    }
-    
-    .section-title {
-      background-color: #f2f2f2;
-      color: #333;
-      padding: 8px 10px;
-      font-weight: bold;
-      border-radius: 4px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-    }
-    
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      margin-bottom: 15px;
-    }
-    
-    .info-item {
-      margin-bottom: 8px;
-    }
-    
-    .info-label {
-      font-weight: bold;
-      color: #333;
-    }
-    
-    .info-value {
-      padding: 4px 0;
-    }
-    
-    .specs-table, .checklist-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 15px;
-    }
-    
-    .specs-table th, .specs-table td,
-    .checklist-table th, .checklist-table td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-    
-    .specs-table th, .checklist-table th {
-      background-color: #f2f2f2;
-      color: #333;
-    }
-    
-    .specs-table tr:nth-child(even),
-    .checklist-table tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    
-    .checklist-category {
-      background-color: #eef2f7 !important;
-      font-weight: bold;
-    }
-    
-    .summary-box {
-      border: 1px solid #ddd;
-      padding: 15px;
-      margin-top: 20px;
-      border-radius: 4px;
-      background-color: #f9f9f9;
-    }
-    
-    .signature-section {
-      margin-top: 40px;
-      display: flex;
-      justify-content: space-between;
-      page-break-inside: avoid;
-    }
-    
-    .signature-line {
-      border-top: 1px solid #333;
-      width: 200px;
-      text-align: center;
-      padding-top: 5px;
-      margin-top: 60px;
-    }
-    
-    .signature-title {
-      font-weight: bold;
-    }
-    
-    .print-footer {
-      margin-top: 30px;
-      font-size: 12px;
-      text-align: center;
-      color: #7f8c8d;
-      border-top: 1px solid #eee;
-      padding-top: 10px;
-    }
-
-    @media print {
-      .section {
-        margin-bottom: 4px;
-      }
-    }
-
-    .section {
-      margin-bottom: 8px;
-    }
-
-    .section-title {
-      font-size: 16px;
-      font-weight: bold;
-      margin-bottom: 6px;
-    }
-
-    .info-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 12px;
-    }
-
-    .info-item {
-      flex: 1 1 45%;
       margin-bottom: 4px;
     }
-
-    .info-label {
-      font-weight: 500;
-      display: inline-block;
-      margin-right: 4px;
+    .page-break {
+      page-break-before: always;
     }
-
-    .info-value {
-      display: inline-block;
-    }
-
-    .signature-subtitle {
-    font-size: 12px;
-    margin-top: 3px;
+    .avoid-break {
+      page-break-inside: avoid;
     }
     
-    /* Added styles for logo */
-    .cmu-header {
+    /* Footer positioning for printing */
+    .footer {
+      position: fixed;
+      bottom: 0;
       width: 100%;
-      margin-bottom: 0;
-      padding-bottom: 5px;
-      display: flex;
-      align-items: center;
-      border-bottom: 1px solid #555;
+      border-top: 1px solid #000;
+      padding-top: 5px;
     }
     
-    .cmu-logo-img {
-      max-height: 70px;
-      width: auto;
-      margin-right: 10px;
+    /* Ensure content doesn't overlap with footer */
+    .content {
+      margin-bottom: 40px; /* Adjust based on footer height */
     }
+  }
 
-    .university-info {
-      display: flex;
-      flex-direction: column;
-    }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+    line-height: 1.5;
+    position: relative;
+  }
 
-    .republic-text {
-      font-size: 12px;
-      color: #333;
-      margin-bottom: 2px;
-    }
+  .print-header {
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+    position: relative;
+  }
 
-    .university-name {
-      font-size: 14px;
-      font-weight: bold;
-      color: #333;
-      margin: 0;
-      text-transform: uppercase;
-    }
+  .organization-header {
+    text-align: center;
+    margin-bottom: 10px;
+  }
 
-    .university-address {
-      font-size: 12px;
-      color: #333;
-      margin-top: 2px;
-      font-style: italic;
-    }
+  .organization-header h1 {
+    margin: 0;
+    font-size: 22px;
+    color: #333;
+  }
 
-    .office-title {
-      font-size: 14px;
-      font-weight: bold;
-      color: #333;
-      margin-top: 8px;
-      margin-bottom: 3px;
-      text-transform: uppercase;
-    }
+  .organization-header h2 {
+    margin: 5px 0;
+    font-size: 18px;
+    color: #333;
+  }
 
-    .report-title-header {
-      font-size: 16px;
-      font-weight: bold;
-      margin-top: 3px;
-      margin-bottom: 15px;
-      text-transform: uppercase;
-      text-align: center;
-    }
-  `;
+  .report-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin: 15px 0 5px;
+  }
+
+  .ticket-info {
+    font-size: 16px;
+    margin: 5px 0;
+  
+  }
+  
+  .ticket-info-container {
+    display: flex
+    justify-content : space-between;
+    margin-bottom: 12px;
+  }
+
+  .section {
+    margin-bottom: 8px;
+    page-break-inside: avoid;
+  }
+
+  .section-title {
+    background-color: #f2f2f2;
+    color: #333;
+    padding: 8px 10px;
+    font-weight: bold;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+
+  .info-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-bottom: 15px;
+  }
+
+  .info-item {
+    flex: 1 1 45%;
+    margin-bottom: 4px;
+  }
+
+  .info-label {
+    font-weight: 500;
+    display: inline-block;
+    margin-right: 4px;
+    color: #333;
+  }
+
+  .info-value {
+    display: inline-block;
+    padding: 4px 0;
+  }
+
+  .specs-table, .checklist-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+  }
+
+  .specs-table th, .specs-table td,
+  .checklist-table th, .checklist-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+
+  .specs-table th, .checklist-table th {
+    background-color: #f2f2f2;
+    color: #333;
+  }
+
+  .specs-table tr:nth-child(even),
+  .checklist-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+
+  .checklist-category {
+    background-color: #eef2f7 !important;
+    font-weight: bold;
+  }
+
+  .summary-box {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+  }
+
+  .signature-section {
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+    page-break-inside: avoid;
+  }
+
+  .signature-line {
+    border-top: 1px solid #333;
+    width: 200px;
+    text-align: center;
+    padding-top: 5px;
+    margin-top: 60px;
+  }
+
+  .signature-title {
+    font-weight: bold;
+  }
+
+  .print-footer {
+    margin-top: 30px;
+    font-size: 12px;
+    text-align: center;
+    color: #7f8c8d;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+  }
+
+  /* Styles for CMU header and logo */
+  .cmu-header {
+    width: 100%;
+    margin-bottom: 0;
+    padding-bottom: 5px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #555;
+  }
+  
+  .cmu-logo-img {
+    max-height: 50px; /* Further reduced from 50px */
+    width: auto;
+    margin-right: 15px;
+  }
+
+  .university-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .republic-text {
+    font-size: 12px;
+    color: #333;
+    margin-bottom: 1px;
+  }
+
+  .university-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .university-address {
+    font-size: 12px;
+    color: #333;
+    margin-top: 1px;
+    font-style: italic;
+  }
+
+  .office-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin-top: 8px;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+
+  .report-title-header {
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 3px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  
+  /* Fixed footer styles */
+  .footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    font-size: 12px;
+    text-align: center;
+    border-top: 1px solid #000;
+    padding-top: 5px;
+    background-color: white;
+  }
+  
+  /* Counter styling for page numbers */
+  .footer-content {
+    width: 100%;
+  }
+  
+  /* Page number counter */
+  @page {
+    counter-increment: page;
+  }
+  
+  .pageNumber:after {
+    content: counter(page);
+  }
+  
+  .totalPages:after {
+    content: counter(pages);
+  }
+  
+  .content {
+    padding: 20px;
+    padding-bottom: 60px; /* Provide space for footer */
+  }
+  
+  .avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    display: block;
+  }
+  
+  .section {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  
+  /* Make sure the signatures section doesn't break */
+  .signatures-container {
+    margin-top: 10px;
+    page-break-inside: avoid !important;
+  }
+`;
 };
+
 
 /**
  * Returns the path to the logo image
@@ -332,34 +376,38 @@ const getLogoPath = () => {
 
 /**
  * Generates the HTML for the Basic Information section
- * @param {Object} equipment - Equipment data object
+ * @param {Object} formData - Form data object
  * @returns {string} HTML for the section
  */
-const generateBasicInfoSection = (equipment) => {
+const generateBasicInfoSection = (formData) => {
   return `
     <div class="section" style="margin-top: 0; padding-top: 0; page-break-before: avoid !important;">
       <div class="section-title" style="margin-top: 0;">Basic Information</div>
       <table class="specs-table" style="margin-top: 5px; font-size: 95%; width: 100%;">
         <tbody>
           <tr style="height: 22px;">
+            <th style="padding: 3px 5px; width: 20%;">User/Operator</th>
+            <td style="padding: 3px 5px;">${formData.userOperator || 'N/A'}</td>
+          </tr>
+          <tr style="height: 22px;">
             <th style="padding: 3px 5px; width: 20%;">Office/College/Unit</th>
-            <td style="padding: 3px 5px;">${equipment.OfficeName || 'N/A'}</td>
+            <td style="padding: 3px 5px;">${formData.officeUnit || 'N/A'}</td>
           </tr>
           <tr style="height: 22px;">
             <th style="padding: 3px 5px; width: 20%;">Department</th>
-            <td style="padding: 3px 5px;">${equipment.department_name || 'N/A'}</td>
+            <td style="padding: 3px 5px;">${formData.department || 'N/A'}</td>
           </tr>
           <tr style="height: 22px;">
             <th style="padding: 3px 5px; width: 20%;">Date Acquired</th>
-            <td style="padding: 3px 5px;">${formatDate(equipment.date_acquired) || 'N/A'}</td>
+            <td style="padding: 3px 5px;">${formatDate(formData.dateAcquired) || 'N/A'}</td>
           </tr>
           <tr style="height: 22px;">
             <th style="padding: 3px 5px; width: 20%;">PC Name</th>
-            <td style="padding: 3px 5px;">${equipment.pcName || 'N/A'}</td>
+            <td style="padding: 3px 5px;">${formData.pcName || 'N/A'}</td>
           </tr>
           <tr style="height: 22px;">
             <th style="padding: 3px 5px; width: 20%;">Equipment No</th>
-            <td style="padding: 3px 5px;">${equipment.equipmentId || 'N/A'}</td>
+            <td style="padding: 3px 5px;">${formData.equipment || 'N/A'}</td>
           </tr>
         </tbody>
       </table>
@@ -368,151 +416,106 @@ const generateBasicInfoSection = (equipment) => {
 };
 
 /**
- * Generates the HTML for the Equipment Installed section
- * @param {Object} equipment - Equipment data object
- * @returns {string} HTML for the section
- */
-const generateEquipmentSection = (equipment) => {
-  // Define the possible equipment options
-  const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS', 'AVR', 'Other'];
-  
-  // Build equipment array from object properties
-  const equipmentInstalled = [];
-  if (equipment.cpu_status == 1) equipmentInstalled.push('CPU');
-  if (equipment.monitor_status == 1) equipmentInstalled.push('Monitor');
-  if (equipment.mouse_status == 1) equipmentInstalled.push('Mouse');
-  if (equipment.keyboard_status == 1) equipmentInstalled.push('Keyboard');
-  if (equipment.printer_status == 1) equipmentInstalled.push('Printer');
-  if (equipment.ups_status == 1) equipmentInstalled.push('UPS');
-  if (equipment.avr_status == 1) equipmentInstalled.push('AVR');
-  if (equipment.other_equip) equipmentInstalled.push('Other');
-  
-  return `
-    <div class="section" style="margin-bottom: 0; padding-bottom: 0;">
-      <div class="section-title">Equipment Installed:</div>
-      <div class="info-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 5px; margin-bottom: 0;">
-        ${equipmentOptions.map(item => {
-          const isChecked = equipmentInstalled.includes(item);
-          return `
-            <div class="info-item" style="display: flex; align-items: center; margin-bottom: 2px;">
-              <div style="width: 14px; height: 14px; border: 1px solid #333; margin-right: 6px; display: flex; justify-content: center; align-items: center;">
-                ${isChecked ? '<span style="font-weight: bold;">✓</span>' : ''}
-              </div>
-              <div class="info-value" style="font-size: 95%;">
-                ${item}${item === 'Other' && isChecked && equipment.other_equip ? ': ' + equipment.other_equip : ''}
-              </div>
+* Generates the HTML for the Equipment Installed section
+* @param {Object} formData - Form data object
+* @returns {string} HTML for the section
+*/
+const generateEquipmentSection = (formData) => {
+// Define the possible equipment options
+const equipmentOptions = ['CPU', 'Keyboard', 'Monitor', 'Mouse', 'Printer', 'UPS', 'AVR', 'Other'];
+
+return `
+  <div class="section" style="margin-bottom: 0; padding-bottom: 0;">
+    <div class="section-title">Equipment Installed:</div>
+    <div class="info-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 5px; margin-bottom: 0;">
+      ${equipmentOptions.map(item => {
+        const isChecked = formData.equipmentInstalled && formData.equipmentInstalled.includes(item);
+        return `
+          <div class="info-item" style="display: flex; align-items: center; margin-bottom: 2px;">
+            <div style="width: 14px; height: 14px; border: 1px solid #333; margin-right: 6px; display: flex; justify-content: center; align-items: center;">
+              ${isChecked ? '<span style="font-weight: bold;">✓</span>' : ''}
             </div>
-          `;
-        }).join('')}
-      </div>
+            <div class="info-value" style="font-size: 95%;">
+              ${item}${item === 'Other' && isChecked && formData.other_equip ? ': ' + formData.other_equip : ''}
+            </div>
+          </div>
+        `;
+      }).join('')}
     </div>
-  `;
+  </div>
+`;
 };
 
 /**
- * Generates the HTML for the Operating System section
- * @param {Object} equipment - Equipment data object
- * @returns {string} HTML for the section
- */
-const generateOsSection = (equipment) => {
-  // Build OS information
-  let osInstalled = 'None';
-  if (equipment.windows10 == 1) osInstalled = 'Windows 10';
-  else if (equipment.windows11 == 1) osInstalled = 'Windows 11';
-  else if (equipment.other_os) osInstalled = `Other: ${equipment.other_os}`;
-  
-  const isWindows = osInstalled.includes('Windows');
-  const otherOS = equipment.other_os ? `: ${equipment.other_os}` : '';
-  const licenseStatus = isWindows ? `${equipment.license == 1 ? 'Licensed' : 'Not Licensed'}` : '';
+* Generates the HTML for the Operating System section
+* @param {Object} formData - Form data object
+* @returns {string} HTML for the section
+*/
+const generateOsSection = (formData) => {
+const isWindows = formData.osInstalled === 'Windows 10' || formData.osInstalled === 'Windows 11';
+const osLabel = formData.osInstalled || 'N/A';
+const otherOS = formData.osInstalled === 'Other' && formData.other_os ? `: ${formData.other_os}` : '';
+const licenseStatus = isWindows ? `${formData.license == 1 ? 'Licensed' : 'Not Licensed'}` : '';
 
-  return `
-    <div class="section">
-      <div class="section-title">Operating System</div>
-      <div class="info-item" style="display: flex; align-items: center;">
-        <div class="info-label" style="margin-right: 10px;">OS:</div>
-        <div class="info-value" style="flex-grow: 1;">
-          ${osInstalled} ${licenseStatus ? `— ${licenseStatus}` : ''}
-        </div>
+return `
+  <div class="section">
+    <div class="section-title">Operating System</div>
+    <div class="info-item" style="display: flex; align-items: center;">
+      <div class="info-label" style="margin-right: 10px;">OS:</div>
+      <div class="info-value" style="flex-grow: 1;">
+        ${osLabel}${otherOS} ${licenseStatus ? `— ${licenseStatus}` : ''}
       </div>
     </div>
-  `;
+  </div>
+`;
 };
+
 
 /**
- * Generates the HTML for the Software Installed section
- * @param {Object} equipment - Equipment data object
- * @returns {string} HTML for the section
- */
-const generateSoftwareSection = (equipment) => {
-  // Define the possible software options
-  const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 'Media Player', 'Anti-Virus', 'Browser', 'Microsoft', 'Other'];
-  
-  // Build software array from object properties
-  const softwareInstalled = [];
-  if (equipment.enrollment == 1) softwareInstalled.push('Enrollment System');
-  if (equipment.adobe_reader == 1) softwareInstalled.push('Adobe Reader');
-  if (equipment.word_processor == 1) softwareInstalled.push('Word Processor');
-  if (equipment.media_player == 1) softwareInstalled.push('Media Player');
-  if (equipment.anti_virus == 1) softwareInstalled.push('Anti-Virus');
-  if (equipment.browser == 1) softwareInstalled.push('Browser');
-  if (equipment.microsoft == 1) softwareInstalled.push('Microsoft');
-  if (equipment.other_sys) softwareInstalled.push('Other');
-  
-  return `
-    <div class="section" style="margin-bottom: 0; padding-bottom: 0;">
-      <div class="section-title">Software Application Installed:</div>
-      <div class="info-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 5px; margin-bottom: 0;">
-        ${softwareOptions.map(item => {
-          const isChecked = softwareInstalled.includes(item);
-          return `
-            <div class="info-item" style="display: flex; align-items: center; margin-bottom: 2px;">
-              <div style="width: 14px; height: 14px; border: 1px solid #333; margin-right: 6px; display: flex; justify-content: center; align-items: center;">
-                ${isChecked ? '<span style="font-weight: bold;">✓</span>' : ''}
-              </div>
-              <div class="info-value" style="font-size: 95%;">
-                ${item}${item === 'Other' && isChecked && equipment.other_sys ? ': ' + equipment.other_sys : ''}
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    </div>
-  `;
-};
+* Generates the HTML for the Software Installed section
+* @param {Object} formData - Form data object
+* @returns {string} HTML for the section
+*/
+const generateSoftwareSection = (formData) => {
+// Define the possible software options
+const softwareOptions = ['Enrollment System', 'Adobe Reader', 'Word Processor', 'Media Player', 'Anti-Virus', 'Browser', 'Microsoft', 'Other'];
 
+return `
+  <div class="section" style="margin-bottom: 0; padding-bottom: 0;">
+    <div class="section-title">Software Application Installed:</div>
+    <div class="info-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 5px; margin-bottom: 0;">
+      ${softwareOptions.map(item => {
+        const isChecked = formData.softwareInstalled && formData.softwareInstalled.includes(item);
+        return `
+          <div class="info-item" style="display: flex; align-items: center; margin-bottom: 2px;">
+            <div style="width: 14px; height: 14px; border: 1px solid #333; margin-right: 6px; display: flex; justify-content: center; align-items: center;">
+              ${isChecked ? '<span style="font-weight: bold;">✓</span>' : ''}
+            </div>
+            <div class="info-value" style="font-size: 95%;">
+              ${item}${item === 'Other' && isChecked && formData.other_sys ? ': ' + formData.other_sys : ''}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  </div>
+`;
+};
 /**
  * Generates the HTML for the Desktop Specifications section
- * @param {Object} equipment - Equipment data object
+ * @param {Object} formData - Form data object
  * @returns {string} HTML for the section
  */
-const generateSpecsSection = (equipment) => {
-  // Build hardware specifications
-  const hardwareSpecs = [
-    { name: 'Processor', value: equipment.processor_details },
-    { name: 'Motherboard', value: equipment.motherboard_details },
-    { name: 'Memory', value: equipment.memory_details },
-    { name: 'Graphics Card', value: equipment.graphics_card_details },
-    { name: 'Hard Disk', value: equipment.hard_disk_details },
-    { name: 'Monitor', value: equipment.monitor_details },
-    { name: 'Casing', value: equipment.casing_details },
-    { name: 'Power Supply', value: equipment.power_supply_details },
-    { name: 'Keyboard', value: equipment.keyboard_details },
-    { name: 'Mouse', value: equipment.mouse_details },
-    { name: 'AVR', value: equipment.avr_details },
-    { name: 'UPS', value: equipment.ups_details },
-    { name: 'Printer', value: equipment.printer_details },
-    { name: 'Network/MAC/IP', value: equipment.network_mac_ip_details }
-  ].filter(spec => spec.value); // Only include specs that have values
-
+const generateSpecsSection = (formData) => {
   return `
     <div class="section" style="margin-top: 0; padding-top: 0; page-break-before: avoid !important;">
       <div class="section-title" style="margin-top: 0;">Desktop Specifications</div>
       <table class="specs-table" style="margin-top: 5px; font-size: 95%; width: 100%;">
         <tbody>
-          ${hardwareSpecs.map(spec => `
+          ${Object.entries(formData.desktopSpecs).map(([key, value]) => `
             <tr style="height: 22px;">
-              <th style="padding: 3px 5px; width: 20%;">${spec.name}</th>
-              <td style="padding: 3px 5px;">${spec.value || 'N/A'}</td>
+              <th style="padding: 3px 5px; width: 20%;">${key.replace(/([A-Z])/g, ' $1').trim()}</th>
+              <td style="padding: 3px 5px;">${value || ' '}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -522,253 +525,488 @@ const generateSpecsSection = (equipment) => {
 };
 
 /**
- * Generates the HTML for the Maintenance Checklist section
- * @param {Object} equipment - Equipment data object
- * @returns {string} HTML for the section
+ * Renders a group of related checklist items with server checklist style
+ * @param {string} category - The category name
+ * @param {Array} items - Array of [description, statusCode] pairs
+ * @returns {string} HTML for the grouped items
  */
-const generateChecklistSection = (equipment) => {
-  return `
-    <div class="section">
-      <div class="section-title">Maintenance Checklist</div>
-      <table class="checklist-table">
-        <thead>
-          <tr>
-            <th width="10%">ITEM#</th>
-            <th width="25%">TASK</th>
-            <th width="45%">DESCRIPTION</th>
-            <th width="20%">STATUS</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- System Boot & Login -->
-          <tr>
-            <td>1</td>
-            <td>System Boot</td>
-            <td>Boot system from a cold start</td>
-            <td>${getStatusLabel(equipment.System_Boot)}</td>
-          </tr>
-          <tr>
-            <td>2</td>
-            <td>System Log-in</td>
-            <td>Monitor for errors and speed of entire boot process</td>
-            <td>${getStatusLabel(equipment.System_Log)}</td>
-          </tr>
-
-          <tr>
-            <td>3</td>
-            <td>Network Settings</td>
-            <td>Monitor login script</td>
-            <td>${getStatusLabel(equipment.Network_Settings1)}</td>
-          </tr>
-          <tr>
-            <td></td>
-            <td></td>
-            <td>TCP/IP and IPX settings are correct</td>
-            <td>${getStatusLabel(equipment.Network_Settings2)}</td>
-          </tr>
-          <tr>
-            <td></td>
-            <td></td>
-            <td>Domain Name</td>
-            <td>${getStatusLabel(equipment.Network_Settings3)}</td>
-          </tr>
-          <tr>
-            <td></td>
-            <td></td>
-            <td>Security Settings</td>
-            <td>${getStatusLabel(equipment.Network_Settings4)}</td>
-          </tr>
-          <tr>
-            <td></td>
-            <td></td>
-            <td>Client Configurations</td>
-            <td>${getStatusLabel(equipment.Network_Settings5)}</td>
-          </tr>
-          <tr>
-            <td></td>
-            <td></td>
-            <td>Computer Name</td>
-            <td>${getStatusLabel(equipment.Network_Settings6)}</td>
-          </tr>
-
-          <!-- Hardware Settings -->
-          <td>4</td>
-          <td>Computer Hardware Settings</td>
-          <td>Verify Device Manager settings</td>
-          <td>${getStatusLabel(equipment.Computer_Hardware_Settings1)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>BIOS up-to-date</td>
-          <td>${getStatusLabel(equipment.Computer_Hardware_Settings2)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Hard Disk</td>
-          <td>${getStatusLabel(equipment.Computer_Hardware_Settings3)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>DVD/CD-RW firmware up-to-date</td>
-          <td>${getStatusLabel(equipment.Computer_Hardware_Settings4)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Memory is O.K.</td>
-          <td>${getStatusLabel(equipment.Computer_Hardware_Settings5)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>For Laptop battery run-time is norm</td>
-          <td>${getStatusLabel(equipment.Computer_Hardware_Settings6)}</td>
-          </tr>
-
-          <!-- Browser Settings -->
-          <tr>
-            <td>5</td>
-            <td>Browser/Proxy Settings</td>
-            <td>Verify proper settings and operation</td>
-            <td>${getStatusLabel(equipment.Browser_Settings)}</td>
-          </tr>
-          
-          <!-- Software Loads -->
-          <tr>
-            <td>6</td>
-            <td>Proper Software Loads</td>
-            <td>Required software is installed and operating</td>
-            <td>${getStatusLabel(equipment.Proper_Software_Loads)}</td>
-          </tr>
-          
-          <!-- Viruses and Malware -->
-          <td>7</td>
-          <td>Viruses and Malware</td>
-          <td>Anti-virus installed</td>
-          <td>${getStatusLabel(equipment.Viruses_Malware1)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Virus scan done</td>
-          <td>${getStatusLabel(equipment.Viruses_Malware2)}</td>
-          </tr>
-
-          <!-- Clearance -->
-          <td>8</td>
-          <td>Clearance</td>
-          <td>Unused Software Removed</td>
-          <td>${getStatusLabel(equipment.Clearance1)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Temporary files removed</td>
-          <td>${getStatusLabel(equipment.Clearance2)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Cache Cleared</td>
-          <td>${getStatusLabel(equipment.Clearance3)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Recycle Bin Emptied</td>
-          <td>${getStatusLabel(equipment.Clearance4)}</td>
-          </tr>
-
-          <!-- Interiors and Cleaning -->
-          <td>9</td>
-          <td>Interiors and Cleaning</td>
-          <td>Dust removed</td>
-          <td>${getStatusLabel(equipment.Interiors_Cleaning1)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>No loose parts</td>
-          <td>${getStatusLabel(equipment.Interiors_Cleaning2)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Airflow is O.K.</td>
-          <td>${getStatusLabel(equipment.Interiors_Cleaning3)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Cables unplugged and re-plugged</td>
-          <td>${getStatusLabel(equipment.Interiors_Cleaning4)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Fans are operating</td>
-          <td>${getStatusLabel(equipment.Interiors_Cleaning5)}</td>
-          </tr>
-
-          <!-- Peripheral Devices -->
-          <td>10</td>
-          <td>Peripheral Devices</td>
-          <td>Mouse</td>
-          <td>${getStatusLabel(equipment.Peripheral_Devices1)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Keyboard</td>
-          <td>${getStatusLabel(equipment.Peripheral_Devices2)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Monitor</td>
-          <td>${getStatusLabel(equipment.Peripheral_Devices3)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>UPS</td>
-          <td>${getStatusLabel(equipment.Peripheral_Devices4)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Printer</td>
-          <td>${getStatusLabel(equipment.Peripheral_Devices5)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Telephone extension</td>
-          <td>${getStatusLabel(equipment.Peripheral_Devices6)}</td>
-          </tr>
-          <tr>
-          <td></td>
-          <td></td>
-          <td>Fax</td>
-          <td>${getStatusLabel(equipment.Peripheral_Devices7)}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  `;
+const renderGroup = (category, items) => {
+  return items.map((item, index) => {
+    const [description, statusCode] = item;
+    return `
+      <tr>
+        ${index === 0 ? `<td rowspan="${items.length}">${category}</td>` : ''}
+        <td>${description}</td>
+        <td style="text-align:center">${renderCheck(statusCode, '1')}</td>
+        <td style="text-align:center">${renderCheck(statusCode, '2')}</td>
+        <td style="text-align:center">${renderCheck(statusCode, '3')}</td>
+      </tr>
+    `;
+  }).join('');
 };
 
 /**
- * Prints equipment details using iframe for direct printing
- * 
- * @param {Object} equipment - The equipment object to print
- * @param {Boolean} includeSummary - Whether to include the summary/checklist section
- * @param {Boolean} printImmediately - Whether to print immediately without showing the page
+ * Renders checkmark for matching status values
+ * @param {string} value - The current value
+ * @param {string} checkValue - The value to check against
+ * @returns {string} HTML for the checkmark if values match
  */
-const printEquipmentDetails = (equipment, includeSummary = true, printImmediately = true) => {
+const renderCheck = (value, checkValue) => {
+  // Convert to string for strict comparison 
+  const stringValue = String(value || '');
+  const stringCheckValue = String(checkValue || '');
+  
+  // Return a clear checkmark if values match
+  return stringValue === stringCheckValue ? '<span class="checkmark">✓</span>' : '';
+};
+
+/**
+ * Generates the HTML for the Maintenance Checklist section with server-style format
+ * @param {Object} checklist - Checklist data object
+ * @returns {string} HTML for the section
+ */
+const generateChecklistSection = (checklist) => {
+  return `
+  <div style="page-break-inside: avoid;">
+  <div style="margin-bottom: 0; padding-bottom: 0;">
+    <div style="text-align: center; font-weight: bold; margin-bottom: 5px; font-size: 14px;">ITEM CHECKLIST</div>
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #000;">
+      <thead>
+        <tr>
+          <th style="border: 1px solid #000; padding: 2px 3px; width: 5%; text-align: center; font-size: 13px;">ITEM #</th>
+          <th style="border: 1px solid #000; padding: 2px 3px; width: 18%; text-align: center; font-size: 13px;">TASK</th>
+          <th style="border: 1px solid #000; padding: 2px 3px; width: 52%; text-align: center; font-size: 13px;">DESCRIPTION</th>
+          <th style="border: 1px solid #000; padding: 2px 3px; width: 8%; text-align: center; font-size: 13px;">OK</th>
+          <th style="border: 1px solid #000; padding: 2px 3px; width: 8%; text-align: center; font-size: 13px;">REPAIR</th>
+          <th style="border: 1px solid #000; padding: 2px 3px; width: 9%; text-align: center; font-size: 13px;">N/A</th>
+        </tr>
+      </thead>
+      <tbody>
+      <!-- System Boot -->
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">1</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">SYSTEM BOOT</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Boot system from a cold start. Monitor for errors and speed of entire boot proccess.</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.System_Boot === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.System_Boot === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.System_Boot === '3' ? '✓' : ''}</td>
+        </tr>
+        
+        <!-- System Log-in -->
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">2</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">System Log-in</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Monitor for errors, monitor log-in script</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.System_Log === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.System_Log === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.System_Log === '3' ? '✓' : ''}</td>
+        </tr>
+        
+        <!-- Network Settings -->
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; vertical-align: top; font-size: 13px;" rowspan="5">3</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; vertical-align: top; font-size: 13px;" rowspan="5">Network Settings</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">TCP/IP or IPX settings are correct</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings2 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings2 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings2 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Domain Name</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings3 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings3 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings3 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Security Settings</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings4 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings4 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings4 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Client Configurations</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings5 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings5 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings5 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Computer Name</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings6 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings6 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Network_Settings6 === '3' ? '✓' : ''}</td>
+        </tr>
+        
+        <!-- Computer Hardware Settings -->
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; vertical-align: top; font-size: 13px;" rowspan="6">4</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; vertical-align: top; font-size: 13px;" rowspan="6">Computer Hardware Settings</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Verify device manager settings</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings1 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings1 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings1 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">BIOS up-to-date</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings2 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings2 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings2 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Hard Disk</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings3 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings3 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings3 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">DVD, CD/RW drive firmware up-to-date</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings4 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings4 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings4 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Memory is OK</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings5 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings5 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings5 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Laptop: battery run time is normal</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings6 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings6 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Computer_Hardware_Settings6 === '3' ? '✓' : ''}</td>
+        </tr>
+        
+        <!-- Browser/Proxy Settings -->
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">5</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Browser/Proxy Settings</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Verify proper settings and operation</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Browser_Settings === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Browser_Settings === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Browser_Settings === '3' ? '✓' : ''}</td>
+        </tr>
+        
+        <!-- Proper Software Loads -->
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">6</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Proper Software loads</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Required software is installed and operating</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Proper_Software_Loads === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Proper_Software_Loads === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Proper_Software_Loads === '3' ? '✓' : ''}</td>
+        </tr>
+        
+        <!-- Viruses and Malware -->
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; vertical-align: top; font-size: 13px;" rowspan="2">7</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; vertical-align: top; font-size: 13px;" rowspan="2">Viruses and Malware</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Anti-Virus installed</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Viruses_Malware1 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Viruses_Malware1 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Viruses_Malware1 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Virus scan done</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Viruses_Malware2 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Viruses_Malware2 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Viruses_Malware2 === '3' ? '✓' : ''}</td>
+        </tr>
+        
+        <!-- Clearance -->
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; vertical-align: top; font-size: 13px;" rowspan="4">8</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; vertical-align: top; font-size: 13px;" rowspan="4">Clearance</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Unused software remove</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Clearance1 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Clearance1 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Clearance1 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Temporary files remove</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Clearance2 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Clearance2 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Clearance2 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Recycle Bin and Caches emptied</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Clearance3 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Clearance3 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Clearance3 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Periphery devices clean</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Clearance4 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Clearance4 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Clearance4 === '3' ? '✓' : ''}</td>
+        </tr>
+        
+        <!-- Interiors and cleaning -->
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; vertical-align: top; font-size: 13px;" rowspan="5">9</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; vertical-align: top; font-size: 13px;" rowspan="5">Interiors and cleaning</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Dust remove</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning1 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning1 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning1 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">No loose parts</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning2 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning2 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning2 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Airflow is OK</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning3 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning3 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning3 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Cables unplugged and re-plugged</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning4 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning4 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning4 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Fans are operating</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning5 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning5 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Interiors_Cleaning5 === '3' ? '✓' : ''}</td>
+        </tr>
+        
+        <!-- Peripheral devices -->
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; vertical-align: top; font-size: 13px;" rowspan="7">10</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; vertical-align: top; font-size: 13px;" rowspan="7">Peripheral devices</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Mouse</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices1 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices1 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices1 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Keyboard</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices2 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices2 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices2 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Monitor</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices3 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices3 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices3 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">UPS</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices4 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices4 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices4 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Printer</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices5 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices5 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices5 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Telephone Extension</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices6 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices6 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices6 === '3' ? '✓' : ''}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 2px 3px; font-size: 13px;">Fax</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices7 === '1' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices7 === '2' ? '✓' : ''}</td>
+          <td style="border: 1px solid #000; padding: 2px 3px; text-align: center; font-size: 13px;">${checklist.Peripheral_Devices7 === '3' ? '✓' : ''}</td>
+        </tr>
+        
+        <!-- Summary/Recommendation -->
+        <tr>
+          <td style="border: 1px solid #000; padding: 3px 4px; text-align: left; font-size: 13px;" colspan="6">
+            <div style="margin-bottom: 4px;"><strong>Summary/Recommendation</strong></div>
+            <div>${checklist.Summary || 'Unit is in good condition. Uninstall unnecessary applications'}</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="font-size: 13px; margin-top: 4px;">Note: To be filled by Technician attending to ICT Equipment </div>
+  </div>
+`;
+};
+
+/**
+ * Main function to print employee preventive maintenance details with fixed footer
+ * @param {Object} employee - Employee data object
+ * @param {Object} formData - Form data object
+ * @param {Object} checklist - Checklist data object
+ */
+const printPreventiveMaintenance = (employee, formData, checklist) => {
+  // Create a hidden iframe for printing
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+  
+  // Get the iframe document
+  const fixedFooterDate = "12 February 2024";
+  const iframeDoc = iframe.contentWindow.document;
+  
+  const printContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Preventive Maintenance Record - ${employee.emp_name || ''}</title>
+  <style>
+    ${getPrintStyles()}
+    
+    /* Additional styles for fixed page numbering */
+    .page {
+      position: relative;
+      page-break-after: always;
+      margin-bottom: 60px; /* Space for footer */
+    }
+    
+    .page:last-child {
+      page-break-after: avoid;
+    }
+    
+    .page-footer {
+      position: absolute;
+      bottom: -40px;
+      left: 0;
+      width: 100%;
+      border-top: 1px solid #000;
+      padding-top: 5px;
+      background-color: white;
+      font-size: 12px;
+    }
+    
+    @media print {
+      .page {
+        height: calc(100vh - 80px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- First Page with footer -->
+  <div class="page">
+    <!-- Header and First Page Content -->
+    <div class="cmu-header">
+      <img src="${getLogoPath()}" alt="Central Mindanao University" class="cmu-logo-img" />
+      <div class="university-info">
+        <div class="republic-text">Republic of the Philippines</div>
+        <div class="university-name">CENTRAL MINDANAO UNIVERSITY</div>
+        <div class="university-address">Musuan, Maramag, Bukidnon</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 8px;">
+      <div class="office-title">OFFICE OF DIGITAL TRANSFORMATION</div>
+      <div class="report-title-header">PREVENTIVE MAINTENANCE CHECKLIST</div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between;">
+      <div style="text-align: left; font-size: 14px;">Ticket #: ${employee.ticketnumber || 'N/A'}</div>
+      <div style="text-align: right; font-size: 14px;">Date: ${formatDate(employee.date) || formatDate(new Date())}</div>
+    </div>
+
+    ${generateBasicInfoSection(formData)}
+    ${generateEquipmentSection(formData)}
+    ${generateOsSection(formData)}
+    ${generateSoftwareSection(formData)}
+    ${generateSpecsSection(formData)}
+    
+    <!-- First page footer -->
+    <div class="page-footer">
+      <table style="width: 100%; border: none;">
+        <tr>
+          <td style="width: 25%; text-align: left;">CMU-F-4-DTO-002</td>
+          <td style="width: 30%; text-align: center;">${fixedFooterDate}</td>
+          <td style="width: 25%; text-align: right;">Rev. 1</td>
+          <td style="width: 20%; text-align: right;">Page 1 of 2</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  
+  <!-- Second Page with footer -->
+  <div class="page">
+    <!-- Second Page Content (Checklist) -->
+    ${generateChecklistSection(checklist)}
+  
+    <!-- Signatures Section -->
+    <div class="signatures-container">
+      <table style="width: 100%; border: none; margin-top: 20px;">
+        <tr>
+          <!-- Checked by -->
+          <td style="width: 45%; vertical-align: top; border: none; padding-right: 5%;">
+            <div style="margin-bottom: 15px;"><strong>Checked by:</strong></div>
+            <div style="text-align: center;">
+            <div style="width: 90%; margin: 0 auto; margin-bottom: 10px; height: 40px;"></div>
+              <div style="width: 90%; margin: 0 auto; text-align: center; height: auto; min-height: 24px; line-height: 1.2; text-transform: uppercase; font-size: 16px; font-weight: 500; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                ${formData.technician}
+              </div>
+              <div style="border-top: 1px solid #333; width: 90%; margin: 0 auto;"></div>
+              <div style="text-align: center; margin-top: 4px; color: #333;">Signature over Printed Name</div>
+              <div style="text-align: center; color: #333;">Technician</div>
+            </div>
+          </td>
+
+          <!-- Conforme -->
+          <td style="width: 45%; vertical-align: top; border: none;">
+            <div style="margin-bottom: 15px;"><strong>Conforme:</strong></div>
+            <div style="text-align: center;">
+            <div style="width: 90%; margin: 0 auto; margin-bottom: 10px; height: 40px;"></div>
+              <div style="width: 90%; margin: 0 auto; text-align: center; height: auto; min-height: 28px; line-height: 1.2; text-transform: uppercase; font-size: 14px; font-weight: 500; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                ${formData.userOperator || ' '}
+              </div>
+              <div style="border-top: 1px solid #333; width: 90%; margin: 0 auto;"></div>
+              <div style="text-align: center; margin-top: 4px; color: #333;">Signature over Printed Name</div>
+              <div style="text-align: center; color: #333;">End User</div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    
+    <!-- Second page footer -->
+    <div class="page-footer">
+      <table style="width: 100%; border: none;">
+        <tr>
+          <td style="width: 25%; text-align: left;">CMU-F-4-DTO-002</td>
+          <td style="width: 30%; text-align: center;">${fixedFooterDate}</td>
+          <td style="width: 25%; text-align: right;">Rev. 1</td>
+          <td style="width: 20%; text-align: right;">Page 2 of 2</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+  // Write HTML to the iframe
+  iframeDoc.open();
+  iframeDoc.write(printContent);
+  iframeDoc.close();
+  
+  // Wait for content to load before triggering print
+  iframe.onload = function() {
+    // Start printing
+    iframe.contentWindow.print();
+    
+    // Remove the iframe after printing
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 1000);
+  };
+};
+
+/**
+ * Alternative function that prints in the same page without opening new window
+ * This can be used interchangeably with printPreventiveMaintenance
+ */
+const printInPage = (employee, formData, checklist) => {
   // Create a hidden iframe for printing
   const iframe = document.createElement('iframe');
   iframe.style.display = 'none';
@@ -777,15 +1015,12 @@ const printEquipmentDetails = (equipment, includeSummary = true, printImmediatel
   // Get the iframe document
   const iframeDoc = iframe.contentWindow.document;
   
-  // Get current date for the printed document
-  const currentDate = new Date().toLocaleDateString();
-  
   // Prepare HTML content for printing
   const printContent = `
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Preventive Maintenance Report - ${equipment.equipmentId || 'N/A'}</title>
+      <title>Preventive Maintenance Record - ${employee.emp_name || ''}</title>
       <style>${getPrintStyles()}</style>
     </head>
     <body>
@@ -805,35 +1040,32 @@ const printEquipmentDetails = (equipment, includeSummary = true, printImmediatel
       </div>
       
       <div class="ticket-info-container">
-        <div class="ticket-info">Ticket #: ${equipment.ticketnumber || 'N/A'}</div>
-        <div class="ticket-info">Date: ${formatDate(equipment.date) || formatDate(new Date())}</div>
+        <div class="ticket-info">Ticket #: ${formData.ticketnumber || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp; Date: ${formatDate(formData.date) || formatDate(new Date())}</div>
       </div>
       
-      ${generateBasicInfoSection(equipment)}
-      ${generateEquipmentSection(equipment)}
-      ${generateOsSection(equipment)}
-      ${generateSoftwareSection(equipment)}
-      ${generateSpecsSection(equipment)}
-      ${includeSummary ? generateChecklistSection(equipment) : ''}
+      ${generateBasicInfoSection(formData)}
+      ${generateEquipmentSection(formData)}
+      ${generateOsSection(formData)}
+      ${generateSoftwareSection(formData)}
+      ${generateSpecsSection(formData)}
+      ${generateChecklistSection(checklist)}
       
-      ${equipment.Summary ? `
       <div class="summary-box">
         <div class="info-label">Summary/Recommendation:</div>
-        <div class="info-value">${equipment.Summary || 'No summary provided.'}</div>
+        <div class="info-value">${checklist.Summary || 'No summary provided.'}</div>
       </div>
-      ` : ''}
       
       <div class="signature-section">
         <div class="signature-item">
           <div class="signature-line">
             <div class="signature-title">Technician's Signature</div>
-            <div></div>
+            <div>${employee.technician_name || ''}</div>
           </div>
         </div>
         <div class="signature-item">
           <div class="signature-line">
             <div class="signature-title">User's Signature</div>
-            <div></div>
+            <div>${formData.userOperator || ''}</div>
           </div>
         </div>
         <div class="signature-item">
@@ -843,14 +1075,6 @@ const printEquipmentDetails = (equipment, includeSummary = true, printImmediatel
           </div>
         </div>
       </div>
-      
-      <div class="print-footer">
-        This document was generated on ${formatDate(new Date())} by the Preventive Maintenance System.
-      </div>
-
-      <script>
-        ${printImmediately ? 'window.onload = function() { window.print(); };' : ''}
-      </script>
     </body>
     </html>
   `;
@@ -862,13 +1086,8 @@ const printEquipmentDetails = (equipment, includeSummary = true, printImmediatel
   
   // Wait for content to load before triggering print
   iframe.onload = function() {
-    // Make sure print triggers
-    if (printImmediately) {
-      iframe.contentWindow.focus(); // Focus the iframe
-      setTimeout(() => {
-        iframe.contentWindow.print();
-      }, 300);
-    }
+    // Start printing
+    iframe.contentWindow.print();
     
     // Remove the iframe after printing (with a delay to ensure printing completes)
     setTimeout(() => {
@@ -877,9 +1096,10 @@ const printEquipmentDetails = (equipment, includeSummary = true, printImmediatel
   };
 };
 
-// Export the service
+// Export the print service functions
 export default {
-  printEquipmentDetails,
+  printPreventiveMaintenance,
+  printInPage, // Added the new function
   formatDate,
   getStatusLabel
 };
