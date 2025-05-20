@@ -99,10 +99,6 @@ onMounted(() => {
         <!-- Main Content -->
         <div class="main-content">
             <nav class="topnav navbar navbar-expand shadow justify-content-between navbar-light bg-white">
-                <!-- Sidebar Toggle Button -->
-                <!-- <button class="btn btn-icon btn-transparent-dark order-1 order-lg-0" @click="toggleSidebar">
-                    <i data-feather="menu"></i>
-                </button> -->
 
                 <!-- User Dropdown -->
                 <ul class="navbar-nav align-items-center ml-auto">
@@ -316,4 +312,13 @@ footer {
     border-radius: 5px;
 }
 
+.nav-link-custom {
+    /* Your existing styles */
+    transition: all 0.25s ease;
+}
+
+.sidebar {
+    /* Your existing styles */
+    transition: width 0.3s ease, transform 0.3s ease;
+}
 </style>

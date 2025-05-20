@@ -147,26 +147,44 @@ class MaintenancePlanControllerC extends Controller
     }
     
 
-    public function destroyC($id)
+    public function copy(Request $request)
     {
-        Log::info("Attempting to delete MaintenancePlan with ID: " . $id);
-
-        $plan = MaintenancePlan::find($id);
-
-        if (!$plan) {
-            Log::warning("Plan not found for ID: " . $id);
-            return response()->json(['message' => 'Plan not found'], 404);
-        }
+        // Validate the incoming request
+        $validated = $request->validate([
+            'oldYrId' => 'required|integer',
+            'oldCatId' => 'required|integer',
+            'newYrId' => 'required|integer',
+        ]);
 
         try {
-            $plan->delete();
-            Log::info("Deleted MaintenancePlan ID: " . $id);
-            return response()->json(['message' => 'Plan deleted successfully']);
+            // Call the stored procedure
+            DB::statement('CALL DuplicatePremainPlanDetails(?, ?, ?)', [
+                $validated['oldYrId'],
+                $validated['oldCatId'],
+                $validated['newYrId']
+            ]);
+
+            return response()->json([
+                'message' => 'Premain plan details duplicated successfully!'
+            ], 200);
+
         } catch (\Exception $e) {
-            Log::error("Error deleting MaintenancePlan ID: " . $id, ['error' => $e->getMessage()]);
-            return response()->json(['error' => 'Failed to delete plan', 'details' => $e->getMessage()], 500);
+            return response()->json([
+                'error' => 'Failed to duplicate premain plan details.',
+                'details' => $e->getMessage()
+            ], 500);
         }
     }
+
+
+    public function detaches($id)
+    {
+        DB::table('tbl_premainplan_details')
+            ->where('PlanId', $id)
+            ->update(['detached' => 0]); 
+        return response()->json(['message' => 'Plan detached successfully']);
+    }
+
 
     public function getOfficeC()
     {
@@ -246,10 +264,12 @@ try {
 
     $network = DB::select('CALL GetNetworkRouterData(?)', [$departmentId]);
 
-    $networks = array_filter($network, function ($net) use ($yrId, $officeId, $departmentId) {
-        return $net-> YrId == $yrId
-        && $net-> OffId == $officeId
+    $networks = array_filter($network, function ($net) use ($yrId, $officeId, $departmentId,$PlanId) {
+        return $net-> YrId == $yrId        
+        && $net-> PlanId == $PlanId
+        && $net-> Offid == $officeId
         && $net-> deptId == $departmentId;
+
     });
 
 

@@ -4,9 +4,7 @@ import MainLayout from '@/Layouts/MainLayout.vue';
 import axios from "axios";
 import { Link } from '@inertiajs/vue3';
 
-const isPrinting = ref(false);
-
-// ✅ Reactive properties
+//Reactive properties
 const years = ref([]);
 const selectedYear = ref(new Date().getFullYear());
 const maintenancePlans = ref([]);
@@ -14,11 +12,15 @@ const selectedYearDescription = ref("");
 const isFetchingData = ref(false);
 const selectedYearName = ref("");
 const offices = ref([]); // Store the list of offices for the dropdown
-const selectedOffice= ref(null); // ✅ Holds selected value
-const selectedParentOffice = ref(null); // ✅ Define this to avoid ReferenceError
-const addedOffices = ref([]); // ✅ Fix: Declare addedOffices as a reactive array
+const selectedOffice= ref(null); //  Holds selected value
+const selectedParentOffice = ref(null); // Define this to avoid ReferenceError
+const addedOffices = ref([]); // Fix: Declare addedOffices as a reactive array
+const selectYear = ref(null)
+const plan = ref([])
+const isPrinting = ref(false);
 
-// ✅ External Scripts
+const lockedYears = ref({}); 
+//  External Scripts
 const files = [
     '/script/jquery-3.5.1.min.js',  
     '/script/jquery.dataTables.min.js', 
@@ -30,7 +32,7 @@ const files = [
     '/script/moment.min.js'
 ];
 
-// ✅ Load external scripts dynamically
+// Load external scripts dynamically
 const loadScripts = (fileList) => {
     fileList.forEach(file => {
         if (!document.querySelector(`script[src="${file}"]`)) {
@@ -42,7 +44,7 @@ const loadScripts = (fileList) => {
     });
 };
 
-// ✅ Open Modal
+//  Open Modal
 const openModal = () => {
   const modalElement = document.getElementById("addCollegeModal");
   if (modalElement) {
@@ -65,7 +67,7 @@ const fetchOffices = async () => {
   }
 };
 
-// ✅ Fetch available years
+// Fetch available years
 const fetchYears = async () => {
   try {
     const response = await axios.get("/api/yearsC");
@@ -75,18 +77,15 @@ const fetchYears = async () => {
   }
 };
 
-// ✅ Fetch maintenance plans
+// Fetch maintenance plans
 const fetchData = async () => {
   if (!selectedYear.value) {
     maintenancePlans.value = [];
     return;
   }
-
   isFetchingData.value = true;
-
   try {
     const response = await axios.get(`/api/maintenance-plansC?YrId=${selectedYear.value}&CatId=3`);
-
     console.log("📡 Fetching Data for YrId:", selectedYear.value);
     console.log("📦 Fetched Data:", response.data);
 
@@ -96,35 +95,47 @@ const fetchData = async () => {
       return;
     }
 
-    maintenancePlans.value = response.data.map(plan => ({
-      ...plan,
-      JanuaryTemp: plan.January ?? "",
-      FebruaryTemp: plan.February ?? "",
-      MarchTemp: plan.March ?? "",
-      AprilTemp: plan.April ?? "",
-      MayTemp: plan.May ?? "",
-      JuneTemp: plan.June ?? "",
-      JulyTemp: plan.July ?? "",
-      AugustTemp: plan.August ?? "",
-      SeptemberTemp: plan.September ?? "",
-      OctoberTemp: plan.October ?? "",
-      NovemberTemp: plan.November ?? "",
-      DecemberTemp: plan.December ?? "",
-    }));
+      // Transform lowercase database values to uppercase for display
+      maintenancePlans.value = response.data.map(plan => {
+      const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      
+      const transformedPlan = { ...plan };
+      
+      // Transform each month's value to uppercase for display
+      months.forEach(month => {
+        if (transformedPlan[month]) {
+          transformedPlan[month] = transformedPlan[month].toUpperCase();
+        }
+        
+        // Remove any readonly or temp flags that might cause issues
+        delete transformedPlan[`${month}Readonly`];
+        delete transformedPlan[`${month}Temp`];
+      });
+      
+      // Initialize isSaving flag to false
+      transformedPlan.isSaving = false;
+      
+      return transformedPlan;
+    });
   } catch (error) {
     console.error("❌ Error fetching maintenance plans:", error);
     alert(error.response?.data?.message || "Failed to fetch data.");
+  } finally {
+    isFetchingData.value = false;
   }
-
-  isFetchingData.value = false;
 };
 
 const countOccurrences = (type) => {
   return maintenancePlans.value.reduce((count, plan) => {
-    return count + Object.values(plan).filter(value => value === type).length;
+    return count + Object.values(plan)
+      .filter(value => typeof value === 'string')
+      .filter(value => value.toUpperCase() === type)
+      .length;
   }, 0);
 };
-
 
 //  Computed properties to track limits
 const countA = computed(() => countOccurrences('A'));
@@ -133,30 +144,104 @@ const countQA = computed(() => countOccurrences('QA'));
 const countM = computed(() => countOccurrences('M'));
 
 // Function to check if input is allowed
-const isInputAllowed = (type) => {
-  if (type === 'A') return countA.value < 1;
-  if (type === 'SA') return countSA.value < 2;
-  if (type === 'QA') return countQA.value < 4;
-  if (type === 'M') return countM.value < 12;
+const isInputAllowed = (type, plan, month) => {
+  // If it's the current value in this cell, always allow it (editing existing value)
+  if (plan && month && plan[month] && plan[month].toUpperCase() === type) {
+    return true;
+  }
+  
+  if (!type) return true;
+  // Convert to uppercase for consistency
+  const upperType = typeof type === 'string' ? type.toUpperCase() : type;
+  
+  // Count totals excluding the current cell being edited
+  let adjustedCount = 0;
+  
+  if (upperType === 'A') {
+    // Count A values excluding the current cell if it's being edited
+    adjustedCount = maintenancePlans.value.reduce((count, p) => {
+      return count + Object.entries(p)
+        .filter(([key, value]) => 
+          ["January", "February", "March", "April", "May", "June", "July", 
+           "August", "September", "October", "November", "December"].includes(key) &&
+          typeof value === 'string' && 
+          value.toUpperCase() === 'A' && 
+          !(p === plan && key === month)
+        )
+        .length;
+    }, 0);
+    return adjustedCount < 1;
+  }
+  
+  if (upperType === 'SA') {
+    // Similar approach for SA
+    adjustedCount = maintenancePlans.value.reduce((count, p) => {
+      return count + Object.entries(p)
+        .filter(([key, value]) => 
+          ["January", "February", "March", "April", "May", "June", "July", 
+           "August", "September", "October", "November", "December"].includes(key) &&
+          typeof value === 'string' && 
+          value.toUpperCase() === 'SA' && 
+          !(p === plan && key === month)
+        )
+        .length;
+    }, 0);
+    return adjustedCount < 2;
+  }
+  
+  if (upperType === 'QA') {
+    // Similar approach for QA
+    adjustedCount = maintenancePlans.value.reduce((count, p) => {
+      return count + Object.entries(p)
+        .filter(([key, value]) => 
+          ["January", "February", "March", "April", "May", "June", "July", 
+           "August", "September", "October", "November", "December"].includes(key) &&
+          typeof value === 'string' && 
+          value.toUpperCase() === 'QA' && 
+          !(p === plan && key === month)
+        )
+        .length;
+    }, 0);
+    return adjustedCount < 4;
+  }
+  
+  if (upperType === 'M') {
+    // Similar approach for M
+    adjustedCount = maintenancePlans.value.reduce((count, p) => {
+      return count + Object.entries(p)
+        .filter(([key, value]) => 
+          ["January", "February", "March", "April", "May", "June", "July", 
+           "August", "September", "October", "November", "December"].includes(key) &&
+          typeof value === 'string' && 
+          value.toUpperCase() === 'M' && 
+          !(p === plan && key === month)
+        )
+        .length;
+    }, 0);
+    return adjustedCount < 12;
+  }
+  
   return true;
 };
 
 // Function to ensure input restrictions
-const handleInput = (plan, month) => {
-  if (plan[month] !== null && plan[month] !== "") {
-    plan[`${month}Temp`] = plan[month];
-  }
-};
+// const handleInput = (plan, month) => {
+//   if (plan[month] !== null && plan[month] !== "") {
+//     plan[`${month}Temp`] = plan[month];
+//   }
+// };
 
-const saveOnEnter = async (plan) => {
+const saveOnEnter = async (plan, triggerMonth = null) => {
   try {
     console.log(`🔹 Saving Plan ID: ${plan?.PlanId} for ${selectedYear.value}`);
+    plan.isSaving = true; // Set saving flag 
 
     await nextTick(); // Ensure the DOM is updated
 
     if (!plan || typeof plan !== "object") {
       console.error("❌ Error: Plan is undefined or not an object!", { plan });
       alert("❌ Error: Plan data is missing.");
+      plan.isSaving = false;
       return;
     }
 
@@ -175,15 +260,20 @@ const saveOnEnter = async (plan) => {
       PrevId: plan.PrevId ?? null,
     };
 
+    // Transform to lowercase for saving to database
     months.forEach((month) => {
-      payload[month] = plan[month] ?? null;
+      if (plan[month]) {
+        payload[month] = plan[month].toLowerCase();
+      } else {
+        payload[month] = null;
+      }
     });
 
     console.log("📩 Sending Data:", payload);
 
     const response = await axios.post("/api/save-maintenance-planC", payload);
 
-    console.log(" Maintenance plan saved successfully", response.data);
+    console.log("✅ Maintenance plan saved successfully", response.data);
 
     // Update the PlanId if it's newly created
     if (!plan.PlanId && response.data.PlanId) {
@@ -191,16 +281,51 @@ const saveOnEnter = async (plan) => {
       console.log("🔄 Plan ID updated:", plan.PlanId);
     }
 
+    // Ensure all values are uppercase for display
+    months.forEach((month) => {
+      if (plan[month]) {
+        plan[month] = plan[month].toUpperCase();
+      }
+    });
+
+    // Show success message
+    if (triggerMonth) {
+      console.log(`✅ Successfully saved ${triggerMonth} data`);
+    } else {
+      console.log("✅ Successfully saved plan data");
+    }
+    
+    alert("Plan saved successfully!");
+
   } catch (error) {
     console.error("❌ Error in saveOnEnter:", error);
     alert(error.response?.data?.error || "Failed to save data.");
+  } finally {
+    // Always reset the saving state, even on error
+    plan.isSaving = false;
   }
 };
 
+const saveAllPlans = async () => {
+  if (!selectedYear.value) {
+    alert('Please select a year before saving.');
+    return;
+  }
+  try {
+    const response = await axios.post('/api/copy', {
+      oldYrId: selectYear.value, 
+      oldCatId: 3,
+      newYrId: selectedYear.value
+    });
+
+    alert('Plans duplicated successfully!');
+  } catch (error) {
+    console.error(error);
+    alert('Failed to duplicate plans. Please try again.');
+  }
+};
 
 // Add College (POST Request to Laravel API)
-
-
 const addOffice = async () => {
   if (!selectedOffice.value) {
     alert("Please select an office.");
@@ -271,20 +396,20 @@ watch(maintenancePlans, (newValue) => {
 }, { deep: true });
 
 
-// ✅ Watcher for real-time updates (but skip if fetching data)
-watch(maintenancePlans, (newValue) => {
-  if (isFetchingData.value || !selectedYear.value || !newValue.length) return;
+// Watcher for real-time updates (but skip if fetching data)
+// watch(maintenancePlans, (newValue) => {
+//   if (isFetchingData.value || !selectedYear.value || !newValue.length) return;
 
-  newValue.forEach(plan => {
-    Object.keys(plan).forEach(month => {
-      if (["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].includes(month)) {
-        if (plan[month]) {
-          plan[`${month}Readonly`] = true;
-        }
-      }
-    });
-  });
-}, { deep: true });
+//   newValue.forEach(plan => {
+//     Object.keys(plan).forEach(month => {
+//       if (["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].includes(month)) {
+//         if (plan[month]) {
+//           plan[`${month}Readonly`] = true;
+//         }
+//       }
+//     });
+//   });
+// }, { deep: true });
 
 // Handle Year Selection Change
 watch(selectedYear, async (newYearId) => {
@@ -341,8 +466,8 @@ const printTable = () => {
 
 
 // Reactive variables for pagination
-const entriesPerPage = ref(5); // Default to 10 entries per page
-const currentPage = ref(1); // Start at page 1
+const entriesPerPage = ref(5); 
+const currentPage = ref(1); 
 
 const paginatedPlans = computed(() => {
   const start = (currentPage.value - 1) * entriesPerPage.value;
@@ -371,6 +496,36 @@ const prevPage = () => {
   }
 };
 
+const openSaveModal = () => {
+  const modalElement = document.getElementById("saveYearModal");
+  if (modalElement) {
+    const modalInstance = new bootstrap.Modal(modalElement);
+    modalInstance.show();
+  }
+};
+
+const detachPlan = async (PlanId) => {
+  try {
+    await axios.post(`/api/detaches/${PlanId}`);
+    alert('Plan detached successfully!');
+    // Optionally remove from table
+    plan.value = plan.value.filter(plan => plan.PlanId !== PlanId);
+  } catch (error) {
+    console.error(error);
+    alert('Failed to detach the plan.');
+  }
+};
+
+const toggleLock = () => {
+  const year = selectedYear.value;
+  lockedYears.value[year] = !lockedYears.value[year];
+};
+
+const isYearLocked = (plan) => {
+  return !!lockedYears.value[plan.YrId]; // locked if true
+};
+
+
 </script>
 
 <template>
@@ -394,17 +549,41 @@ const prevPage = () => {
           </div>
 
           <!-- Action Buttons -->
-            <div class="d-flex justify-content-center gap-4 mt-3 no-print">
-              <button class="btn btn-success rounded-pill shadow-sm px-4 py-2" style="font-size: 16px;">
-                <i class="fas fa-save"></i> Save
-              </button>
-              <button class="btn btn-warning rounded-pill shadow-sm px-4 py-2" style="font-size: 16px;">
-                <i class="fas fa-lock"></i> Lock
-              </button>
-              <button class="btn btn-info rounded-pill shadow-sm px-4 py-2" @click="printTable" style="font-size: 16px;">
-                <i class="fas fa-print"></i> Print
-              </button>
+          <div class="d-flex justify-content-center gap-4 mt-3 no-print">
+            <button class="btn btn-success rounded-pill shadow-sm px-4 py-2 no-print" @click="openSaveModal">
+              <i class="fas fa-save"></i> Save
+            </button>
+            <button class="btn btn-warning rounded-pill shadow-sm px-4 py-2"style="font-size: 16px;"
+            @click="toggleLock"> <i class="fas fa-lock"></i>{{ lockedYears[selectedYear] ? 'Unlock' : 'Lock' }}
+            </button>
+            <button class="btn btn-info rounded-pill shadow-sm px-4 py-2" @click="printTable" style="font-size: 16px;">
+              <i class="fas fa-print"></i> Print
+            </button>
+          </div>
+
+            <div class="modal fade" id="saveYearModal" tabindex="-1" aria-labelledby="saveYearModalLabel" >
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="saveYearModalLabel">Select Year</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="saveYearDropdown" class="form-label">Select Year:</label>
+                    <select id="saveYearDropdown" v-model="selectYear" class="form-control">
+                      <option v-for="year in years" :key="year.YrId" :value="year.YrId">{{ year.Name }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary"data-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-primary" @click="saveAllPlans">Save</button>
+                </div>
+              </div>
             </div>
+          </div>
 
           <!-- Year Selection -->
           <div class="mt-2 no-print">
@@ -446,28 +625,42 @@ const prevPage = () => {
 
       <!-- Data Table -->
       <div class="datatable text-center table-responsive">
-        <table class="table table-bordered table-hover" width="100%" cellspacing="0">
-          <thead class="table-success">
-            <tr>
-              <th>Colleges</th>
-              <th v-for="month in months" :key="month">{{ month }}</th>
-              <th class="no-print">Actions</th> <!-- Added Actions Column -->
-            </tr>
-          </thead>
+      <table class="table table-bordered table-hover sticky-table" width="100%" cellspacing="0">
+        <thead>
+          <tr class="custom-header-bg">
+            <th class="py-3 text-center fw-bold fs-6 border-bottom border-2">Colleges</th>
+            <th v-for="month in months" :key="month" class="py-3 text-center fw-bold fs-6 border-bottom border-2">{{ month }}</th>
+            <th class="py-3 text-center fw-bold fs-6 border-bottom border-2 no-print">Actions</th> 
+          </tr>
+        </thead>
           <tbody>
             <tr v-for="plan in isPrinting ? maintenancePlans : paginatedPlans" :key="plan.PlanId">
               <td>{{ plan.OffName ?? 'N/A' }}</td>
               <td v-for="month in months" :key="month">
                 <!-- Show input box only when not printing -->
-                <input 
-                  v-if="!isPrinting"
-                  v-model="plan[month]" 
-                  @keyup.enter="saveOnEnter(plan, month)" 
-                  :disabled="plan.isSaving || !isInputAllowed(plan[month])"
-                />
-                <!-- When printing, show just the value -->
-                <span v-if="isPrinting">{{ plan[month] }}</span>
-                <span v-if="plan.isSaving">Saving...</span>
+                <div class="position-relative">
+                  <input 
+                    v-if="!isPrinting"
+                    v-model="plan[month]"
+                    @input="e => { 
+                      // Convert to uppercase immediately for display
+                      if (e.target.value) {
+                        plan[month] = e.target.value.toUpperCase();
+                      }
+                    }" 
+                    @keyup.enter="saveOnEnter(plan, month)" 
+                    :disabled="plan.isSaving || !isInputAllowed(plan[month], plan, month) || isYearLocked(plan)"
+                    class="form-control form-control-sm text-center text-uppercase fw-bold"
+                    :class="{
+                      'border-primary bg-light-blue text-primary': plan[month]?.toUpperCase() === 'A',
+                      'border-success bg-light-green text-success': plan[month]?.toUpperCase() === 'SA',
+                      'border-warning bg-light-yellow text-dark': plan[month]?.toUpperCase() === 'QA' || plan[month]?.toUpperCase() === 'M',
+                    }"
+                    style="width: 50px; margin: 0 auto; font-size: 14px;"
+                  />
+                  <!-- When printing, show just the value (uppercase) -->
+                  <span v-if="isPrinting">{{ plan[month]?.toUpperCase() }}</span>
+                </div>
               </td>
               <td class="no-print text-center">
                 <div class="d-flex justify-content-center gap-2">
@@ -477,8 +670,8 @@ const prevPage = () => {
                     <i class="fas fa-eye me-1"></i> View
                   </Link>
                   <!-- Delete Button -->
-                  <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="deleteOffice(plan.PlanId)">
-                    <i class="fas fa-trash me-1"></i> Delete
+                  <button class="btn btn-sm btn-outline-danger d-flex align-items-center" @click="detachPlan(plan.PlanId)">
+                    <i class="fas fa-unlink me-1"></i> Detach
                   </button>
                 </div>
               </td>
@@ -514,7 +707,7 @@ const prevPage = () => {
 
     <!-- Bootstrap Modal -->
     <div class="modal fade" id="addCollegeModal" aria-labelledby="exampleModalLabel" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title">Add College</h5>
@@ -545,7 +738,7 @@ const prevPage = () => {
             <div class="modal-footer">
               <!-- Close Button to dismiss modal -->
               <button type="button" class="btn btn-danger"  data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-success" @click="addOffice">Save</button>
+              <button type="button" class="btn btn-success" data-dismiss="modal" @click="addOffice">Save</button>
             </div>
           </div>
         </div>
@@ -636,6 +829,17 @@ button {
     overflow-x: visible !important;
     white-space: normal !important;
   }
+    /* Make header row text black for printing */
+  .custom-header-bg {
+    background-color: #f2f2f2 !important;
+    color: black !important;
+  }
+  .sticky-table th:first-child,
+  .sticky-table td:first-child {
+    position: static;
+    background-color: transparent !important;
+    box-shadow: none;
+  }
 }
 @media print {
   /* These styles ONLY apply during printing */
@@ -677,5 +881,42 @@ button {
     transform: translateY(-3px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
+
+  /* Style to show that a field is being saved */
+  tr:has(span.saving-indicator) {
+    background-color: rgba(0, 123, 255, 0.1);
+  }
+  /*table fillable na stye etuh sya te */
+.bg-light-green {
+  background-color: rgba(25, 135, 84, 0.1) !important;
+}
+
+.bg-light-blue {
+  background-color: rgba(13, 110, 253, 0.1) !important;
+}
+
+.bg-light-yellow {
+  background-color: rgba(255, 193, 7, 0.1) !important;
+}
+.custom-header-bg {
+  background: linear-gradient(135deg, #198754, #146c43);
+  color: white;
+}
+.sticky-table {
+  position: relative;
+}
+.sticky-table th:first-child,
+.sticky-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background-color: white; /* Match your table background */
+  box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); /* Optional: adds shadow for visual separation */
+}
+.sticky-table th:first-child {
+  z-index: 3;
+  background-color: #198754; /* Match your header gradient */
+  color: white;
+}
 </style>
 
