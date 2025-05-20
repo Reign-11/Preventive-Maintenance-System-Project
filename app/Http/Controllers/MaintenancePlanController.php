@@ -1,11 +1,16 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers; 
 
 use Illuminate\Support\Facades\Log; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Str;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\File; 
+use Illuminate\Support\Facades\Storage;
 
 class MaintenancePlanController extends Controller
 {
@@ -43,7 +48,7 @@ class MaintenancePlanController extends Controller
     {
         try {
             Log::info("Received data:", $request->all());
-
+    
             $data = $request->validate([
                 'PlanId'    => 'nullable|integer',
                 'YrId'      => 'required|integer|exists:tbl_pmyear,YrId',
@@ -62,12 +67,24 @@ class MaintenancePlanController extends Controller
                 'November'  => 'nullable|string|max:10',
                 'December'  => 'nullable|string|max:10',
             ]);
-
+    
+            // Ensure all month values are lowercase before saving
+            $months = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            
+            foreach ($months as $month) {
+                if (isset($data[$month]) && $data[$month] !== '') {
+                    $data[$month] = strtolower($data[$month]);
+                }
+            }
+    
             $prevPlan = DB::table('tbl_premainplan')->latest('PrevId')->first();
             $PrevId = $prevPlan ? $prevPlan->PrevId : 0; 
-
+    
             Log::info("Validated data with PrevId:", array_merge($data, ['PrevId' => $PrevId]));
-
+    
             DB::statement("CALL ValidateAndManagePlanDetails(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
                 $data['PlanId'] ?? null,
                 $data['YrId'],
@@ -87,15 +104,16 @@ class MaintenancePlanController extends Controller
                 $data['November'] ?? '',
                 $data['December'] ?? '',
             ]);
-
-            return response()->json(["message" => "Plan saved successfully"], 200);
+    
+            return response()->json([
+                "message" => "Plan saved successfully",
+                "PlanId" => $data['PlanId'] ?? DB::getPdo()->lastInsertId()
+            ], 200);
         } catch (\Throwable $e) {
             Log::error("Error saving plan:", ['error' => $e->getMessage()]);
             return response()->json(["error" => $e->getMessage()], 500);
         }
     }
-
-
     
     public function addCollege(Request $request)
     {
@@ -147,26 +165,46 @@ class MaintenancePlanController extends Controller
     }
     
 
-    public function destroy($id)
+    public function duplicate(Request $request)
     {
-        Log::info("Attempting to delete MaintenancePlan with ID: " . $id);
-
-        $plan = MaintenancePlan::find($id);
-
-        if (!$plan) {
-            Log::warning("Plan not found for ID: " . $id);
-            return response()->json(['message' => 'Plan not found'], 404);
-        }
+        // Validate the incoming request
+        $validated = $request->validate([
+            'oldYrId' => 'required|integer',
+            'oldCatId' => 'required|integer',
+            'newYrId' => 'required|integer',
+        ]);
 
         try {
-            $plan->delete();
-            Log::info("Deleted MaintenancePlan ID: " . $id);
-            return response()->json(['message' => 'Plan deleted successfully']);
+            // Call the stored procedure
+            DB::statement('CALL DuplicatePremainPlanDetails(?, ?, ?)', [
+                $validated['oldYrId'],
+                $validated['oldCatId'],
+                $validated['newYrId']
+            ]);
+
+            return response()->json([
+                'message' => 'Premain plan details duplicated successfully!'
+            ], 200);
+
         } catch (\Exception $e) {
-            Log::error("Error deleting MaintenancePlan ID: " . $id, ['error' => $e->getMessage()]);
-            return response()->json(['error' => 'Failed to delete plan', 'details' => $e->getMessage()], 500);
+            return response()->json([
+                'error' => 'Failed to duplicate premain plan details.',
+                'details' => $e->getMessage()
+            ], 500);
         }
     }
+
+
+    public function detach($id)
+    {
+        DB::table('tbl_premainplan_details')
+            ->where('PlanId', $id)
+            ->update(['detached' => 0]); 
+        return response()->json(['message' => 'Plan detached successfully']);
+    }
+
+
+ 
 
     public function getOffice()
     {
@@ -181,15 +219,13 @@ class MaintenancePlanController extends Controller
         }
     }
 
-
-    
     public function index(Request $request, int $officeId)
     {
         try {
             $yrId = $request->query('YrId');  
             $deptId = $request->query('departmentId'); 
             $PlanId  = $request->query('PlanId'); 
-            $categoryId = $request->query('CatId', 1); // Default categoryId to 1
+            $categoryId = $request->query('CatId', 1); 
 
 
             Log::info('Yrd Data:', ['data' => $yrId]);
@@ -204,7 +240,10 @@ class MaintenancePlanController extends Controller
 
             // Filter departments based on PlanId, YrId, and OfficeId
             $departments = array_filter($departmentData, function ($department) use ($PlanId, $yrId, $officeId,$categoryId) {
-                return $department->PlanId == $PlanId && $department->YrId == $yrId && $department->OffId == $officeId  &&  ($department->CatId == $categoryId || is_null($department->CatId));  ;
+                return 
+                $department->PlanId == $PlanId && 
+                $department->YrId == $yrId && 
+                $department->OffId == $officeId  &&  ($department->CatId == $categoryId || is_null($department->CatId));  ;
             });
     
             // Re-index to ensure departments is a clean array (not an object)
@@ -240,8 +279,6 @@ class MaintenancePlanController extends Controller
         }
     }
     
-     
-
     public function employee(Request $request, int $departmentId )
     {
     try {
@@ -251,16 +288,13 @@ class MaintenancePlanController extends Controller
         $officeId  = $request->query('officeId'); 
         $employeeId = $request->query('employeeId');  
         $categoryId = $request->query('CatId', 1); 
-
-
         $department = DB::table('tbl_department')->where('deptId', $departmentId)->first();
 
         // Fetch employees using the stored procedure
         $employees = DB::select('CALL GetEmployeesByDepartment(?)', [$departmentId]);
         Log::info("📢 Raw Employees Data Before Filtering:", $employees);
 
-            // Filter Employee based on PlanId, YrId, OfficeId, And Department
-
+        // Filter Employee based on PlanId, YrId, OfficeId, And Department
         $employee = array_filter($employees, function ($emp) use ($PlanId, $yrId, $officeId, $departmentId,$categoryId) {
             return $emp-> PlanId == $PlanId && $emp-> YrId == $yrId && $emp-> OffId == $officeId && $emp-> DeptId == $departmentId &&  ($emp->CatId == $categoryId || is_null($emp->CatId));
         });
@@ -270,7 +304,7 @@ class MaintenancePlanController extends Controller
         Log::info("📢 Filtered Employees:", $employee);
 
         // Fetch additional data (PM Year & Office Details)
-        $pmYearData = DB::table('tbl_pmyear')->where('YrId', $yrId)->first();
+        $pmYearData = DB::table('tbl_pmyear')->get();
 
         return Inertia::render('Usertable', [
             'employee' => $employee,
@@ -281,8 +315,8 @@ class MaintenancePlanController extends Controller
             'departmentId ' => $departmentId ?? '', 
             'department' => $department ?? [], 
             'categoryId' => $categoryId ?? 1,  // Ensure categoryId is 1 if missing
-
-            'pmYear' => $pmYearData ? (array) $pmYearData : ['Name' => '', 'Description' => ''],
+            'pmYearList' => $pmYearData, // Send array of all years
+            'pmYear' => $pmYearData->first() ? (array) $pmYearData->first() : ['Name' => '', 'Description' => ''],
         ]);
 
     
@@ -292,115 +326,52 @@ class MaintenancePlanController extends Controller
     }
 }
 
+public function employees(Request $request, int $employeeId)
+{
+    try {
+        $yrId = $request->query('YrId');  
+        $PlanId = $request->query('PlanId'); 
+        $officeId = $request->query('officeId'); 
+        $categoryId = $request->query('CatId', 1); 
+        $departmentId = $request->query('DeptId'); 
 
-// public function employeeChecklist(Request $request)
-// {
-//     try {
-//         $currentTimestamp = now();
-//         $day = $currentTimestamp->format('d');
-//         $month = $currentTimestamp->format('m');
-//         $year = $currentTimestamp->format('y');
+        $employed = DB::select('CALL GetEquipmentDetailsByEmployeeId(?)', [$employeeId]);
 
-//         // Generate Ticket Number
-//         $submissionOrder = DB::table('tbl_preventive_maintainance')
-//             ->whereDate('date', $currentTimestamp->toDateString())
-//             ->count() + 1;
+        $employees = array_filter($employed, function ($emp) use ($yrId, $officeId, $departmentId, $categoryId, $employeeId) {
+            return 
+                $emp->employeeId !== null && 
+                $emp->YrId == $yrId &&
+                $emp->OffId == $officeId &&
+                $emp->DeptId == $departmentId &&
+                ($emp->CatId == $categoryId || $emp->CatId) &&
+                $emp->employeeId == $employeeId;
+        });
 
-//         $generatedTicketNumber = str_pad($submissionOrder, 2, '0', STR_PAD_LEFT) . $day . $month . $year;
+        $employees = array_values($employees);
 
-//         // Validate Request
-//         $validated = $request->validate([
-//             'employeeId' => 'required|integer',
-//             'pcName' => 'required|string|max:100',
-//             'dateAcquired' => 'required|date',
-//             'cpu_status' => 'required|integer',
-//             'keyboard_status' => 'required|integer',
-//             'printer_status' => 'required|integer',
-//             'monitor_status' => 'required|integer',
-//             'mouse_status' => 'required|integer',
-//             'ups_status' => 'required|integer',
-//             'avr_status' => 'required|integer',
-//             'windows10' => 'integer',
-//             'windows11' => 'integer',
-//             'license' => 'required|integer',
-//             'enrollment' => 'required|integer',
-//             'microsoft' => 'required|integer',
-//             'browser' => 'required|integer',
-//             'anti_virus' => 'required|integer',
-//             'other_equip' => 'nullable|string|max:255',
-//             'other_os' => 'nullable|string|max:255',
-//             'other_sys' => 'nullable|string|max:255',
-//             'processor_details' => 'nullable|string|max:255',
-//             'motherboard_details' => 'nullable|string|max:255',
-//             'memory_details' => 'nullable|string|max:255',
-//             'graphics_card_details' => 'nullable|string|max:255',
-//             'hard_disk_details' => 'nullable|string|max:255',
-//             'monitor_details' => 'nullable|string|max:255',
-//             'casing_details' => 'nullable|string|max:255',
-//             'power_supply_details' => 'nullable|string|max:255',
-//             'keyboard_details' => 'nullable|string|max:255',
-//             'mouse_details' => 'nullable|string|max:255',
-//             'avr_details' => 'nullable|string|max:255',
-//             'ups_details' => 'nullable|string|max:255',
-//             'printer_details' => 'nullable|string|max:255',
-//             'network_mac_ip_details' => 'nullable|string|max:255',
-//             'checklist' => 'required|array',
-//             'checklist.*.task' => 'required|string|max:255',
-//             'checklist.*.details' => 'required|string',
-//             'checklist.*.status' => 'required|array',
-//             'checklist.*.status.*' => 'integer|min:0|max:1',
-//         ]);
+        // ✅ Get image path from the first employee record
+        $imagePath = $employees[0]->image ?? null;
+        $imageUrl = $imagePath ? asset('storage/' . $imagePath) : null;
 
-//         // Convert checklist array to JSON
-//         $checklistJson = json_encode($validated['checklist']);
+        $pmYearData = DB::table('tbl_pmyear')->where('YrId', $yrId)->first();
 
-//         // Call Stored Procedure
-//         DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)", [
-            
-//             $validated['employeeId'],
-//             $generatedTicketNumber,
-//             $validated['pcName'],
-//             $validated['dateAcquired'],
-//             $validated['cpu_status'],
-//             $validated['keyboard_status'],
-//             $validated['printer_status'],
-//             $validated['monitor_status'],
-//             $validated['mouse_status'],
-//             $validated['ups_status'],
-//             $validated['avr_status'],
-//             $validated['windows10'],
-//             $validated['windows11'],
-//             $validated['license'],
-//             $validated['enrollment'],
-//             $validated['microsoft'],
-//             $validated['browser'],
-//             $validated['anti_virus'],
-//             $validated['other_equip'],
-//             $validated['other_os'],
-//             $validated['other_sys'],
-//             $validated['processor_details'],
-//             $validated['motherboard_details'],
-//             $validated['memory_details'],
-//             $validated['graphics_card_details'],
-//             $validated['hard_disk_details'],
-//             $validated['monitor_details'],
-//             $validated['casing_details'],
-//             $validated['power_supply_details'],
-//             $validated['keyboard_details'],
-//             $validated['mouse_details'],
-//             $validated['avr_details'],
-//             $validated['ups_details'],
-//             $validated['printer_details'],
-//             $validated['network_mac_ip_details'],
-//             $checklistJson,  // Store checklist as JSON
-//         ]);
-// \Log::info('Parameters passed to stored procedure: ', $parameters);
+        return Inertia::render('Employees', [
+            'employees' => $employees,
+            'imageUrl' => $imageUrl, // ✅ Pass the image URL here
+            'officeId' => $officeId ?? '',
+            'YrId' => $yrId ?? '',
+            'employeeId' => $employeeId ?? '',
+            'PlanId' => $PlanId ?? '', 
+            'departmentId' => $departmentId ?? '', 
+            'categoryId' => $categoryId ?? 1,
+            'pmYear' => $pmYearData ? (array) $pmYearData : ['Name' => '', 'Description' => ''],
+        ]);
+    } catch (\Exception $e) {
+        Log::error("❌ Error fetching employees:", ['error' => $e->getMessage()]);
+        return redirect()->back()->withErrors(['error' => 'Failed to fetch employee data']);
+    }
+}
 
-//         return response()->json(['message' => 'Checklist submitted successfully']);
-//     } catch (\Exception $e) {
-//         return response()->json(['error' => $e->getMessage()], 500);
-//     }
-// }
 
 
 public function addEmployee(Request $request)
@@ -444,25 +415,30 @@ public function employeeChecklist(Request $request)
         // Validate Request
         $validated = $request->validate([
             'employeeId' => 'required|integer',
-            'pcName' => 'required|string|max:100',
+            'YrId' => 'required|integer',
+            'pcName' => 'nullable|string|max:100',
+            'equipment' => 'required|string|max:50',
             'dateAcquired' => 'required|date',
-            'cpu_status' => 'required|integer',
-            'keyboard_status' => 'required|integer',
-            'printer_status' => 'required|integer',
-            'monitor_status' => 'required|integer',
-            'mouse_status' => 'required|integer',
-            'ups_status' => 'required|integer',
-            'avr_status' => 'required|integer',
+            'cpu_status' => 'nullable|integer',
+            'keyboard_status' => 'nullable|integer',
+            'printer_status' => 'nullable|integer',
+            'monitor_status' => 'nullable|integer',
+            'mouse_status' => 'nullable|integer',
+            'ups_status' => 'nullable|integer',
+            'avr_status' => 'nullable|integer',
             'windows10' => 'integer',
             'windows11' => 'integer',
-            'license' => 'required|integer',
-            'enrollment' => 'required|integer',
-            'microsoft' => 'required|integer',
-            'browser' => 'required|integer',
-            'anti_virus' => 'required|integer',
-            'other_equip' => 'nullable|string|max:255',
-            'other_os' => 'nullable|string|max:255',
-            'other_sys' => 'nullable|string|max:255',
+            'license' => 'nullable|integer',
+            'enrollment' => 'nullable|integer',
+            'microsoft' => 'nullable|integer',
+            'browser' => 'nullable|integer',
+            'anti_virus' => 'nullable|integer',
+            'word_processor' =>'nullable|integer',
+            'adobe_reader'  => 'nullable|integer',
+            'media_player' => 'nullable|integer',
+            'other_equip' => 'nullable|max:255',
+            'other_os' => 'nullable|max:255',
+            'other_sys' => 'nullable|max:255',
             'processor_details' => 'nullable|string|max:255',
             'motherboard_details' => 'nullable|string|max:255',
             'memory_details' => 'nullable|string|max:255',
@@ -477,12 +453,26 @@ public function employeeChecklist(Request $request)
             'ups_details' => 'nullable|string|max:255',
             'printer_details' => 'nullable|string|max:255',
             'network_mac_ip_details' => 'nullable|string|max:255',
+            'disposal' => 'nullable|integer|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:50000',
+            'technician' => 'nullable|string|max:255',
+
         ]);
+        $imagePath = null;
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $dynamicFolder = 'uploads/preventive/' . now()->format('Y/m');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imagePath = $image->storeAs($dynamicFolder, $imageName, 'public');
+        }
 
         // Prepare parameters for the stored procedure
         $parameters = [
             $validated['employeeId'],
+            $validated['YrId'],
             $generatedTicketNumber,
+            $validated['equipment'],
             $validated['pcName'],
             $validated['dateAcquired'],
             $validated['cpu_status'],
@@ -499,6 +489,9 @@ public function employeeChecklist(Request $request)
             $validated['microsoft'],
             $validated['browser'],
             $validated['anti_virus'],
+            $validated['word_processor'],
+            $validated['adobe_reader'],
+            $validated['media_player'],
             $validated['other_equip'],
             $validated['other_os'],
             $validated['other_sys'],
@@ -516,20 +509,557 @@ public function employeeChecklist(Request $request)
             $validated['ups_details'],
             $validated['printer_details'],
             $validated['network_mac_ip_details'],
+            $validated['disposal'] , 
+            $imagePath,
+            $validated['technician'] , 
+
+
         ];
 
         // Log the parameters
         \Log::info('Parameters passed to stored procedure: ', $parameters);
 
         // Call Stored Procedure
-        DB::statement("CALL InsertPreventiveMaintenanceChecklist(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
+        DB::statement("CALL InsertPreventiveMaintenanceChecklist(?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
 
-        return response()->json(['message' => 'Checklist submitted successfully']);
+        // Get the saved record using the ticket number
+        $savedData = DB::table('tbl_preventive_maintainance')
+            ->where('ticketnumber', $generatedTicketNumber)
+            ->first();
+
+        return response()->json([
+            'message' => 'Checklist submitted successfully',
+            'data' => $savedData
+        ]);
     } catch (\Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
 }
+
+
+
+
+public function submitChecklist(Request $request)
+{
+    try {
+        // Validate the request
+        $validated = $request->validate([
+            'mainId' => 'required|integer',
+            'YrId' => 'required|integer',
+            'task' => 'nullable|string',
+            'details' => 'required|string',
+            'summary' => 'required|string',
+            'status' => 'required|integer',
+
+
+        ]);
+
+        // Log for debugging
+        \Log::info('Checklist Payload:', $request->all());
+
+        DB::statement('CALL InsertPreventiveChecklist(?, ?, ?, ?, ?,?)', [
+            $request->mainId,
+            $request->YrId,
+            $request->task,
+            $request->details,
+            $request->summary,
+            $request->status,
+
+        ]);
+        return response()->json(['message' => 'Checklist submitted successfully.'], 200);
+
+    } catch (\Exception $e) {
+        \Log::error('Checklist submission failed', [
+            'error' => $e->getMessage()
+        ]);
+
+        return response()->json([
+            'message' => 'Failed to submit checklist.',
+            'error' => $e->getMessage()
+        ], 500);
+    }
 }
-    
+
+public function insertChecklist(Request $request)
+{
+    // Validate inputs
+    $validated = $request->validate([
+        'mainId' => 'required|integer',
+        'YrId' => 'required|integer',
+
+        // System Settings
+        'System_Boot' => 'required|integer',
+        'System_Log' => 'required|integer',
+
+        // Network Settings
+        'Network_Settings1' => 'required|integer',
+        'Network_Settings2' => 'required|integer',
+        'Network_Settings3' => 'required|integer',
+        'Network_Settings4' => 'required|integer',
+        'Network_Settings5' => 'required|integer',
+        'Network_Settings6' => 'required|integer',
+
+        // Computer Hardware Settings
+        'Computer_Hardware_Settings1' => 'required|integer',
+        'Computer_Hardware_Settings2' => 'required|integer',
+        'Computer_Hardware_Settings3' => 'required|integer',
+        'Computer_Hardware_Settings4' => 'required|integer',
+        'Computer_Hardware_Settings5' => 'required|integer',
+        'Computer_Hardware_Settings6' => 'required|integer',
+
+        // Software Checks
+        'Browser_Settings' => 'required|integer',
+        'Proper_Software_Loads' => 'required|integer',
+
+        // Virus/Malware Scanning
+        'Viruses_Malware1' => 'required|integer',
+        'Viruses_Malware2' => 'required|integer',
+
+        // Clearance
+        'Clearance1' => 'required|integer',
+        'Clearance2' => 'required|integer',
+        'Clearance3' => 'required|integer',
+        'Clearance4' => 'required|integer',
+
+        // Interior Cleaning
+        'Interiors_Cleaning1' => 'required|integer',
+        'Interiors_Cleaning2' => 'required|integer',
+        'Interiors_Cleaning3' => 'required|integer',
+        'Interiors_Cleaning4' => 'required|integer',
+        'Interiors_Cleaning5' => 'required|integer',
+
+        // Peripherals
+        'Peripheral_Devices1' => 'required|integer',
+        'Peripheral_Devices2' => 'required|integer',
+        'Peripheral_Devices3' => 'required|integer',
+        'Peripheral_Devices4' => 'required|integer',
+        'Peripheral_Devices5' => 'required|integer',
+        'Peripheral_Devices6' => 'required|integer',
+        'Peripheral_Devices7' => 'required|integer',
+
+        // Summary (String)
+        'Summary' => 'required|string',
+    ]);
+
+    try {
+        DB::statement('CALL InsertPreventiveChecklist2(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,? )', [
+            $validated['mainId'],
+            $validated['YrId'],
+
+            $validated['System_Boot'],
+            $validated['System_Log'],
+
+            $validated['Network_Settings1'],
+            $validated['Network_Settings2'],
+            $validated['Network_Settings3'],
+            $validated['Network_Settings4'],
+            $validated['Network_Settings5'],
+            $validated['Network_Settings6'],
+
+            $validated['Computer_Hardware_Settings1'],
+            $validated['Computer_Hardware_Settings2'],
+            $validated['Computer_Hardware_Settings3'],
+            $validated['Computer_Hardware_Settings4'],
+            $validated['Computer_Hardware_Settings5'],
+            $validated['Computer_Hardware_Settings6'],
+
+            $validated['Browser_Settings'],
+
+            $validated['Proper_Software_Loads'],
+
+            $validated['Viruses_Malware1'],
+            $validated['Viruses_Malware2'],
+
+            $validated['Clearance1'],
+            $validated['Clearance2'],
+            $validated['Clearance3'],
+            $validated['Clearance4'],
+
+            $validated['Interiors_Cleaning1'],
+            $validated['Interiors_Cleaning2'],
+            $validated['Interiors_Cleaning3'],
+            $validated['Interiors_Cleaning4'],
+            $validated['Interiors_Cleaning5'],
+
+            $validated['Peripheral_Devices1'],
+            $validated['Peripheral_Devices2'],
+            $validated['Peripheral_Devices3'],
+            $validated['Peripheral_Devices4'],
+            $validated['Peripheral_Devices5'],
+            $validated['Peripheral_Devices6'],
+            $validated['Peripheral_Devices7'],
+            
+            $validated['Summary'],
+        ]);
+
+        return response()->json(['message' => 'Checklist inserted successfully.'], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Failed to insert checklist.',
+            'details' => $e->getMessage()
+        ], 500);
+    }
+}
+
+public function department(Request $request, int $departmentId)
+{
+    try {
+        $yrId = $request->query('YrId');  
+        $PlanId = $request->query('PlanId'); 
+        $officeId = $request->query('officeId'); 
+        $categoryId = $request->query('CatId', 1); 
+
+        // Call stored procedure to fetch department plan details
+        $dept = DB::select('CALL GetDepartmentPlanDetails(?)', [$departmentId]);
+
+        // Filter based on provided query params
+        $depts = array_filter($dept, function ($depart) use ($PlanId, $yrId, $officeId, $departmentId, $categoryId) {
+            return (!$PlanId || $depart->PlanId == $PlanId)
+                && (!$yrId || $depart->YrId == $yrId)
+                && (!$officeId || $depart->OffId == $officeId)
+                && $depart->deptId == $departmentId
+                && (!$categoryId || $depart->CatId == $categoryId);
+        });
+
+        // Re-index array
+        $depts = array_values($depts);
+
+  
+        $imagePath = $depts[0]->image ?? null;
+        $imageUrl = $imagePath ? asset('storage/' . $imagePath) : null;
+
+        // Get all PM Year data
+        $pmYearData = DB::table('tbl_pmyear')->get();
+
+        return Inertia::render('Equipment', [
+            'imageUrl' => $imageUrl,
+            'departments' => $depts,
+            'YrId' => $yrId ?? '',
+            'PlanId' => $PlanId ?? '',
+            'officeId' => $officeId ?? '',
+            'CatId' => $categoryId ?? 1,
+            'pmYearList' => $pmYearData,
+            'pmYear' => $pmYearData->first() ? (array) $pmYearData->first() : ['Name' => '', 'Description' => ''],
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error("❌ Error fetching department:", ['error' => $e->getMessage()]);
+        return redirect()->back()->withErrors(['error' => 'Failed to fetch department data']);
+    }
+}             
+
+public function departmentChecklist(Request $request)
+{
+    try {
+        $currentTimestamp = now();
+        $day = $currentTimestamp->format('d');
+        $month = $currentTimestamp->format('m');
+        $year = $currentTimestamp->format('y');
+
+        // Generate Ticket Number
+        $submissionOrder = DB::table('tbl_preventive_maintainance')
+            ->whereDate('date', $currentTimestamp->toDateString())
+            ->count() + 1;
+
+        $generatedTicketNumber = str_pad($submissionOrder, 2, '0', STR_PAD_LEFT) . $day . $month . $year;
+
+        // Validate Request
+        $validated = $request->validate([
+            'employeeId' => 'nullable|integer',
+            'deptId' => 'required|integer', 
+            'YrId' => 'required|integer',
+            'pcName' => 'nullable|string|max:100',
+            'equipment' => 'required|string|max:50',
+            'dateAcquired' => 'required|date',
+            'cpu_status' => 'nullable|integer',
+            'keyboard_status' => 'nullable|integer',
+            'printer_status' => 'nullable|integer',
+            'monitor_status' => 'nullable|integer',
+            'mouse_status' => 'nullable|integer',
+            'ups_status' => 'nullable|integer',
+            'avr_status' => 'nullable|integer',
+            'windows10' => 'nullable|integer',
+            'windows11' => 'nullable|integer',
+            'license' => 'nullable|integer',
+            'enrollment' => 'nullable|integer',
+            'microsoft' => 'nullable|integer',
+            'browser' => 'nullable|integer',
+            'anti_virus' => 'nullable|integer',
+            'word_processor' => 'nullable|integer',
+            'adobe_reader' => 'nullable|integer',
+            'media_player' => 'nullable|integer',
+            'other_equip' => 'nullable|string|max:255',
+            'other_os' => 'nullable|string|max:255',
+            'other_sys' => 'nullable|string|max:255',
+            'processor_details' => 'nullable|string|max:255',
+            'motherboard_details' => 'nullable|string|max:255',
+            'memory_details' => 'nullable|string|max:255',
+            'graphics_card_details' => 'nullable|string|max:255',
+            'hard_disk_details' => 'nullable|string|max:255',
+            'monitor_details' => 'nullable|string|max:255',
+            'casing_details' => 'nullable|string|max:255',
+            'power_supply_details' => 'nullable|string|max:255',
+            'keyboard_details' => 'nullable|string|max:255',
+            'mouse_details' => 'nullable|string|max:255',
+            'avr_details' => 'nullable|string|max:255',
+            'ups_details' => 'nullable|string|max:255',
+            'printer_details' => 'nullable|string|max:255',
+            'network_mac_ip_details' => 'nullable|string|max:255',
+            'disposal' => 'nullable|integer|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'technician' => 'nullable|string|max:255',
+
+        ]);
+
+        $imagePath = null;
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $dynamicFolder = 'uploads/preventive/' . now()->format('Y/m');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imagePath = $image->storeAs($dynamicFolder, $imageName, 'public');
+        }
+        // Prepare parameters for the stored procedure
+        $parameters = [
+            $validated['employeeId'] ?? null,
+            $validated['deptId'], 
+            $validated['YrId'],
+            $generatedTicketNumber,
+            $validated['equipment'],
+            $validated['pcName'],
+            $validated['dateAcquired'],
+            $validated['cpu_status'],
+            $validated['keyboard_status'],
+            $validated['printer_status'],
+            $validated['monitor_status'],
+            $validated['mouse_status'],
+            $validated['ups_status'],
+            $validated['avr_status'],
+            $validated['windows10'],
+            $validated['windows11'],
+            $validated['license'],
+            $validated['enrollment'],
+            $validated['microsoft'],
+            $validated['browser'],
+            $validated['anti_virus'],
+            $validated['word_processor'],
+            $validated['adobe_reader'],
+            $validated['media_player'],
+            $validated['other_equip'],
+            $validated['other_os'],
+            $validated['other_sys'],
+            $validated['processor_details'],
+            $validated['motherboard_details'],
+            $validated['memory_details'],
+            $validated['graphics_card_details'],
+            $validated['hard_disk_details'],
+            $validated['monitor_details'],
+            $validated['casing_details'],
+            $validated['power_supply_details'],
+            $validated['keyboard_details'],
+            $validated['mouse_details'],
+            $validated['avr_details'],
+            $validated['ups_details'],
+            $validated['printer_details'],
+            $validated['network_mac_ip_details'],
+            $validated['disposal'],
+            $imagePath ,
+            $validated['technician'],
+
+        ];
+
+        // Log the parameters
+        \Log::info('Parameters passed to stored procedure: ', $parameters);
+
+        // Call the Stored Procedure
+        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
+
+        $savedData = DB::table('tbl_preventive_maintainance')
+        ->where('ticketnumber', $generatedTicketNumber)
+        ->first();
+
+    return response()->json([
+        'message' => 'Checklist submitted successfully',
+        'data' => $savedData
+    ]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
+
+public function getChecklistByYrId($YrId)
+{
+    try {
+        $results = DB::select('CALL GetChecklistByYrId(?)', [$YrId]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $results
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error retrieving checklist.',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
+public function updatePreventiveMaintenance(Request $request, $mainId)
+{
+    $validated = $request->validate([
+        'mainId' => 'required|integer',
+        'employeeId' => 'nullable|integer',
+        'deptId' => 'required|integer',
+        'OffId' => 'required|integer',
+        'YrId' => 'required|integer',
+        'pcName' => 'nullable|string',
+        'dateAcquired' => 'nullable|date',
+        'cpu_status' => 'nullable|integer',
+        'keyboard_status' => 'nullable|integer',
+        'printer_status' => 'nullable|integer',
+        'monitor_status' => 'nullable|integer',
+        'mouse_status' => 'nullable|integer',
+        'ups_status' => 'nullable|integer',
+        'avr_status' => 'nullable|integer',
+        'windows10' => 'nullable|integer',
+        'windows11' => 'nullable|integer',
+        'license' => 'nullable|integer',
+        'enrollment' => 'nullable|integer',
+        'microsoft' => 'nullable|integer',
+        'browser' => 'nullable|integer',
+        'anti_virus' => 'nullable|integer',
+        'media_player' => 'nullable|integer',
+        'adobe_reader' => 'nullable|integer',
+        'word_processor' => 'nullable|integer',
+        'other_equip' => 'nullable|string',
+        'other_os' => 'nullable|string',
+        'other_sys' => 'nullable|string',
+        'processor_details' => 'nullable|string',
+        'motherboard_details' => 'nullable|string',
+        'memory_details' => 'nullable|string',
+        'graphics_card_details' => 'nullable|string',
+        'hard_disk_details' => 'nullable|string',
+        'monitor_details' => 'nullable|string',
+        'casing_details' => 'nullable|string',
+        'power_supply_details' => 'nullable|string',
+        'keyboard_details' => 'nullable|string',
+        'mouse_details' => 'nullable|string',
+        'avr_details' => 'nullable|string',
+        'ups_details' => 'nullable|string',
+        'printer_details' => 'nullable|string',
+        'network_mac_ip_details' => 'nullable|string',
+    ]);
+
+    DB::statement('CALL UpdatePreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+        $validated['mainId'],
+        $validated['employeeId'],
+        $validated['deptId'],
+        $validated['OffId'],
+        $validated['YrId'],
+        $validated['pcName'],
+        $validated['dateAcquired'],
+        $validated['cpu_status'],
+        $validated['keyboard_status'],
+        $validated['printer_status'],
+        $validated['monitor_status'],
+        $validated['mouse_status'],
+        $validated['ups_status'],
+        $validated['avr_status'],
+        $validated['windows10'],
+        $validated['windows11'],
+        $validated['license'],
+        $validated['enrollment'],
+        $validated['microsoft'],
+        $validated['browser'],
+        $validated['anti_virus'],
+        $validated['media_player'],
+        $validated['adobe_reader'],
+        $validated['word_processor'],
+        $validated['other_equip'],
+        $validated['other_os'],
+        $validated['other_sys'],
+        $validated['processor_details'],
+        $validated['motherboard_details'],
+        $validated['memory_details'],
+        $validated['graphics_card_details'],
+        $validated['hard_disk_details'],
+        $validated['monitor_details'],
+        $validated['casing_details'],
+        $validated['power_supply_details'],
+        $validated['keyboard_details'],
+        $validated['mouse_details'],
+        $validated['avr_details'],
+        $validated['ups_details'],
+        $validated['printer_details'],
+        $validated['network_mac_ip_details'],
+    ]);
+
+    return response()->json(['message' => 'Preventive maintenance record updated successfully.']);
+}
+
+public function getAllEmployees()
+{
+    $employees = DB::table('tbl_employee')
+        ->where('is_Active', 1)
+        ->where('is_Deleted', 0)
+        ->select('employeeId', 'emp_name')
+        ->get();
+        
+    return response()->json($employees);
+}
+
+public function getMonthlyCounts()
+{
+    try {
+        $results = DB::select('CALL GetMonthlySubmissionCounts()');
+
+        $grouped = [];
+
+        foreach ($results as $row) {
+            $monthShort = substr($row->month_name, 0, 3); // 'January' → 'Jan'
+
+            if (!isset($grouped[$monthShort])) {
+                $grouped[$monthShort] = [
+                    'month' => $monthShort,
+                    'SetA' => 0,
+                    'SetB' => 0,
+                    'SetC' => 0,
+                ];
+            }
+
+            $grouped[$monthShort][$row->category] = $row->total;
+        }
+
+        return response()->json(array_values($grouped)); // indexed array for Vue
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to retrieve data', 'details' => $e->getMessage()], 500);
+    }
+}
+
+public function getCategoryTaskCount(Request $request)
+{
+    $catId = $request->query('CatId', 1); 
+
+    $count = DB::table('tbl_premainplan_details')
+        ->where('CatId', $catId)
+        ->count('OffId');
+
+    return response()->json(['count' => $count]);
+}
+
+public function getTechnicians()
+{
+    $technicians = DB::table('tbl_technician')
+        ->where('is_Active', 1)
+        ->where('is_Deleted', 0)
+        ->select('techId', 'Name')
+        ->get();
+
+    return response()->json($technicians);
+}
+}
 
 
