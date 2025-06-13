@@ -19,6 +19,7 @@ const props = defineProps({
 });
 
 const technicians = ref([])
+const imageUrl = ref(null);
 
 const employees = ref([]);
 const isUpdateMode = ref(false);
@@ -187,35 +188,40 @@ const submitStep1AndGoToStep2 = (mainIdParam) => {
 
 const openStepModal = (mainId) => {
   console.log("Opening edit modal for mainId:", mainId);
- 
+
   if (!mainId) {
     console.error("Cannot open edit modal without mainId");
     return;
   }
- 
+
   isUpdateMode.value = true;
   currentMainId.value = mainId;
   isStep1ModalOpen.value = true;
- 
-  // Find the record to edit
+
+  // ✅ Declare recordData before using it
   const recordData = departments.value.find(dep => String(dep.mainId) === String(mainId));
- 
+
   if (recordData) {
     selectedDepartments.value = recordData;
-   
- 
+
+    // ✅ Set image
+    if (recordData.image) {
+      imageUrl.value = `/storage/${recordData.image}`;
+    } else {
+      imageUrl.value = null;
+    }
+
+    // ✅ Fill formData as before
     formData.employeeId = recordData.employeeId;
     formData.deptId = recordData.deptId;
     formData.OffId = recordData.OffId;
     formData.YrId = recordData.YrId;
-   
-    // Other fields
+
     formData.officeUnit = recordData.OfficeName || "";
     formData.department = recordData.department_name || "";
     formData.pcName = recordData.pcname || "";
     formData.dateAcquired = recordData.date_acquired || null;
-   
-    // Hardware status
+
     formData.cpu_status = recordData.cpu || 0;
     formData.keyboard_status = recordData.keyboard_status || 0;
     formData.printer_status = recordData.printer_status || 0;
@@ -223,8 +229,7 @@ const openStepModal = (mainId) => {
     formData.mouse_status = recordData.mouse_status || 0;
     formData.ups_status = recordData.ups_status || 0;
     formData.avr_status = recordData.avr_status || 0;
-   
-    // Software
+
     formData.windows10 = recordData.windows10 || 0;
     formData.windows11 = recordData.windows11 || 0;
     formData.license = recordData.license || 0;
@@ -235,13 +240,11 @@ const openStepModal = (mainId) => {
     formData.media_player = recordData.media_player || 0;
     formData.adobe_reader = recordData.adobe_reader || 0;
     formData.word_processor = recordData.word_processor || 0;
-   
-    // Other fields
+
     formData.other_equip = recordData.other_equip || "";
     formData.other_os = recordData.other_os || "";
     formData.other_sys = recordData.other_sys || "";
-   
-    // Component details
+
     formData.processor_details = recordData.processor_details || "";
     formData.motherboard_details = recordData.motherboard_details || "";
     formData.memory_details = recordData.memory_details || "";
@@ -256,13 +259,13 @@ const openStepModal = (mainId) => {
     formData.ups_details = recordData.ups_details || "";
     formData.printer_details = recordData.printer_details || "";
     formData.network_mac_ip_details = recordData.network_mac_ip_details || "";
-   
+
     console.log("Form data populated:", formData);
   } else {
     console.error("Record not found with mainId:", mainId);
   }
- 
 };
+
 
 // For moving to Step 2 when editing
 const openStep2Modal = (mainId) => {
@@ -304,6 +307,7 @@ const updateRecord = async () => {
   try {
     console.log("Updating Form Data:", formData);
     const payload = {
+      technician: formData.technician,
       mainId: currentMainId.value,
       employeeId: formData.employeeId,
       deptId: formData.deptId,
@@ -346,26 +350,32 @@ const updateRecord = async () => {
       printer_details: formData.printer_details,
       network_mac_ip_details: formData.network_mac_ip_details,
     };
+    await axios.get('/sanctum/csrf-cookie', { withCredentials: true });
 
-    const response = await axios.put(`/api/preventive-maintenance/${currentMainId.value}`, payload);
+// Step 2: Perform the PUT request with credentials
+const response = await axios.put(
+  `/api/preventive-maintenance/${currentMainId.value}`,
+  payload,
+  { withCredentials: true }
+);
 
-    if (response.data && response.data.message) {
-      // Find and update local entry
-      const index = departments.value.findIndex(dep => String(dep.mainId) === String(currentMainId.value));
-      if (index !== -1) {
-        departments.value[index] = { ...departments.value[index], ...payload };
-      }
-
-      closeModal();
-      // Optional: toast/success message
-      console.log("Update successful:", response.data.message);
-    }
-
-  } catch (error) {
-    console.error("Error updating record:", error.response?.data || error.message);
-    // Optional: display error to user
+if (response.data && response.data.message) {
+  // Find and update local entry
+  const index = departments.value.findIndex(dep => String(dep.mainId) === String(currentMainId.value));
+  if (index !== -1) {
+    departments.value[index] = { ...departments.value[index], ...payload };
   }
-};
+
+  closeModal();
+  console.log("Update successful:", response.data.message);
+}
+
+} catch (error) {
+console.error("Error updating record:", error.response?.data || error.message);
+// Optional: display error to user
+}
+}
+
 const nextToStep2 = () => {
   // This should only be used when you're not submitting data
   if (currentMainId.value) {
@@ -783,7 +793,7 @@ for (const key in payload) {
   if (payload[key] !== null && payload[key] !== undefined) {
     formPayload.append(key, payload[key]);
   }
-}
+}   
 
 // If you want to explicitly send null, use an empty string instead
 if (payload.employeeId === null) {
@@ -792,6 +802,7 @@ if (payload.employeeId === null) {
 if (formData.image) {
   formPayload.append('image', formData.image);
 }
+await axios.get('/sanctum/csrf-cookie');
 
 console.log("Sending FormData payload...");
 
@@ -799,6 +810,8 @@ const response = await axios.post(`/api/departmentChecklist`, formPayload, {
   headers: {
     'Content-Type': 'multipart/form-data',
   },
+  withCredentials: true, 
+
 });
 
     const newDepartmentData = response.data.data;
@@ -993,11 +1006,20 @@ const submitChecklist = async () => {
 
     Summary: checklist.Summary
   };
-    window.location.reload();
 
   try {
-    const response = await axios.post('http://127.0.0.1:8000/api/insertChecklist', payload);
-    console.log('Checklist submitted:', response.data);
+    await axios.get('/sanctum/csrf-cookie');
+
+// Submit the checklist payload
+const response = await axios.post(
+  'http://127.0.0.1:8000/api/insertChecklist',
+  payload,
+  {
+    withCredentials: true, // Important for Sanctum
+  }
+); 
+
+window.location.reload();
 
 
   } catch (error) {

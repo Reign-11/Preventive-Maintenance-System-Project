@@ -256,7 +256,7 @@ const getPrintStyles = () => {
   }
   
   .cmu-logo-img {
-    max-height: 50px; /* Further reduced from 50px */
+    max-height: 75px;
     width: auto;
     margin-right: 15px;
   }
@@ -387,7 +387,7 @@ const generateBasicInfoSection = (formData) => {
         <tbody>
           <tr style="height: 22px;">
             <th style="padding: 3px 5px; width: 20%;">User/Operator</th>
-            <td style="padding: 3px 5px;">${formData.userOperator || 'N/A'}</td>
+            <td style="padding: 3px 5px;"></td>
           </tr>
           <tr style="height: 22px;">
             <th style="padding: 3px 5px; width: 20%;">Office/College/Unit</th>
@@ -1103,3 +1103,4 @@ export default {
   formatDate,
   getStatusLabel
 };
+

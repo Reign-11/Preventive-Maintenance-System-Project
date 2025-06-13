@@ -79,7 +79,8 @@ const checklist = reactive({
   security_checks5: "",
   hardware_checks1: "",
   hardware_checks2: "",
-  Summary: ""
+  Summary: "",
+  technician: "" 
 });
 
 // Helper function to get logo path
@@ -88,7 +89,6 @@ const getLogoPath = () => {
   return '/assets/cmu1.png';
 };
 
-// This is the updated printDetails function with the CMU header
 const printDetails = (department) => {
   if (!department) return;
 
@@ -101,6 +101,9 @@ const printDetails = (department) => {
 
   // Create a deep copy of the checklist to avoid reactivity issues
   const checklistData = JSON.parse(JSON.stringify(checklist));
+
+  // Convert technician name to uppercase
+  const technicianName = (checklistData.technician || '').toUpperCase();
 
   const modalHtml = `
     <html>
@@ -239,14 +242,14 @@ const printDetails = (department) => {
           </tbody>
         </table>
         
-        <!-- Added Signature Section with proper spacing -->
+        <!-- Updated Signature Section with Technician Name in UPPERCASE -->
         <table style="border: none; margin-top: 30px; width: 100%;">
           <tr style="border: none;">
             <td style="border: none; width: 50%; text-align: left;"><strong>Checked by:</strong></td>
             <td style="border: none; width: 50%; text-align: left;"><strong>Noted by:</strong></td>
           </tr>
           <tr style="border: none;">
-            <td style="border: none; padding-top: 40px;"></td>
+            <td style="border: none; padding-top: 40px;">${technicianName}</td>
             <td style="border: none; padding-top: 40px;">CARLO MARTIN A. SARAUSA</td>
           </tr>
           <tr style="border: none;">
@@ -379,6 +382,11 @@ watch(selectedDepartments, (newVal) => {
         </div>
 
         <div class="modal-body">
+          <!-- Display Technician Name -->
+          <div v-if="checklist.technician" class="technician-display">
+            <strong>Technician:</strong> {{ checklist.technician }}
+          </div>
+
           <!-- Preventive Maintenance Checklist Table -->
           <div class="table-responsive">
             <table class="checklist-table">
@@ -780,6 +788,16 @@ watch(selectedDepartments, (newVal) => {
   max-height: calc(90vh - 130px);
 }
 
+/* Technician Display */
+.technician-display {
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #3498db;
+  font-size: 0.95rem;
+}
+
 .modal-footer {
   padding: 1rem 1.5rem;
   display: flex;
@@ -956,6 +974,11 @@ watch(selectedDepartments, (newVal) => {
   
   .modal-content {
     width: 95%;
+  }
+
+  .technician-display {
+    font-size: 0.9rem;
+    padding: 0.5rem;
   }
 }
 

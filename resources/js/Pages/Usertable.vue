@@ -233,6 +233,7 @@ watch(selectedEmployee, (newVal) => {
 
 onMounted(async () => {
   try {
+    await axios.get('/sanctum/csrf-cookie')
     const response = await axios.get('/api/technicians')
     console.log("Fetched Technicians:", response.data);
     technicians.value = response.data
@@ -474,12 +475,16 @@ const submitForm = async () => {
   }
     console.log("Payload:", payload);
 
-    // Send the data to the Laravel backend
-    const response = await axios.post(`/api/employeeChecklist/${employeeId}`, formPayload, {
+    await axios.get('/sanctum/csrf-cookie');
+
+// 2. Submit the form
+const response = await axios.post(`/api/employeeChecklist/${employeeId}`, formPayload, {
   headers: {
     'Content-Type': 'multipart/form-data',
   },
+  withCredentials: true, 
 });
+
    
     selectedEmployee.value.mainId = response.data.data.mainId;
     console.log("Response:", response.data);
@@ -493,12 +498,10 @@ const submitForm = async () => {
 };
 
 
-
 const submitChecklist = async () => {
-  
   const payload = {
     mainId: selectedEmployee.value.mainId,   
-     YrId: selectedEmployee.value.YrId,
+    YrId: selectedEmployee.value.YrId,
 
     System_Boot: checklist.System_Boot,
     System_Log: checklist.System_Log,
@@ -544,17 +547,27 @@ const submitChecklist = async () => {
 
     Summary: checklist.Summary
   };
-    window.location.reload();
 
   try {
-    const response = await axios.post('http://127.0.0.1:8000/api/insertChecklist', payload);
+    await axios.get('http://127.0.0.1:8000/sanctum/csrf-cookie', { withCredentials: true }); // CSRF cookie first
+
+    const response = await axios.post(
+      'http://127.0.0.1:8000/api/insertChecklist',
+      payload,
+      { withCredentials: true }
+    );
+
     console.log('Checklist submitted:', response.data);
-    // You can show a success message or reset the form here
+
+    // Only reload **after successful submission**
+    window.location.reload();
+
   } catch (error) {
     console.error('Submission failed:', error.response?.data || error.message);
-    // Show error to the user
+    alert('Submission failed. Check console for details.');
   }
 };
+
 
 
   // BUTTON PRINT 
@@ -607,12 +620,22 @@ const addUser = async () => {
   const departmentId = firstEmployee ? firstEmployee.DeptId : null;
 
   try {
-    const response = await axios.post("/api/add-employee", {
+  // Step 1: Get CSRF token from Sanctum
+  await axios.get('/sanctum/csrf-cookie', { withCredentials: true });
+
+  // Step 2: Post the employee data to the backend
+  const response = await axios.post(
+    '/api/add-employee',
+    {
       emp_name: newUser.value.name,
       employee_number: newUser.value.number,
       offId: officeId ?? 0,
       deptId: departmentId ?? 0
-    });
+    },
+    {
+      withCredentials: true, // Ensures cookies like XSRF-TOKEN are sent
+    }
+  );
 
     alert("Employee added successfully!");
 

@@ -71,6 +71,7 @@ const filteredSpecs = computed(() => {
 });
 
 const formData = reactive({
+  technician: "",
   ticketnumber: "",
   officeUnit: "",
   department: "",
@@ -107,6 +108,7 @@ watch(selectedDepartments, (newVal) => {
   if (newVal) {
     console.log("Selected employee changed:", newVal);    
     // Basic Info
+    formData.technician = newVal.technician || "";
     formData.userOperator = newVal.emp_name || "";
     formData.officeUnit = newVal.OfficeName || "";
     formData.pcName = newVal.pcName || "";
@@ -314,7 +316,7 @@ const printDepartmentTable = () => {
         </table>
       </div>
     </div>
-    
+
     <!-- Modal Component -->
     <div v-if="isStep1ModalOpen" class="modal-overlay">
       <div class="modal-content modal-xl">
@@ -348,6 +350,12 @@ const printDepartmentTable = () => {
           </div>
           <button class="close-btn-icon" @click="closeModal">&times;</button>
         </div>
+
+        
+    <!-- Display Technician Name -->
+    <div v-if="formData.technician" class="technician-display">
+      <strong>Technician:</strong> {{ formData.technician }}
+    </div>
 
         <div class="modal-body">
           <!-- Office Information Card -->
@@ -1077,5 +1085,13 @@ const printDepartmentTable = () => {
 
 .print-btn:active, .cancel-btn:active {
   animation: pulse 0.3s ease-in-out;
+}
+.technician-display {
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #3498db;
+  font-size: 0.95rem;
 }
 </style>

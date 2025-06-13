@@ -91,6 +91,7 @@ const enableBackgroundScroll = () => {
 
 // Checklist Data
 const checklist = reactive({
+  technician: "",
   data_softsystem_checks1: "",
   data_softsystem_checks2: "",
   data_softsystem_checks3: "",
@@ -139,9 +140,18 @@ const submitChecklist = async () => {
       hardware_checks1: checklist.hardware_checks1,
       hardware_checks2: checklist.hardware_checks2,
       Summary: checklist.Summary,
+      technician:checklist.technician
     };
 
-    const response = await axios.post('/api/addDatacenter', payload);
+    await axios.get('/sanctum/csrf-cookie', { withCredentials: true });
+
+  // Step 2: Send the POST request with credentials
+  const response = await axios.post(
+    '/api/addDatacenter',
+    payload,
+    { withCredentials: true }
+  );
+
 
     console.log("Checklist submitted:", response.data);
     alert("Checklist submitted successfully!");
@@ -178,12 +188,18 @@ const options = [
   { value: '3' }
 ];
 
-const selectedTechnician = ref('');
-const technicians = ref([
-  { id: 1, name: 'Marlaw Neel Bolinas' },
-  { id: 2, name: 'Leo Franco Sobradil' },
-  { id: 3, name: 'Chester Lawrence Bautista' }
-]);
+
+const technicians = ref([])
+
+onMounted(async () => {
+  try {
+    const response = await axios.get('/api/technicians', { withCredentials: true })
+    technicians.value = response.data
+  } catch (error) {
+    console.error('❌ Failed to fetch technicians:', error)
+  }
+})
+
 </script>
 
 <template>
@@ -251,11 +267,11 @@ const technicians = ref([
             </div>
             <div class="header-technician-selection">
               <label for="technician-select" class="technician-label">Technician:</label>
-              <select id="technician-select" v-model="selectedTechnician" class="technician-select">
-                <option value="" disabled>Select Technician</option>
-                <option v-for="technician in technicians" :key="technician.id" :value="technician.name">
-                  {{ technician.name }}
-                </option>
+  <select id="technician-select" v-model="checklist.technician" class="technician-select">
+    <option value="" disabled>Select Technician</option>
+    <option v-for="tech in technicians" :key="tech.techId" :value="tech.Name">
+      {{ tech.Name }}
+    </option>
               </select>
             </div>
           </div>

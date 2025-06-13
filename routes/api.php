@@ -12,10 +12,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// ✅ Get available years
+Route::middleware(['auth:sanctum', 'role:User'])->group(function () {
+
 Route::get('/years', [MaintenancePlanController::class, 'getYears']);
 
-// ✅ Fetch maintenance plans (YrId required)
 Route::get('/maintenance-plans', [MaintenancePlanController::class, 'getMaintenancePlans']);
 
 // ✅ Save/Update maintenance plan (use `saveMaintenancePlan()`)
@@ -55,7 +55,6 @@ Route::get('/maintenance-category-count', [MaintenancePlanController::class, 'ge
 
 Route::get('/technicians', [MaintenancePlanController::class, 'getTechnicians']);
 
-
 // SET B
 
 // ✅ Get available years
@@ -83,6 +82,8 @@ Route::post('/duplicates', [MaintenancePlanControllerB::class, 'duplicates']);
 
 Route::post('/detached/{id}', [MaintenancePlanControllerB::class, 'detached']);
 
+Route::get('/technicians', [MaintenancePlanControllerB::class, 'getTechnician']);
+
 // SET c
 
 // ✅ Get available years
@@ -106,12 +107,38 @@ Route::post('/copy', [MaintenancePlanControllerC::class, 'copy']);
 
 Route::post('/detaches/{id}', [MaintenancePlanControllerC::class, 'detaches']);
 
-//Analytics Dashboard Routes
-Route::post('/api/analytics/dashboard-data', [DashboardController::class, 'getDashboardData'])
-    ->middleware('auth:sanctum');
+});
+
+
+
 
     // Admin 
+Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
 
 Route::get('/offices-with-departments', [AdminController::class, 'getOfficesAndDepartments']);
 
 Route::post('/AddOffice', [AdminController::class, 'AddOffice']);
+    
+Route::get('/getYears', [AdminController::class, 'getPmYears']);
+    
+Route::post('/add-year', [AdminController::class, 'AddYear']);
+
+Route::get('/getLogs', [AdminController::class, 'getLogs']);
+
+Route::post('/add-user', [AdminController::class, 'stores']);
+
+Route::get('/getuser', [AdminController::class, 'getUser']);
+
+Route::put('/updateUser/{id}', [AdminController::class, 'updateUser']);
+
+Route::get('/getLicenseCount', [AdminController::class, 'getLicenseCount']);
+
+Route::get('/getAvailableYears', [AdminController::class, 'PmYears']);
+
+Route::get('/getEquipmentCount', [AdminController::class, 'getEquipmentCount']);
+
+Route::post('/toggleYearStatus', [AdminController::class, 'toggleYearStatus']);
+
+Route::put('/updateYr/{YrId}', [AdminController::class, 'updateYear']);
+
+});

@@ -60,6 +60,11 @@ onMounted(() => {
 
                 <ul class="navbar-nav d-flex flex-column align-items-center nav-items-wrapper">
                     <li class="nav-item nav-item-spacing">
+                        <Link href="summary" class="nav-link-custom" title="Logs">
+                            <i data-feather="trending-up" style="width: 25px; height: 25px;"></i>
+                        </Link>
+                    </li>
+                    <li class="nav-item nav-item-spacing">
                         <Link href="admin" class="nav-link-custom" title="Logs">
                             <i data-feather="clipboard" style="width: 25px; height: 25px;"></i>
                         </Link>
@@ -72,6 +77,11 @@ onMounted(() => {
                     <li class="nav-item nav-item-spacing">
                         <Link href="addyear" class="nav-link-custom" title="Add Year">
                             <i data-feather="calendar" style="width: 25px; height: 25px;"></i>
+                        </Link>
+                    </li>
+                      <li class="nav-item nav-item-spacing">
+                        <Link href="adduser" class="nav-link-custom" title="Add User">
+                            <i data-feather="user" style="width: 25px; height: 25px;"></i>
                         </Link>
                     </li>
                 </ul>
@@ -103,15 +113,6 @@ onMounted(() => {
             <main class="content-area">
                 <slot></slot>
             </main>
-
-            <!-- Footer -->
-            <footer class="py-4 bg-light mt-auto">
-                <div class="container-fluid">
-                    <div class="d-flex align-items-center justify-content-center small">
-                        <div class="text-muted">Admin Dashboard © 2025</div>
-                    </div>
-                </div>
-            </footer>
         </div>
     </div>
 </template>
@@ -241,3 +242,4 @@ onMounted(() => {
     }
 }
 </style>
+

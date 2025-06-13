@@ -1,4 +1,3 @@
-
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, defineProps, reactive, watch } from 'vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
@@ -79,6 +78,7 @@ const filteredSpecs = computed(() => {
 });
 
 const formData = reactive({
+  technician: "",
   ticketnumber: "",
   officeUnit: "",
   department: "",
@@ -235,6 +235,8 @@ const submitForm = async () => {
       vlan_details: formData.desktopSpecs.Vlan,
       wifiband_details: formData.desktopSpecs.WifiBand,
       dhcp_details: formData.desktopSpecs.DHCP,
+      technician: formData.technician,
+
     };
 
     // Handle conditional fields
@@ -259,6 +261,16 @@ const submitForm = async () => {
     console.error("Error submitting form:", error.response?.data || error.message);
   }
 };
+const technicians = ref([])
+onMounted(async () => {
+  try {
+    const response = await axios.get('/api/technicians')
+    console.log("Fetched Technicians:", response.data);
+    technicians.value = response.data
+  } catch (error) {
+    console.error('❌ Failed to fetch technicians:', error)
+  }
+})
 </script>
 
 <template>
@@ -348,6 +360,7 @@ const submitForm = async () => {
         </div>
 
         <div class="modal-body">
+
           <!-- User & Date Info Card -->
           <div class="card mb-4">
             <div class="card-header">
@@ -355,22 +368,30 @@ const submitForm = async () => {
             </div>
             <div class="card-body">
               <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
+                  <label class="form-label">Technician</label>
+                  <select class="form-control" v-model="formData.technician">
+                    <option value="">Select Technician</option>
+                    <option v-for="tech in technicians" :key="tech.techId" :value="tech.Name">
+                      {{ tech.Name }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-3">
                   <label class="form-label">Office/College/Unit</label>
                   <input type="text" class="form-control" v-model="formData.officeUnit">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <label class="form-label">Department</label>
                   <input type="text" class="form-control" v-model="formData.department">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-">
                   <label class="form-label">Date Acquired</label>
                   <input type="date" class="form-control" v-model="formData.dateAcquired">
                 </div>
               </div>
             </div>
           </div>
-
           <!-- Equipment Installed -->
           <div class="card mb-4">
             <div class="card-header">
@@ -514,6 +535,7 @@ const submitForm = async () => {
         </div>
       </div>
     </div>
+
   </MainLayout>
 </template>
 

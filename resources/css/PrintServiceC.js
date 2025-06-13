@@ -21,7 +21,7 @@ const getPrintStyles = () => {
     @media print {
       @page {
         size: legal;
-        margin: 1cm;
+        margin: 0.8cm; /* Slightly reduced margin */
       }
       body {
         -webkit-print-color-adjust: exact !important;
@@ -30,77 +30,81 @@ const getPrintStyles = () => {
       .no-print {
         display: none !important;
       }
+      table { page-break-inside: avoid !important; }
+      tr { page-break-inside: avoid !important; }
+      * { overflow: visible !important; }
     }
     
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 20px;
+      padding: 15px; /* Slightly reduced from 20px */
       color: #333;
-      line-height: 1.5;
+      line-height: 1.4; /* Slightly reduced from 1.5 */
     }
     
     .print-header {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 15px; /* Slightly reduced from 20px */
       border-bottom: 2px solid #333;
-      padding-bottom: 10px;
+      padding-bottom: 8px; /* Slightly reduced from 10px */
       position: relative;
     }
     
     .organization-header {
       text-align: center;
-      margin-bottom: 10px;
+      margin-bottom: 8px; /* Slightly reduced from 10px */
     }
     
     .organization-header h1 {
       margin: 0;
-      font-size: 22px;
+      font-size: 21px; /* Slightly reduced from 22px */
       color: #333;
     }
     
     .organization-header h2 {
-      margin: 5px 0;
-      font-size: 18px;
+      margin: 4px 0; /* Slightly reduced from 5px */
+      font-size: 17px; /* Slightly reduced from 18px */
       color: #333;
     }
     
     .report-title {
-      font-size: 24px;
+      font-size: 23px; /* Slightly reduced from 24px */
       font-weight: bold;
       color: #333;
-      margin: 15px 0 5px;
+      margin: 12px 0 4px; /* Slightly reduced from 15px 0 5px */
     }
     
     .ticket-info {
-      font-size: 16px;
-      margin: 5px 0;
+      font-size: 15px; /* Slightly reduced from 16px */
+      margin: 4px 0; /* Slightly reduced from 5px */
     }
     
     .section {
-      margin-bottom: 20px;
+      margin-bottom: 15px; /* Slightly reduced from 20px */
       page-break-inside: avoid;
     }
     
     .section-title {
       background-color: #f2f2f2;
       color: #333;
-      padding: 8px 10px;
+      padding: 6px 8px; /* Slightly reduced from 8px 10px */
       font-weight: bold;
       border-radius: 4px;
-      margin-bottom: 10px;
+      margin-bottom: 8px; /* Slightly reduced from 10px */
       border: 1px solid #ccc;
+      font-size: 15px; /* Slightly reduced from 16px */
     }
     
     .info-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      margin-bottom: 15px;
+      gap: 12px; /* Slightly reduced from 15px */
+      margin-bottom: 12px; /* Slightly reduced from 15px */
     }
     
     .info-item {
-      margin-bottom: 8px;
+      margin-bottom: 6px; /* Slightly reduced from 8px */
     }
     
     .info-label {
@@ -109,19 +113,19 @@ const getPrintStyles = () => {
     }
     
     .info-value {
-      padding: 4px 0;
+      padding: 3px 0; /* Slightly reduced from 4px */
     }
     
     .specs-table, .checklist-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 15px;
+      margin-bottom: 12px; /* Slightly reduced from 15px */
     }
     
     .specs-table th, .specs-table td,
     .checklist-table th, .checklist-table td {
       border: 1px solid #ddd;
-      padding: 8px;
+      padding: 6px; /* Slightly reduced from 8px */
       text-align: left;
     }
     
@@ -136,7 +140,7 @@ const getPrintStyles = () => {
     }
     
     .signature-section {
-      margin-top: 40px;
+      margin-top: 30px; /* Reduced from 40px but keeps appropriate spacing */
       display: flex;
       justify-content: space-between;
       page-break-inside: avoid;
@@ -146,8 +150,8 @@ const getPrintStyles = () => {
       border-top: 1px solid #333;
       width: 200px;
       text-align: center;
-      padding-top: 5px;
-      margin-top: 60px;
+      padding-top: 4px; /* Slightly reduced from 5px */
+      margin-top: 40px; /* Reduced from 60px but keeps good spacing */
     }
     
     .signature-title {
@@ -155,41 +159,39 @@ const getPrintStyles = () => {
     }
     
     .page-footer {
-      position: absolute;
-      bottom: -40px;
-      left: 0;
-      width: 100%;
-      border-top: 1px solid #000;
-      padding-top: 5px;
+      position: relative;
+      border-top: 1px solid #999;
+      padding-top: 4px; /* Slightly reduced from 5px */
       background-color: white;
-      font-size: 12px;
+      font-size: 11px; /* Slightly reduced from 12px */
+      margin-top: 25px;
     }
 
     .section {
-      margin-bottom: 8px;
+      margin-bottom: 10px; /* Adjusted from 8px */
     }
 
     .section-title {
-      font-size: 16px;
+      font-size: 15px; /* Slightly reduced from 16px */
       font-weight: bold;
-      margin-bottom: 6px;
+      margin-bottom: 5px; /* Slightly reduced from 6px */
     }
 
     .info-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px 12px;
+      gap: 5px 10px; /* Slightly reduced from 6px 12px */
     }
 
     .info-item {
       flex: 1 1 45%;
-      margin-bottom: 4px;
+      margin-bottom: 3px; /* Slightly reduced from 4px */
     }
 
     .info-label {
       font-weight: 500;
       display: inline-block;
-      margin-right: 4px;
+      margin-right: 3px; /* Slightly reduced from 4px */
     }
 
     .info-value {
@@ -200,16 +202,16 @@ const getPrintStyles = () => {
     .cmu-header {
       width: 100%;
       margin-bottom: 0;
-      padding-bottom: 5px;
+      padding-bottom: 4px; /* Slightly reduced from 5px */
       display: flex;
       align-items: center;
       border-bottom: 1px solid #555;
     }
     
     .cmu-logo-img {
-      max-height: 45px; /* Further reduced from 50px */
+      max-height: 75px; 
       width: auto;
-      margin-right: 15px;
+      margin-right: 10px; 
     }
 
     .university-info {
@@ -244,16 +246,16 @@ const getPrintStyles = () => {
       font-size: 14px;
       font-weight: bold;
       color: #333;
-      margin-top: 8px;
+      margin-top: 7px; /* Slightly reduced from 8px */
       margin-bottom: 3px;
       text-transform: uppercase;
     }
 
     .report-title-header {
-      font-size: 16px;
+      font-size: 15px; /* Slightly reduced from 16px */
       font-weight: bold;
       margin-top: 3px;
-      margin-bottom: 15px;
+      margin-bottom: 10px; /* Slightly reduced from 15px */
       text-transform: uppercase;
       text-align: center;
     }
@@ -261,7 +263,7 @@ const getPrintStyles = () => {
     .ticket-info-container {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 15px;
+      margin-bottom: 0;
     }
   `;
 };
@@ -302,6 +304,14 @@ export default {
           <title>${title}</title>
           <style>
             ${getPrintStyles()}
+            /* Additional styles to ensure all content is visible */
+            @media print {
+              table { page-break-inside: avoid; }
+              tr { page-break-inside: avoid; }
+              .section { page-break-inside: avoid; margin-bottom: 10px; }
+              body { margin: 0; padding: 0; }
+              * { overflow: visible !important; }
+            }
           </style>
         </head>
         <body>
@@ -325,6 +335,8 @@ export default {
   
   // Print network form data
   printNetworkForm(formData) {
+    const fixedFooterDate = "12 February 2024";
+    
     // Create a temporary div to hold the formatted content
     const tempDiv = document.createElement('div');
     tempDiv.className = 'network-form-print';
@@ -341,42 +353,42 @@ export default {
         </div>
       </div>
       
-      <div style="margin-top: 8px;">
+      <div style="margin-top: 7px;">
         <div class="office-title">OFFICE OF DIGITAL TRANSFORMATION</div>
-        <div class="report-title-header">NETWORK PREVENTIVE MAINTENANCE CHECKLIST</div>
+        <div class="report-title-header" style="margin-bottom: 10px;">NETWORK PREVENTIVE MAINTENANCE CHECKLIST</div>
       </div>
       
-      <div class="ticket-info-container">
+      <!-- Ticket info container with reduced bottom margin -->
+      <div class="ticket-info-container" style="margin-bottom: 0;">
         <div class="ticket-info">Ticket #: ${formData.ticketnumber || 'N/A'}</div>
-        <div class="ticket-info">Date: ${formatDate(formData.date || new Date())}</div>
       </div>
     `;
     
-    // Add basic information section
+    // Add basic information section with no top margin
     tempDiv.innerHTML += `
       <div class="section" style="margin-top: 0; padding-top: 0; page-break-before: avoid !important;">
         <div class="section-title" style="margin-top: 0;">Basic Information</div>
-        <table class="specs-table" style="margin-top: 0px; font-size: 95%; width: 100%;">
+        <table class="specs-table" style="margin-top: 0px; font-size: 92%; width: 100%;">
           <tbody>
             <tr style="height: 22px;">
-              <th style="padding: 3px 5px; width: 20%;">Office/College/Unit</th>
-              <td style="padding: 3px 5px;">${formData.officeUnit || 'N/A'}</td>
+              <th style="padding: 4px 5px; width: 20%;">Office/College/Unit</th>
+              <td style="padding: 4px 5px;">${formData.officeUnit || 'N/A'}</td>
             </tr>
             <tr style="height: 22px;">
-              <th style="padding: 3px 5px; width: 20%;">Department</th>
-              <td style="padding: 3px 5px;">${formData.department || 'N/A'}</td>
+              <th style="padding: 4px 5px; width: 20%;">Department</th>
+              <td style="padding: 4px 5px;">${formData.department || 'N/A'}</td>
             </tr>
             <tr style="height: 22px;">
-              <th style="padding: 3px 5px; width: 20%;">Date Acquired</th>
-              <td style="padding: 3px 5px;">${formatDate(formData.dateAcquired) || 'N/A'}</td>
+              <th style="padding: 4px 5px; width: 20%;">Date Acquired</th>
+              <td style="padding: 4px 5px;">${formatDate(formData.dateAcquired) || 'N/A'}</td>
             </tr>
             <tr style="height: 22px;">
-              <th style="padding: 3px 5px; width: 20%;">PC Name</th>
-              <td style="padding: 3px 5px;">${formData.pcName || 'N/A'}</td>
+              <th style="padding: 4px 5px; width: 20%;">PC Name</th>
+              <td style="padding: 4px 5px;">${formData.pcName || 'N/A'}</td>
             </tr>
             <tr style="height: 22px;">
-              <th style="padding: 3px 5px; width: 20%;">Equipment No</th>
-              <td style="padding: 3px 5px;">${formData.equipment || 'N/A'}</td>
+              <th style="padding: 4px 5px; width: 20%;">Equipment No</th>
+              <td style="padding: 4px 5px;">${formData.equipment || 'N/A'}</td>
             </tr>
           </tbody>
         </table>
@@ -385,17 +397,17 @@ export default {
     
     // Add equipment installed section
     tempDiv.innerHTML += `
-      <div class="section" style="margin-bottom: 0; padding-bottom: 0;">
+      <div class="section" style="margin-bottom: 0; padding-bottom: 0; margin-top: 0px;">
         <div class="section-title">Equipment Installed:</div>
-        <div class="info-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 5px; margin-bottom: 0;">
+        <div class="info-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 2px; margin-bottom: 0;">
           ${['Router', 'Switch', 'Access Point', 'Modem', 'Network Cable', 'Patch Panel', 'Other'].map(item => {
             const isChecked = (formData.equipmentInstalled || []).includes(item);
             return `
-              <div class="info-item" style="display: flex; align-items: center; margin-bottom: 2px;">
-                <div style="width: 14px; height: 14px; border: 1px solid #333; margin-right: 6px; display: flex; justify-content: center; align-items: center;">
+              <div class="info-item" style="display: flex; align-items: center; margin-bottom: 0px;">
+                <div style="width: 13px; height: 13px; border: 1px solid #333; margin-right: 5px; display: flex; justify-content: center; align-items: center;">
                   ${isChecked ? '<span style="font-weight: bold;">✓</span>' : ''}
                 </div>
-                <div class="info-value" style="font-size: 95%;">
+                <div class="info-value" style="font-size: 92%;">
                   ${item}${item === 'Other' && isChecked && formData.other_equipment ? ': ' + formData.other_equipment : ''}
                 </div>
               </div>
@@ -407,17 +419,17 @@ export default {
     
     // Add software installed section
     tempDiv.innerHTML += `
-      <div class="section" style="margin-bottom: 0; padding-bottom: 0;">
+      <div class="section" style="margin-bottom: 0; padding-bottom: 0; margin-top: 2px;">
         <div class="section-title">Software Application Installed:</div>
-        <div class="info-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 5px; margin-bottom: 0;">
+        <div class="info-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 4px; margin-bottom: 0;">
           ${['Network Monitoring Tool', 'Firewall Software', 'VPN Client', 'Network Configuration Tool', 'Manageable Software', 'Anti Virus', 'Other'].map(item => {
             const isChecked = (formData.softwareInstalled || []).includes(item);
             return `
-              <div class="info-item" style="display: flex; align-items: center; margin-bottom: 2px;">
-                <div style="width: 14px; height: 14px; border: 1px solid #333; margin-right: 6px; display: flex; justify-content: center; align-items: center;">
+              <div class="info-item" style="display: flex; align-items: center; margin-bottom: 0px;">
+                <div style="width: 13px; height: 13px; border: 1px solid #333; margin-right: 5px; display: flex; justify-content: center; align-items: center;">
                   ${isChecked ? '<span style="font-weight: bold;">✓</span>' : ''}
                 </div>
-                <div class="info-value" style="font-size: 95%;">
+                <div class="info-value" style="font-size: 92%;">
                   ${item}${item === 'Other' && isChecked && formData.other_software ? ': ' + formData.other_software : ''}
                 </div>
               </div>
@@ -428,28 +440,25 @@ export default {
     `;
     
     // Add specifications section using the improved approach
-    // Generate network specifications
-    const fixedFooterDate = "12 February 2024";
     const generateNetworkSpecsSection = (specs) => {
       // Build network specifications array
       const networkSpecs = [];
       
-      // Add regular specs (excluding special handling cases)
+      // Add regular specs with more reliable processing
       for (const key in specs) {
-        if (specs[key] !== null && key !== 'WifiBand' && key !== 'DHCP' && 
-            !(key === 'IPv4' && specs.DHCP !== 'Yes') && 
-            !(key === 'IPv6' && specs.DHCP !== 'Yes') &&
-            !(key === 'Gateway' && specs.DHCP === 'Yes')) {
-          
+        // Skip null values and special cases that need custom handling
+        if (specs[key] !== null && specs[key] !== undefined && key !== 'WifiBand' && key !== 'DHCP') {
+          // Format key for display (e.g., "MacAddress" becomes "Mac Address")
           const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
           networkSpecs.push({ name: formattedKey, value: specs[key] });
         }
       }
       
-      // Add DHCP and related fields
+      // Handle DHCP and related fields
       if (specs.DHCP) {
         networkSpecs.push({ name: 'DHCP', value: specs.DHCP });
         
+        // Add DHCP-related fields
         if (specs.DHCP === 'Yes') {
           if (specs.IPv4) {
             networkSpecs.push({ name: 'IPv4', value: specs.IPv4 });
@@ -458,25 +467,28 @@ export default {
           if (specs.IPv6) {
             networkSpecs.push({ name: 'IPv6', value: specs.IPv6 });
           }
-        } else if (specs.DHCP === 'No' && specs.Gateway) {
-          networkSpecs.push({ name: 'Gateway', value: specs.Gateway });
         }
       }
       
-      // Add Wifi Band
+      // Always add Gateway regardless of DHCP setting
+      if (specs.Gateway) {
+        networkSpecs.push({ name: 'Gateway', value: specs.Gateway });
+      }
+      
+      // Add Wifi Band at the end
       if (specs.WifiBand) {
         networkSpecs.push({ name: 'Wifi Band', value: specs.WifiBand });
       }
       
       return `
-        <div class="section" style="margin-top: 0; padding-top: 0; page-break-before: avoid !important;">
-          <div class="section-title" style="margin-top: 0;">Network Specifications</div>
-          <table class="specs-table" style="margin-top: 5px; font-size: 95%; width: 100%;">
+        <div class="section" style="margin-top: 8px;">
+          <div class="section-title">Network Specifications</div>
+          <table class="specs-table" style="margin-top: 4px; font-size: 92%; width: 100%; page-break-inside: avoid;">
             <tbody>
               ${networkSpecs.map(spec => `
                 <tr style="height: 22px;">
-                  <th style="padding: 3px 5px; width: 20%;">${spec.name}</th>
-                  <td style="padding: 3px 5px;">${spec.value || ''}</td>
+                  <th style="padding: 4px 5px; width: 20%;">${spec.name}</th>
+                  <td style="padding: 4px 5px;">${spec.value || ''}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -488,43 +500,45 @@ export default {
     // Add the network specs section to the output
     tempDiv.innerHTML += generateNetworkSpecsSection(formData.desktopSpecs || {});
     
-    // Add signature section with page-break-inside: avoid to keep it on the same page
+    // Add signature section with a bit more space to fill the page
     tempDiv.innerHTML += `
-      <div class="signature-section" style="page-break-inside: avoid; margin-top: 10px;">
-        <table style="width: 100%; border-collapse: collapse; border: none;">
+      <div style="margin-top: 30px; page-break-inside: avoid;">
+        <table style="width: 100%; border-collapse: collapse; border: none; margin-bottom: 30px;">
           <tr>
-            <td style="width: 30%; text-align: center; padding-top: 50px; vertical-align: bottom;">
+        <td style="width: 30%; text-align: center; vertical-align: bottom; padding-top: 10px;">
+          <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 95%; margin: 0 auto;">
+            ${formData.technician ? formData.technician.toUpperCase() : ''}
+          </div>
+          <div style="border-top: 1px solid #333; display: inline-block; width: 80%; margin: 0 auto;">
+            <div style="margin-top: 5px; font-weight: bold;">Technician's Signature</div>
+          </div>
+        </td>
+            <td style="width: 30%; text-align: center; vertical-align: bottom; padding-top: 10px;">
               <div style="border-top: 1px solid #333; display: inline-block; width: 80%; margin: 0 auto;">
-                <div style="margin-top: 0px; font-weight: bold;">Technician's Signature</div>
+                <div style="margin-top: 5px; font-weight: bold;">User's Signature</div>
               </div>
             </td>
-            <td style="width: 30%; text-align: center; padding-top: 50px; vertical-align: bottom;">
+            <td style="width: 30%; text-align: center; vertical-align: bottom; padding-top: 10px;">
+              <div>${formatDate(formData.date || new Date())}</div>
               <div style="border-top: 1px solid #333; display: inline-block; width: 80%; margin: 0 auto;">
-                <div style="margin-top: 0px; font-weight: bold;">User's Signature</div>
-              </div>
-            </td>
-            <td style="width: 30%; text-align: center; padding-top: 50px; vertical-align: bottom;">
-              <div style="border-top: 1px solid #333; display: inline-block; width: 80%; margin: 0 auto;">
-                <div style="margin-top: 0px; font-weight: bold;">Date</div>
+                <div style="margin-top: 5px; font-weight: bold;">Date</div>
               </div>
             </td>
           </tr>
         </table>
-      </div>
-      
-       <hr style="border: 1px solid #000; margin: 0;">
-       
-        <div class="footer" style="display: block;">
-        <table style="width: 100%; border: none;">
-        <tr>
-          <td style="width: 25%; text-align: left;">CMU-F-4-DTO-002</td>
-          <td style="width: 30%; text-align: center;">${fixedFooterDate}</td>
-          <td style="width: 25%; text-align: right;">Rev. 1</td>
-          <td style="width: 20%; text-align: right;">Page 1 of 2</td>
-        </tr>
-      </table>
-    </div>
-    `;
+        
+        <!-- Footer -->
+        <div style="border-top: 1px solid #999; padding-top: 10px; margin-top: 40px;">
+          <table style="width: 100%; border: none;">
+            <tr>
+              <td style="width: 25%; text-align: left;">CMU-F-4-DTO-002</td>
+              <td style="width: 30%; text-align: center;">${fixedFooterDate}</td>
+              <td style="width: 25%; text-align: right;">Rev. 1</td>
+              <td style="width: 20%; text-align: right;">Page 1 of 1</td>
+            </tr>
+          </table>
+        </div>
+      </div>`;
     
     // Print the content
     document.body.appendChild(tempDiv);
@@ -544,6 +558,15 @@ export default {
       <head>
         <title>Network Preventive Maintenance Form</title>
         <style>${getPrintStyles()}</style>
+        <style>
+          /* Additional print-specific styles */
+          @media print {
+            .specs-table { page-break-inside: avoid !important; }
+            table.specs-table tr { page-break-inside: avoid !important; }
+            .section { page-break-inside: avoid !important; }
+            * { overflow: visible !important; }
+          }
+        </style>
       </head>
       <body>
         ${tempDiv.innerHTML}

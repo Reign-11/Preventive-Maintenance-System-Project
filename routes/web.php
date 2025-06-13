@@ -26,13 +26,17 @@ use App\Http\Controllers\AdminController;
 */
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    if (auth()->check()) {
+        return match (auth()->user()->role) {
+            'Admin' => redirect('/admin'),
+            'User' => redirect('/dashboard'),
+            default => redirect()->route('login'),
+        };
+    }
+
+    return redirect()->route('login');
 });
+
 
 Route::get('/', function () {  
     return redirect()->route('login');  
@@ -83,6 +87,8 @@ Route::middleware(['auth', 'verified', 'role:User'])->group(function () {
     Route::get('/addoffice', function () { return Inertia::render('AddOffice'); })->name('addoffice');
     Route::get('/addyear', function () { return Inertia::render('AddYear'); })->name('addyear');
     Route::get('/logs', function () { return Inertia::render('Logs'); })->name('logs');
+    Route::get('/summary', function () { return Inertia::render('Summary'); })->name('summary');
+    Route::get('/adduser', function () { return Inertia::render('AddUser'); })->name('adduser');
 
 
 });

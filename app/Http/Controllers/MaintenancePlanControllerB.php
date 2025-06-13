@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class MaintenancePlanControllerB extends Controller
 {
@@ -34,8 +36,13 @@ class MaintenancePlanControllerB extends Controller
 
     public function getYearsB()
     {
-        $years = DB::table('tbl_pmyear')->select('YrId', 'Name', 'Description')->get();
-        return response()->json($years);
+     
+    $years = DB::table('tbl_pmyear')
+                ->select('YrId', 'Name', 'Description')
+                ->where('Active', 1)
+                ->get();
+
+    return response()->json($years);
     }
 
     public function saveMaintenancePlanB(Request $request)
@@ -349,12 +356,14 @@ class MaintenancePlanControllerB extends Controller
                 'hardware_checks2' => 'nullable|integer',
     
                 'Summary' => 'required|string|max:255',
-    
+                'technician' => 'string|max:255',
+
     
             ]);
     
             // Prepare parameters for the stored procedure
             $parameters = [
+                
                 $validated['YrId'],
                 $validated['OffId'],
                 $validated['PlanId'],
@@ -382,15 +391,18 @@ class MaintenancePlanControllerB extends Controller
                 $validated['hardware_checks2'],
     
                 $validated['Summary'],
-    
+                $validated['technician'],
+
             ];
     
             // Log the parameters
             \Log::info('Parameters passed to InsertChecklist: ', $parameters);
     
             // Call Stored Procedure
-            DB::statement("CALL InsertChecklist(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
-    
+            DB::statement("CALL InsertChecklist(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
+
+            self::recordLogs('Submitted  DATA CENTER Checklist   in SET B  ');
+
             return response()->json([
                 'message' => 'Data inserted successfully',
             ]);
@@ -409,7 +421,7 @@ class MaintenancePlanControllerB extends Controller
         $months = DB::select('CALL GetMonthsWithData(?,?,?)', [$PlanId, $departmentId, $OffId]);
         return response()->json($months);
     }
-    public function getTechnicians()
+    public function getTechnician()
     {
         $technicians = DB::table('tbl_technician')
             ->where('is_Active', 1)
@@ -419,4 +431,17 @@ class MaintenancePlanControllerB extends Controller
 
         return response()->json($technicians);
     }
+
+    public static function recordLogs($action, $guard = null)
+{
+    $user = $guard ? auth($guard)->user() : auth()->user();
+    $name = $user ? $user->name : 'Guest';
+
+    DB::statement('CALL AddLog(?, ?, ?)', [
+        $name,
+        $action,
+        now()
+    ]);
+}
+
 }

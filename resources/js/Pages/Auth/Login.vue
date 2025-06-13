@@ -7,6 +7,8 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
+import axios from 'axios';
+axios.defaults.withCredentials = true;
 
 defineProps({
     canResetPassword: {
@@ -72,14 +74,23 @@ onMounted(() => {
     setTimeout(preloadPages, 1000);
 });
 
-const submit = () => {
-    // Submit login form - the redirect is handled on the backend
+const submit = async () => {
+  try {
+    await axios.get('/sanctum/csrf-cookie');
+
     form.post(route('login'), {
-        onFinish: () => form.reset('password'),
-        preserveScroll: true,
-        preserveState: true,
+      onFinish: () => form.reset('password'),
+      preserveScroll: true,
+      preserveState: true,
     });
+  } catch (error) {
+    console.error('Error getting CSRF cookie:', error);
+    
+  }
+  
 };
+
+
 </script>
 
 <template>

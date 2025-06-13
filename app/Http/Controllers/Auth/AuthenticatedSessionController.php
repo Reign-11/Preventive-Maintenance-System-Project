@@ -28,30 +28,41 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-public function store(Request $request)
-{
-    $credentials = $request->only('email', 'password');
-
-    if (Auth::attempt($credentials, $request->filled('remember'))) {
-        $request->session()->regenerate();
-
-        $user = Auth::user();
-
-        // Clear session just in case
-        session()->forget('url.intended');
-
-        // Redirect based on user role
-        if ($user->role === 'Admin') {
-            return redirect()->route('admin');
+    public function store(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+    
+        if (Auth::attempt($credentials, $request->filled('remember'))) {
+            $request->session()->regenerate();
+    
+            $user = Auth::user();
+    
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Login successful',
+                    'user' => $user,
+                ]);
+            }
+    
+            // Fallback for traditional login
+            if ($user->role === 'Admin') {
+                return redirect()->route('admin');
+            }
+    
+            return redirect()->route('dashboard');
         }
-
-        return redirect()->route('dashboard');
+    
+        // Return JSON error if it's an API request
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
+    
+        return back()->withErrors([
+            'email' => 'These credentials do not match our records.',
+        ]);
     }
-
-    return back()->withErrors([
-        'email' => 'These credentials do not match our records.',
-    ]);
-}
     /**
      * Destroy an authenticated session.
      */

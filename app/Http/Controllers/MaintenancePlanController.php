@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\File; 
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class MaintenancePlanController extends Controller
 {
@@ -38,11 +39,15 @@ class MaintenancePlanController extends Controller
         }
     }
 
-    public function getYears()
-    {
-        $years = DB::table('tbl_pmyear')->select('YrId', 'Name', 'Description')->get();
-        return response()->json($years);
-    }
+   public function getYears()
+{
+    $years = DB::table('tbl_pmyear')
+                ->select('YrId', 'Name', 'Description')
+                ->where('Active', 1)
+                ->get();
+
+    return response()->json($years);
+}
 
     public function saveMaintenancePlan(Request $request)
     {
@@ -181,6 +186,12 @@ class MaintenancePlanController extends Controller
                 $validated['oldCatId'],
                 $validated['newYrId']
             ]);
+            $yrname = DB::table('tbl_pmyear')
+            ->where('YrId', $validated['newYrId'])
+            ->value('Name'); // or 'yrname' based on your actual column
+    
+        // Log with the year name
+        self::recordLog("Duplicated the data in Category 1 for year: {$yrname}");
 
             return response()->json([
                 'message' => 'Premain plan details duplicated successfully!'
@@ -194,15 +205,17 @@ class MaintenancePlanController extends Controller
         }
     }
 
-
     public function detach($id)
     {
         DB::table('tbl_premainplan_details')
             ->where('PlanId', $id)
-            ->update(['detached' => 0]); 
+            ->update(['detached' => 0]);
+    
+        self::recordLog('Detached Office In The Category 1');
+    
         return response()->json(['message' => 'Plan detached successfully']);
     }
-
+    
 
  
 
@@ -235,8 +248,8 @@ class MaintenancePlanController extends Controller
             Log::info('Office Data:', ['data' => $office]);
     
             // Fetch departments using the stored procedure
-            $departmentData = DB::select("CALL GetDepartmentsByOffice(?)", [$officeId]); 
-            Log::info("📢 Raw departments Data Before Filtering:", $departmentData  );
+            $departmentData = DB::select("CALL GetDepartmentsByOffice(?,?,?)", [$officeId, $PlanId, $yrId]);
+                Log::info("📢 Raw departments Data Before Filtering:", $departmentData  );
 
             // Filter departments based on PlanId, YrId, and OfficeId
             $departments = array_filter($departmentData, function ($department) use ($PlanId, $yrId, $officeId,$categoryId) {
@@ -391,6 +404,21 @@ public function addEmployee(Request $request)
             $validatedData['deptId'] ?? 0
         ]);
 
+        $department_name = null;
+        if (!empty($validatedData['deptId'])) {
+    $dept = DB::table('tbl_department')->where('deptId', $validatedData['deptId'])->first();
+    $department_name = $dept ? $dept->department_name : 'Unknown';
+        }
+
+        $logMessage = 'Submitted Employee in Set A';
+        if ($department_name) {
+    $logMessage .= ' - Department: ' . $department_name;
+        }
+
+        self::recordLog($logMessage);
+
+
+
         return response()->json(['message' => 'Employee added successfully'], 201);
     } catch (\Exception $e) {
         return response()->json(['error' => 'Something went wrong', 'details' => $e->getMessage()], 500);
@@ -522,11 +550,15 @@ public function employeeChecklist(Request $request)
         // Call Stored Procedure
         DB::statement("CALL InsertPreventiveMaintenanceChecklist(?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
 
+        self::recordLog('Submitted Checklist First Page in SET A');
+
+        
         // Get the saved record using the ticket number
         $savedData = DB::table('tbl_preventive_maintainance')
             ->where('ticketnumber', $generatedTicketNumber)
             ->first();
 
+    
         return response()->json([
             'message' => 'Checklist submitted successfully',
             'data' => $savedData
@@ -691,6 +723,7 @@ public function insertChecklist(Request $request)
             
             $validated['Summary'],
         ]);
+        self::recordLog('Submitted Checklist Second Page in SET A');
 
         return response()->json(['message' => 'Checklist inserted successfully.'], 200);
     } catch (\Exception $e) {
@@ -874,9 +907,18 @@ public function departmentChecklist(Request $request)
         // Call the Stored Procedure
         DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
 
+        self::recordLog('Submitted First  Page in SET A With No Specified Employee');
+
         $savedData = DB::table('tbl_preventive_maintainance')
         ->where('ticketnumber', $generatedTicketNumber)
         ->first();
+
+        $user = Auth::user(); 
+        DB::statement("CALL AddLog(?, ?, ?)", [
+            $user->name ?? 'Unknown User',
+            'Submitted Maintenance Plan for Ticket ' . $generatedTicketNumber,
+            now()
+        ]);
 
     return response()->json([
         'message' => 'Checklist submitted successfully',
@@ -951,9 +993,14 @@ public function updatePreventiveMaintenance(Request $request, $mainId)
         'ups_details' => 'nullable|string',
         'printer_details' => 'nullable|string',
         'network_mac_ip_details' => 'nullable|string',
+        'technician' => 'nullable|string|max:255',
+
+
     ]);
 
-    DB::statement('CALL UpdatePreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+ 
+
+    DB::statement('CALL UpdatePreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
         $validated['mainId'],
         $validated['employeeId'],
         $validated['deptId'],
@@ -995,7 +1042,10 @@ public function updatePreventiveMaintenance(Request $request, $mainId)
         $validated['ups_details'],
         $validated['printer_details'],
         $validated['network_mac_ip_details'],
+        $validated['technician'],
+
     ]);
+    self::recordLog('Updated First Page in SET A With Add Specific Employee');
 
     return response()->json(['message' => 'Preventive maintenance record updated successfully.']);
 }
@@ -1060,6 +1110,19 @@ public function getTechnicians()
 
     return response()->json($technicians);
 }
+
+public static function recordLog($action, $guard = null)
+{
+    $user = $guard ? auth($guard)->user() : auth()->user();
+    $name = $user ? $user->name : 'Guest';
+
+    DB::statement('CALL AddLog(?, ?, ?)', [
+        $name,
+        $action,
+        now()
+    ]);
+}
+
 }
 
 

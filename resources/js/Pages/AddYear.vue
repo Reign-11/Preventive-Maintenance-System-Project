@@ -1,124 +1,94 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, reactive,onUpdated,nextTick} from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { useForm } from '@inertiajs/vue3';
+import { Head,  } from '@inertiajs/vue3';
+import axios from 'axios';
+import feather from "feather-icons";
 
-// Sample data
-const years = ref([
-    { id: 1, year: '2025', description: 'Fiscal Year 2025', is_active: true, date_start: '2025-01-01', date_end: '2025-12-31' },
-    { id: 2, year: '2024', description: 'Fiscal Year 2024', is_active: false, date_start: '2024-01-01', date_end: '2024-12-31' },
-    { id: 3, year: '2023', description: 'Fiscal Year 2023', is_active: false, date_start: '2023-01-01', date_end: '2023-12-31' },
-]);
+let modalInstance = null;
+
 
 // Form for adding a new year
-const form = useForm({
-    year: '',
+const form = reactive({
+    name: '',
     description: '',
-    is_active: false,
-    date_start: '',
-    date_end: '',
+   
 });
 
-// Modal animation and state management
-const showModal = ref(false);
-const modalClass = ref('');
-const isSubmitting = ref(false);
+const pmyear = ref([]);
 
-// Form validation errors
-const errors = ref({
-    year: '',
-    description: '',
-});
-
-// Automatically set the date range when year changes
-watch(() => form.year, (newYear) => {
-    if (newYear && !isNaN(newYear)) {
-        form.date_start = `${newYear}-01-01`;
-        form.date_end = `${newYear}-12-31`;
-    }
-});
-
-// Function to validate form inputs
-const validateForm = () => {
-    let isValid = true;
-    errors.value = {
-        year: '',
-        description: ''
-    };
-    
-    if (!form.year.trim()) {
-        errors.value.year = 'Year is required';
-        isValid = false;
-    } else if (!/^\d{4}$/.test(form.year)) {
-        errors.value.year = 'Please enter a valid 4-digit year';
-        isValid = false;
-    }
-    
-    if (!form.description.trim()) {
-        errors.value.description = 'Description is required';
-        isValid = false;
-    }
-    
-    return isValid;
+const fetchYears = async () => {
+  try {
+    const response = await axios.get('/api/getYears');
+    pmyear.value = response.data;
+    console.log("Fetched:", pmyear.value);
+  } catch (error) {
+    console.error("Error fetching  and departments:", error);
+  }
 };
 
+onMounted(fetchYears);
+
+// Modal animation and state management
+const editYrModal = ref(false);
+
+const showModal = ref(false);
+const isSubmitting = ref(false);
+const modalClass = computed(() => {
+    return {
+        'show-modal': showModal.value
+    };
+})
+// Form validation errors
+
+const editModal = (YrId) => {
+  const year = pmyear.value.find(y => y.YrId === YrId);
+  if (year) {
+    form.name = year.Name;
+    form.description = year.Description;
+
+    selectedYear.value = { ...year };
+    // Show the modal
+    const modalElement = document.getElementById('editModal');
+    const modalInstance = new bootstrap.Modal(modalElement);
+    modalInstance.show();
+  }
+};
+
+
+
+const selectedYear = ref({
+  YrId: '',
+  Name: '',
+  Description: '',
+
+});
 // Function to open the modal with animation
 const openModal = () => {
     showModal.value = true;
-    setTimeout(() => {
-        modalClass.value = 'show-modal';
-    }, 50);
-    // Set focus on first input after modal opens
-    setTimeout(() => {
-        document.getElementById('year')?.focus();
-    }, 300);
 };
 
-// Function to close the modal with animation
 const closeModal = () => {
-    modalClass.value = '';
-    setTimeout(() => {
-        showModal.value = false;
-        form.reset();
-        errors.value = { year: '', description: '' };
-    }, 300);
+    showModal.value = false;
 };
 
 // Function to handle form submission
-const submitForm = () => {
-    if (!validateForm()) return;
-    
-    isSubmitting.value = true;
-    
-    // Set dates if not already set
-    if (!form.date_start || !form.date_end) {
-        form.date_start = `${form.year}-01-01`;
-        form.date_end = `${form.year}-12-31`;
-    }
-    
-    form.post(route('admin.year.store'), {
-        onSuccess: () => {
-            //typically refresh the data here from the server
-            // For now, we'll simulate adding to our sample data
-            years.value.push({
-                id: years.value.length + 1,
-                year: form.year,
-                description: form.description,
-                is_active: form.is_active,
-                date_start: form.date_start,
-                date_end: form.date_end
-            });
-            isSubmitting.value = false;
-            closeModal(); // Close modal after successful submission
-            // Show success notification
-            showNotification('Year added successfully!');
-        },
-        onError: () => {
-            isSubmitting.value = false;
-        }
-    });
-};
+const submitForm = async () => {
+  try {
+    const response = await axios.post('/api/add-year', {
+      Name: form.name,
+      Description: form.description
+    })
+
+    alert(response.data.message)
+    closeModal()
+
+    // Optionally: emit event or reload data here
+  } catch (error) {
+    console.error("Error adding year:", error)
+    alert(error.response?.data?.error || "Submission failed.")
+  }
+}
 
 // Notification system
 const notification = ref({ show: false, message: '', type: 'success' });
@@ -182,6 +152,58 @@ onUnmounted(() => {
     window.removeEventListener('keydown', handleKeyDown);
     window.removeEventListener('mousedown', handleClickOutside);
 });
+
+
+const toggleActiveStatus = (year) => {
+  axios.post("/api/toggleYearStatus", { id: year.YrId })
+    .then((response) => {
+      console.log(response.data.message);
+      year.Active = year.Active === 1 ? 0 : 1; // Toggle active
+      nextTick(() => {
+        feather.replace(); // Refresh icons
+      });
+    })
+    .catch((error) => {
+      console.error("Error toggling status:", error);
+    });
+};
+
+onMounted(() => {
+  feather.replace();
+});
+
+onUpdated(() => {
+  feather.replace();
+});
+
+const updateYear = async () => {
+  try {
+    const payload = {
+      Name: form.name,
+      Description: form.description,
+    };
+
+    await axios.put(`/api/updateYr/${selectedYear.value.YrId}`, payload);
+
+    const index = pmyear.value.findIndex(y => y.YrId === selectedYear.value.YrId);
+    if (index !== -1) {
+      pmyear.value[index] = { YrId: selectedYear.value.YrId, ...payload };
+    }
+
+    if (modalInstance) {
+      modalInstance.hide();
+    }
+
+    alert("✅ Year updated successfully!");
+  } catch (error) {
+    console.error("❌ Update failed:", error);
+    if (error.response?.status === 422) {
+      console.error("Validation error:", error.response.data.errors);
+    }
+  }
+};
+
+
 </script>
 
 <template>
@@ -221,37 +243,28 @@ onUnmounted(() => {
                                 <tr>
                                     <th>Year</th>
                                     <th>Description</th>
-                                    <th>Status</th>
                                     <th>Actions</th>
+                                    <th>Status</th>
+
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr v-for="year in years" :key="year.id">
-                                    <td>{{ year.year }}</td>
-                                    <td>{{ year.description }}</td>
-                                    <td>
-                                        <span 
-                                            class="badge" 
-                                            :class="year.is_active ? 'bg-success' : 'bg-secondary'"
-                                        >
-                                            {{ year.is_active ? 'Active' : 'Inactive' }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-sm btn-info me-1">
-                                                <i data-feather="edit" style="width: 16px; height: 16px;"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-success me-1" v-if="!year.is_active">
-                                                <i data-feather="check" style="width: 16px; height: 16px;"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-danger">
-                                                <i data-feather="trash-2" style="width: 16px; height: 16px;"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
+                           <tbody>
+                        <tr v-for="year in pmyear" :key="year.YrId">
+                              <td>{{ year.Name }}</td>
+                              <td>{{ year.Description }}</td>
+                              <td> <div class="btn-group" role="group">
+                              <button type="button"class="btn btn-sm btn-info me-1"@click="editModal(year.YrId)">
+                                <i data-feather="edit" style="width: 16px; height: 16px;"></i></button>
+                            <button type="button" class="btn btn-sm":class="year.Active ? 'btn-success' : 'btn-secondary'"@click="toggleActiveStatus(year)">
+                                 <i :data-feather="year.Active ? 'check-circle' : 'x-circle'" style="width: 16px; height: 16px;"></i>
+                            </button>  
+                            </div>
+                              </td>
+                              <td> <span class="badge ms-2" :class="year.Active ? 'bg-success' : 'bg-secondary'">
+                                {{ year.Active ? 'Active' : 'Inactive' }}</span>
+                                </td>
+                         </tr>
+                         </tbody>
                         </table>
                     </div>
                 </div>
@@ -272,21 +285,19 @@ onUnmounted(() => {
                             <button type="button" class="btn-close btn-close-white" @click="closeModal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form @submit.prevent="submitForm" novalidate>
+                            
                                 <div class="mb-3">
-                                    <label for="year" class="form-label">Year <span class="text-danger">*</span></label>
+                                    <label for="year" class="form-label">Year Name <span class="text-danger">*</span></label>
                                     <input 
                                         type="text" 
                                         class="form-control" 
-                                        :class="{ 'is-invalid': errors.year }" 
+
                                         id="year" 
-                                        v-model="form.year" 
+                                        v-model="form.name" 
                                         placeholder="e.g. 2025"
                                         required
                                     >
-                                    <div v-if="errors.year" class="invalid-feedback">
-                                        {{ errors.year }}
-                                    </div>
+                                   
                                     <small class="form-text text-muted">Enter a 4-digit year (e.g. 2025)</small>
                                 </div>
                                 <div class="mb-3">
@@ -294,27 +305,12 @@ onUnmounted(() => {
                                     <input 
                                         type="text" 
                                         class="form-control" 
-                                        :class="{ 'is-invalid': errors.description }" 
+                               
                                         id="description" 
                                         v-model="form.description" 
                                         placeholder="e.g. Fiscal Year 2025"
-                                        required
-                                    >
-                                    <div v-if="errors.description" class="invalid-feedback">
-                                        {{ errors.description }}
-                                    </div>
-                                </div>
-                                <div class="form-check mb-3">
-                                    <input 
-                                        type="checkbox" 
-                                        class="form-check-input" 
-                                        id="is_active" 
-                                        v-model="form.is_active"
-                                    >
-                                    <label class="form-check-label" for="is_active">Set as Active Year</label>
-                                    <div class="form-text">Setting this year as active will automatically deactivate other years.</div>
-                                </div>
-                                
+                                        required ></div>
+                        
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-outline-secondary" @click="closeModal">
                                         <i data-feather="x" class="me-1"></i>
@@ -322,15 +318,9 @@ onUnmounted(() => {
                                     </button>
                                     <button 
                                         type="submit" 
-                                        class="btn btn-success"
-                                        :disabled="isSubmitting"
-                                    >
-                                        <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                                        <i v-else data-feather="save" class="me-1"></i>
-                                        {{ isSubmitting ? 'Saving...' : 'Save Year' }}
-                                    </button>
+                                        class="btn btn-success" @click="submitForm">Submit </button>
                                 </div>
-                            </form>
+                      
                         </div>
                     </div>
                 </div>
@@ -338,6 +328,35 @@ onUnmounted(() => {
             <!-- Modal Backdrop -->
             <div class="modal-backdrop" v-if="showModal"></div>
         </div>
+
+
+        <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editYrModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-white">
+        <h5 class="modal-title" id="editYrModalLabel">Edit User</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+   <div class="modal-body">
+  <form @submit.prevent="updateUser">
+    <div class="mb-3">
+      <label for="editName" class="form-label">Name</label>
+      <input  type="text" id="editName" class="form-control" v-model="form.name" required />
+    </div>
+    <div class="mb-3">
+      <label for="editDescription" class="form-label">Description</label>
+      <input  type="text" id="editDescription" class="form-control"v-model="form.description" required/>
+    </div>
+    <div class="modal-footer">
+      <button type="button"class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+      <button type="submit" class="btn btn-warning" @click="updateYear">Update</button>
+    </div>
+  </form>
+</div>
+      
+    </div>
+  </div>
+</div>
     </AdminLayout>
 </template>
 

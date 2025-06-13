@@ -36,6 +36,7 @@ onMounted(fetchOffices);
 // Form for adding a new office with validation
 const form = reactive({
     office: '',
+    details:'',
     department: ['']    ,
     code: '',
 });
@@ -59,6 +60,8 @@ const submitForm = async () => {
         await axios.post('/api/AddOffice', {
             OfficeName: form.office,
             Code: form.code,
+            Details: form.details,
+
             Departments: form.department, // this must be an array
         });
 
@@ -155,6 +158,7 @@ onUnmounted(() => {
                             <thead>
                                 <tr>
                                     <th>Office/College</th>
+                                    <th>Details</th>
                                     <th>Department</th>
                                     <th>Code</th>
                                     <th>Actions</th>
@@ -163,6 +167,8 @@ onUnmounted(() => {
                             <tbody>
                                 <tr v-for="item in officesWithDepartments" :key="item.deptId">
                                     <td class="px-4 py-2 border">{{ item.OfficeName }}</td>
+                                    <td class="px-4 py-2 border">{{ item.Details }}</td>
+
                                     <td class="px-4 py-2 border">{{ item.department_name }}</td>
                                     <td class="px-4 py-2 border">{{ item.code }}</td>
                                     <td>
@@ -183,102 +189,120 @@ onUnmounted(() => {
             </div>
         </div>
 
-        <!-- Enhanced Add Office Modal -->
+      <!-- Enhanced Add Office Modal -->
         <div class="modal-wrapper" :class="{ 'active': showModal }">
             <div class="modal custom-modal" :class="modalClass" tabindex="-1" 
                 aria-labelledby="addOfficeModalLabel" aria-modal="true" role="dialog">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header bg-success text-white">
-                            <h5 class="modal-title" id="addOfficeModalLabel">
-                                Add New Office
-                            </h5>
+                            <h5 class="modal-title" id="addOfficeModalLabel">Add New Office</h5>
                             <button type="button" class="btn-close btn-close-white" @click="closeModal" aria-label="Close"></button>
                         </div>
 
-                        <div class="modal-body">
-                         
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="office" class="form-label">Office/College <span class="text-danger">*</span></label>
-                                            <input 
-                                                type="text" 
-                                                class="form-control" 
-                                             
-                                                id="office" 
-                                                v-model="form.office" 
-                                                placeholder="Enter office name"
-                                                required
-                                            >
-                                         
-                                        </div>
-                                    </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <!-- Office/College -->
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="office" class="form-label">Office/College <span class="text-danger">*</span></label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="office" 
+                                    v-model="form.office" 
+                                    placeholder="Enter office name"
+                                    required
+                                >
+                            </div>
+                        </div>
 
-                                        <div class="col-md-4" v-for="(dept, index) in form.department" :key="index">
-                                        <div class="form-group">
-                                            <label :for="'department' + index" class="form-label">
-                                                Department {{ index + 1 }} <span class="text-danger">*</span>
-                                            </label>
-                                            <div class="input-group">
-                                                <input 
-                                                    type="text"
-                                                    class="form-control"
-                                                    :id="'department' + index"
-                                                    v-model="form.department[index]"
-                                                    placeholder="Enter department name"
-                                                    required
-                                                />
-                                                <button 
-                                                    type="button" 
-                                                    class="btn btn-danger" 
-                                                    @click="removeDepartment(index)" 
-                                                    v-if="form.department.length > 1"
-                                                >
-                                                    &times;
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Add New Department Button -->
-                                    <div class="col-md-12 mt-2">
-                                        <button type="button" class="btn btn-sm btn-outline-primary" @click="addDepartment">
-                                            + Add Department
-                                        </button>
-                                    </div>
-
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="code" class="form-label">Code <span class="text-danger">*</span></label>
-                                            <input 
-                                                type="text" 
-                                                class="form-control" 
-                                          
-                                                id="code" 
-                                                v-model="form.code"
-                                                placeholder="Format: XXX-000" 
-                                                required
-                                            >
-                                       
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-outline-secondary" @click="closeModal">
-                                        <i data-feather="x" class="me-1"></i>
-                                        Cancel
-                                    </button>
+                        <!-- Departments -->
+                        <div 
+                            class="col-md-4" 
+                            v-for="(dept, index) in form.department" 
+                            :key="index"
+                        >
+                            <div class="form-group">
+                                <label :for="'department' + index" class="form-label">
+                                    Department {{ index + 1 }} <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input 
+                                        type="text"
+                                        class="form-control"
+                                        :id="'department' + index"
+                                        v-model="form.department[index]"
+                                        placeholder="Enter department name"
+                                        required
+                                    />
                                     <button 
-                                        type="submit"  class="btn btn-success"  @click="submitForm">Submit</button>
+                                        type="button" 
+                                        class="btn btn-danger" 
+                                        @click="removeDepartment(index)" 
+                                        v-if="form.department.length > 1"
+                                    >
+                                        &times;
+                                    </button>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Add Department Button -->
+                        <div class="col-md-12 mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" @click="addDepartment">
+                                + Add Department
+                            </button>
+                        </div>
+
+                        <!-- Code -->
+                        <div class="col-md-4 mt-3">
+                            <div class="form-group">
+                                <label for="code" class="form-label">Code <span class="text-danger">*</span></label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="code" 
+                                    v-model="form.code"
+                                    placeholder="Format: XXX-000" 
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Details -->
+                        <div class="col-md-4 mt-3">
+                            <div class="form-group">
+                                <label for="details" class="form-label">Details <span class="text-danger">*</span></label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="details" 
+                                    v-model="form.details"
+                                    placeholder="Enter details"
+                                    required
+                                >
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" @click="closeModal">
+                        <i data-feather="x" class="me-1"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success" @click="submitForm">
+                        Submit
+                    </button>
+                </div>
             </div>
-            <!-- Modal Backdrop -->
-            <div class="modal-backdrop" v-if="showModal"></div>
         </div>
+    </div>
+
+    <!-- Modal Backdrop -->
+    <div class="modal-backdrop" v-if="showModal"></div>
+</div>
+
     </AdminLayout>
 </template>
 

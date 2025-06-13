@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class MaintenancePlanControllerC extends Controller
 {
@@ -35,8 +37,13 @@ class MaintenancePlanControllerC extends Controller
 
     public function getYearsC()
     {
-        $years = DB::table('tbl_pmyear')->select('YrId', 'Name', 'Description')->get();
-        return response()->json($years);
+       
+    $years = DB::table('tbl_pmyear')
+                ->select('YrId', 'Name', 'Description')
+                ->where('Active', 1)
+                ->get();
+
+    return response()->json($years);
     }
 
     public function saveMaintenancePlanC(Request $request)
@@ -328,12 +335,14 @@ public function checklistC(Request $request)
         'vlan_details' => 'nullable|string',
         'wifiband_details' => 'nullable|string|max:25',
         'dhcp_details' => 'nullable|string|max:255',
-        'gateway_details' => 'nullable|string|max:255',
+        'gateway_details' => '  |string|max:255',
         'ipv4_details' => 'nullable|string|max:255',
         'ipv6_details' => 'nullable|string|max:25',
+        'technician' => 'string|max:25',
+
     ]);
 
-    DB::statement('CALL InsertPremainPlanSetC(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+    DB::statement('CALL InsertPremainPlanSetC(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
         $validated['Offid'],
         $validated['deptId'],
         $validated['YrId'],
@@ -367,8 +376,22 @@ public function checklistC(Request $request)
         $validated['gateway_details'],
         $validated['ipv4_details'],
         $validated['ipv6_details'],
+        $validated['technician'],
+
     ]);
+    self::recordLogs('Submitted  NETWORK Checklist   in SET C  ');
 
     return response()->json(['message' => 'Record inserted successfully.']);
+}
+public static function recordLogs($action, $guard = null)
+{
+    $user = $guard ? auth($guard)->user() : auth()->user();
+    $name = $user ? $user->name : 'Guest';
+
+    DB::statement('CALL AddLog(?, ?, ?)', [
+        $name,
+        $action,
+        now()
+    ]);
 }
 }

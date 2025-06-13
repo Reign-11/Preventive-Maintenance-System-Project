@@ -1,151 +1,110 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, onUpdated, nextTick } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head } from '@inertiajs/vue3';
+import axios from 'axios';
+import feather from "feather-icons";
 
-// Sample data structure - replace with your actual API call
-const logs = ref([]);
 const loading = ref(true);
-const searchQuery = ref('');
-const filterType = ref('all');
-const currentPage = ref(1);
-const totalPages = ref(1);
-const itemsPerPage = ref(10);
-const sortField = ref('timestamp');
-const sortDirection = ref('desc');
-const dateRange = ref({
-    start: '',
-    end: ''
-});
+const pmlogs = ref([]);
 
-// Log types for filtering
-const logTypes = [
-    { value: 'all', label: 'All Logs' },
-    { value: 'info', label: 'Information' },
-    { value: 'warning', label: 'Warning' },
-    { value: 'error', label: 'Error' },
-    { value: 'success', label: 'Success' }
-];
-
-// Function to fetch logs
+// Function to fetch logs (simple - no filters, DataTables will handle filtering)
 const fetchLogs = async () => {
     loading.value = true;
     try {
-        // Replace with your actual API endpoint
-        const response = await fetch('/api/logs', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                page: currentPage.value,
-                itemsPerPage: itemsPerPage.value,
-                search: searchQuery.value,
-                type: filterType.value,
-                sortField: sortField.value,
-                sortDirection: sortDirection.value,
-                dateRange: dateRange.value
-            })
-        });
+        const response = await axios.get('/api/getLogs');
+        pmlogs.value = response.data;
+        console.log("Fetched logs:", pmlogs.value);
         
-        const data = await response.json();
-        logs.value = data.logs;
-        totalPages.value = data.totalPages;
+        // Initialize DataTable after data is loaded
+        nextTick(() => {
+            initializeDataTable();
+        });
     } catch (error) {
-        console.error('Error fetching logs:', error);
+        console.error("Error fetching logs:", error);
+        pmlogs.value = [];
     } finally {
         loading.value = false;
     }
 };
 
-// Sort function
-const sortBy = (field) => {
-    if (sortField.value === field) {
-        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
-    } else {
-        sortField.value = field;
-        sortDirection.value = 'asc';
+// Initialize DataTable with search and filtering
+const initializeDataTable = () => {
+    // Destroy existing DataTable if it exists
+    if ($.fn.DataTable.isDataTable('#logsTable')) {
+        $('#logsTable').DataTable().destroy();
     }
-    fetchLogs();
+    
+    // Initialize new DataTable
+    setTimeout(() => {
+        if (typeof $ !== 'undefined' && $.fn.DataTable) {
+            $('#logsTable').DataTable({
+                responsive: true,
+                ordering: true,
+                searching: true, // This enables the search box
+                paging: true,
+                pageLength: 10,
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+                order: [[2, 'desc']], // Order by date column (index 2) descending
+                columnDefs: [
+                    {
+                        targets: 2, // Date column
+                        type: 'date'
+                    }
+                ],
+                language: {
+                    search: "Search logs:",
+                    searchPlaceholder: "Search by name, action, or date...",
+                    emptyTable: "No logs found",
+                    info: "Showing _START_ to _END_ of _TOTAL_ logs",
+                    infoEmpty: "Showing 0 to 0 of 0 logs",
+                    infoFiltered: "(filtered from _MAX_ total logs)"
+                }
+            });
+            
+            // Initialize feather icons
+            feather.replace();
+        }
+    }, 100);
 };
 
-// Filter by log type
-const filterByType = (type) => {
-    filterType.value = type;
-    currentPage.value = 1;
-    fetchLogs();
-};
-
-// Search logs
-const handleSearch = () => {
-    currentPage.value = 1;
-    fetchLogs();
-};
-
-// Clear all filters
-const clearFilters = () => {
-    searchQuery.value = '';
-    filterType.value = 'all';
-    dateRange.value = { start: '', end: '' };
-    currentPage.value = 1;
-    fetchLogs();
-};
-
-// Date range filter
-const applyDateFilter = () => {
-    currentPage.value = 1;
-    fetchLogs();
-};
-
-// Pagination
-const changePage = (page) => {
-    currentPage.value = page;
-    fetchLogs();
-};
-
-// Get log type badge class
-const getLogTypeBadge = (type) => {
-    switch (type.toLowerCase()) {
-        case 'info':
-            return 'badge bg-info text-white';
-        case 'warning':
-            return 'badge bg-warning text-dark';
-        case 'error':
-            return 'badge bg-danger text-white';
-        case 'success':
-            return 'badge bg-success text-white';
-        default:
-            return 'badge bg-secondary text-white';
+// Format date for display
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    } catch (error) {
+        return dateString;
     }
 };
 
-// Format timestamp
-const formatDate = (timestamp) => {
-    return new Date(timestamp).toLocaleString();
-};
-
-// Mock data for initial display
-const initializeMockData = () => {
-    logs.value = [
-        { id: 1, user: 'admin@example.com', action: 'User login', type: 'info', timestamp: '2025-05-15T08:23:44', details: 'Successful login' },
-        { id: 2, user: 'john@example.com', action: 'Add Year', type: 'success', timestamp: '2025-05-15T10:15:22', details: 'Added fiscal year 2025' },
-        { id: 3, user: 'jane@example.com', action: 'Failed login attempt', type: 'warning', timestamp: '2025-05-14T16:45:30', details: 'Invalid credentials' },
-        { id: 4, user: 'admin@example.com', action: 'System update', type: 'info', timestamp: '2025-05-14T12:30:00', details: 'System updated to version 2.3.0' },
-        { id: 5, user: 'system', action: 'Database error', type: 'error', timestamp: '2025-05-13T22:18:05', details: 'Connection timeout during backup process' },
-    ];
-    totalPages.value = 3;
-    loading.value = false;
+// Refresh logs
+const refreshLogs = () => {
+    fetchLogs();
 };
 
 onMounted(() => {
-    // For development, use mock data
-    // In production, uncomment fetchLogs() and comment initializeMockData()
-    initializeMockData();
-    // fetchLogs();
-    
-    // Initialize feather icons if needed
-    if (typeof window.feather !== 'undefined') {
-        window.feather.replace();
+    fetchLogs();
+});
+
+onUpdated(() => {
+    feather.replace();
+});
+
+onUnmounted(() => {
+    // Clean up DataTable when component unmounts
+    if ($.fn.DataTable.isDataTable('#logsTable')) {
+        $('#logsTable').DataTable().destroy();
     }
 });
 </script>
@@ -154,160 +113,50 @@ onMounted(() => {
     <Head title="System Logs" />
 
     <AdminLayout>
-        <div class="logs-container">
-            <div class="card shadow-sm">
-                <div class="card-header green-header d-flex justify-content-between align-items-center">
-                    <h1 class="h3 mb-0 text-white">System Logs</h1>
-                    <button @click="fetchLogs" class="btn btn-sm btn-light">
-                        <i data-feather="refresh-cw" class="feather-sm"></i> Refresh
+        <div class="container-fluid">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mt-2 mb-2 text-white">System Logs</h3>
+                    </div>
+                    <button 
+                        class="btn btn-light btn-sm" 
+                        @click="refreshLogs"
+                        :disabled="loading"
+                        title="Refresh logs"
+                    >
+                        <i data-feather="refresh-cw" class="feather-sm" :class="{ 'spin': loading }"></i>
+                        Refresh
                     </button>
                 </div>
                 
                 <div class="card-body">
-                    <!-- Filters -->
-                    <div class="row mb-3">
-                        <div class="col-md-4 mb-2">
-                            <div class="input-group">
-                                <input 
-                                    type="text" 
-                                    class="form-control" 
-                                    v-model="searchQuery" 
-                                    placeholder="Search logs..." 
-                                    @keyup.enter="handleSearch"
-                                >
-                                <div class="input-group-append">
-                                    <button class="btn btn-primary" type="button" @click="handleSearch">
-                                        <i data-feather="search" class="feather-sm"></i>
-                                    </button>
-                                </div>
-                            </div>
+                    <!-- Loading indicator -->
+                    <div v-if="loading" class="text-center py-4">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="sr-only">Loading logs...</span>
                         </div>
-                        
-                        <div class="col-md-3 mb-2">
-                            <select class="form-control" v-model="filterType" @change="filterByType(filterType)">
-                                <option v-for="type in logTypes" :key="type.value" :value="type.value">
-                                    {{ type.label }}
-                                </option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-4 mb-2">
-                            <div class="d-flex">
-                                <input 
-                                    type="date" 
-                                    class="form-control mr-1" 
-                                    v-model="dateRange.start" 
-                                    placeholder="Start Date"
-                                >
-                                <input 
-                                    type="date" 
-                                    class="form-control" 
-                                    v-model="dateRange.end" 
-                                    placeholder="End Date"
-                                >
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-1 mb-2 d-flex">
-                            <button class="btn btn-primary btn-sm mr-1" @click="applyDateFilter">
-                                <i data-feather="calendar" class="feather-sm"></i>
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm" @click="clearFilters">
-                                <i data-feather="x" class="feather-sm"></i>
-                            </button>
-                        </div>
+                        <p class="text-muted mt-2">Loading system logs...</p>
                     </div>
                     
                     <!-- Logs Table -->
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
+                    <div v-else class="table-responsive">
+                        <table id="logsTable" class="table table-striped table-bordered">
                             <thead>
                                 <tr>
-                                    <th @click="sortBy('id')" class="sortable">
-                                        ID
-                                        <i v-if="sortField === 'id'" 
-                                           :class="sortDirection === 'asc' ? 'feather-chevron-up' : 'feather-chevron-down'" 
-                                           data-feather="chevron-down"></i>
-                                    </th>
-                                    <th @click="sortBy('timestamp')" class="sortable">
-                                        Timestamp
-                                        <i v-if="sortField === 'timestamp'" 
-                                           :class="sortDirection === 'asc' ? 'feather-chevron-up' : 'feather-chevron-down'" 
-                                           data-feather="chevron-down"></i>
-                                    </th>
-                                    <th @click="sortBy('user')" class="sortable">
-                                        User
-                                        <i v-if="sortField === 'user'" 
-                                           :class="sortDirection === 'asc' ? 'feather-chevron-up' : 'feather-chevron-down'" 
-                                           data-feather="chevron-down"></i>
-                                    </th>
-                                    <th @click="sortBy('action')" class="sortable">
-                                        Action
-                                        <i v-if="sortField === 'action'" 
-                                           :class="sortDirection === 'asc' ? 'feather-chevron-up' : 'feather-chevron-down'" 
-                                           data-feather="chevron-down"></i>
-                                    </th>
-                                    <th @click="sortBy('type')" class="sortable">
-                                        Type
-                                        <i v-if="sortField === 'type'" 
-                                           :class="sortDirection === 'asc' ? 'feather-chevron-up' : 'feather-chevron-down'" 
-                                           data-feather="chevron-down"></i>
-                                    </th>
-                                    <th>Details</th>
+                                    <th>Name</th>
+                                    <th>Action</th>
+                                    <th>Date & Time</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-if="loading">
-                                    <td colspan="6" class="text-center py-4">
-                                        <div class="spinner-border text-primary" role="status">
-                                            <span class="sr-only">Loading...</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr v-else-if="logs.length === 0">
-                                    <td colspan="6" class="text-center py-4">
-                                        No logs found
-                                    </td>
-                                </tr>
-                                <tr v-for="log in logs" :key="log.id">
-                                    <td>{{ log.id }}</td>
-                                    <td>{{ formatDate(log.timestamp) }}</td>
-                                    <td>{{ log.user }}</td>
-                                    <td>{{ log.action }}</td>
-                                    <td>
-                                        <span :class="getLogTypeBadge(log.type)">
-                                            {{ log.type }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info" @click="$refs['details-' + log.id].toggle()">
-                                            <i data-feather="info" class="feather-sm"></i>
-                                        </button>
-                                        <!-- We would implement a modal or popover for details -->
-                                    </td>
+                                <tr v-for="log in pmlogs" :key="log.logId || log.id">
+                                    <td>{{ log.Name || '-' }}</td>
+                                    <td>{{ log.Actions || '-' }}</td>
+                                    <td>{{ formatDate(log.Date) }}</td>
                                 </tr>
                             </tbody>
                         </table>
-                    </div>
-                    
-                    <!-- Pagination -->
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <div>
-                            <span>Showing {{ logs.length }} of total logs</span>
-                        </div>
-                        <nav>
-                            <ul class="pagination pagination-sm mb-0">
-                                <li :class="['page-item', { disabled: currentPage === 1 }]">
-                                    <a class="page-link" href="#" @click.prevent="changePage(currentPage - 1)">Previous</a>
-                                </li>
-                                <li v-for="page in totalPages" :key="page" :class="['page-item', { active: currentPage === page }]">
-                                    <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
-                                </li>
-                                <li :class="['page-item', { disabled: currentPage === totalPages }]">
-                                    <a class="page-link" href="#" @click.prevent="changePage(currentPage + 1)">Next</a>
-                                </li>
-                            </ul>
-                        </nav>
                     </div>
                 </div>
             </div>
@@ -316,45 +165,21 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.logs-container {
-    transition: all 0.3s;
-    max-width: 100%;
-}
-
 .card {
     border-radius: 10px;
-    border: none;
-    background-color: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-}
-
-.card-header.green-header {
-    background-color: #00a65a;
-    border-bottom: none;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    padding: 15px 20px;
-}
-
-.card-header {
-    background-color: transparent;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.table-responsive {
-    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
 
-.table th {
-    background-color: #f8f9fa;
-    cursor: pointer;
-    user-select: none;
-    position: relative;
+.card-header {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
 }
 
-.sortable:hover {
-    background-color: #e9ecef;
+.spinner-border {
+    width: 2.5rem;
+    height: 2.5rem;
 }
 
 .feather-sm {
@@ -362,71 +187,126 @@ onMounted(() => {
     height: 16px;
 }
 
-.table td {
-    vertical-align: middle;
+.spin {
+    animation: spin 1s linear infinite;
 }
 
-/* Custom badge colors to match your theme */
-.badge {
-    padding: 5px 10px;
-    border-radius: 12px;
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
     font-weight: 500;
+    transition: all 0.3s ease;
 }
 
-.bg-info {
-    background-color: #17a2b8 !important;
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.bg-warning {
-    background-color: #ffc107 !important;
+.btn:active {
+    transform: translateY(0);
 }
 
-.bg-danger {
-    background-color: #dc3545 !important;
+/* DataTable custom styling */
+::v-deep(.dataTables_wrapper) {
+    padding: 10px 0;
 }
 
-.bg-success {
-    background-color: #28a745 !important;
+::v-deep(.dataTables_filter) {
+    margin-bottom: 1rem;
 }
 
-/* Smooth transitions */
-.form-control, .btn {
-    transition: all 0.3s;
+::v-deep(.dataTables_filter input) {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    padding: 8px 12px;
+    margin-left: 0.5rem;
 }
 
-.form-control:focus {
-    border-color: #09dada;
-    box-shadow: 0 0 0 0.2rem rgba(9, 218, 218, 0.25);
+::v-deep(.dataTables_filter input:focus) {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+    outline: none;
 }
 
-.btn-primary {
-    background-color: #09dada;
-    border-color: #09dada;
+::v-deep(.dataTables_length select) {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    padding: 4px 8px;
+    margin: 0 0.5rem;
 }
 
-.btn-primary:hover {
-    background-color: #07b9b9;
-    border-color: #07b9b9;
+::v-deep(.dataTables_info) {
+    color: #6c757d;
+    font-size: 0.9em;
 }
 
-.page-link {
-    color: #09dada;
+/* Reset all pagination button styling and apply clean borders */
+::v-deep(.dataTables_paginate) {
+    margin-top: 1rem;
 }
 
-.page-item.active .page-link {
-    background-color: #09dada;
-    border-color: #09dada;
+::v-deep(.dataTables_paginate .paginate_button) {
+    padding: 0.375rem 0.75rem !important;
+    margin: 0 2px !important;
+    border-radius: 4px !important;
+    border: 1px solid #dee2e6 !important;
+    color: #495057 !important;
+    background-color: #fff !important;
+    background-image: none !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+::v-deep(.dataTables_paginate .paginate_button:hover) {
+    background-color: #e9ecef !important;
+    background-image: none !important;
+    color: #495057 !important;
+    border: 1px solid #adb5bd !important;
+    box-shadow: none !important;
+}
+
+::v-deep(.dataTables_paginate .paginate_button.current) {
+    background-color: #007bff !important;
+    background-image: none !important;
+    color: white !important;
+    border: 1px solid #007bff !important;
+    box-shadow: none !important;
+}
+
+::v-deep(.dataTables_paginate .paginate_button.disabled) {
+    color: #6c757d !important;
+    background-color: #fff !important;
+    background-image: none !important;
+    border: 1px solid #dee2e6 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+
+::v-deep(.dataTables_paginate .paginate_button.disabled:hover) {
+    background-color: #fff !important;
+    background-image: none !important;
+    color: #6c757d !important;
+    border: 1px solid #dee2e6 !important;
+    box-shadow: none !important;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .card-header {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: flex-start !important;
     }
     
     .card-header button {
         margin-top: 10px;
+        align-self: flex-end;
     }
 }
 </style>
