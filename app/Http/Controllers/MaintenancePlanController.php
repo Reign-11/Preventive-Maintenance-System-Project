@@ -484,6 +484,7 @@ public function employeeChecklist(Request $request)
             'disposal' => 'nullable|integer|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:50000',
             'technician' => 'nullable|string|max:255',
+            'details' => 'nullable|string|max:255',
 
         ]);
         $imagePath = null;
@@ -540,6 +541,7 @@ public function employeeChecklist(Request $request)
             $validated['disposal'] , 
             $imagePath,
             $validated['technician'] , 
+            $validated['details'] , 
 
 
         ];
@@ -548,7 +550,7 @@ public function employeeChecklist(Request $request)
         \Log::info('Parameters passed to stored procedure: ', $parameters);
 
         // Call Stored Procedure
-        DB::statement("CALL InsertPreventiveMaintenanceChecklist(?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
+        DB::statement("CALL InsertPreventiveMaintenanceChecklist(?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
 
         self::recordLog('Submitted Checklist First Page in SET A');
 
@@ -841,6 +843,7 @@ public function departmentChecklist(Request $request)
             'disposal' => 'nullable|integer|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'technician' => 'nullable|string|max:255',
+            'details' => 'nullable|string|max:255',
 
         ]);
 
@@ -898,6 +901,7 @@ public function departmentChecklist(Request $request)
             $validated['disposal'],
             $imagePath ,
             $validated['technician'],
+            $validated['details'],
 
         ];
 
@@ -905,7 +909,7 @@ public function departmentChecklist(Request $request)
         \Log::info('Parameters passed to stored procedure: ', $parameters);
 
         // Call the Stored Procedure
-        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
+        DB::statement("CALL InsertPreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $parameters);
 
         self::recordLog('Submitted First  Page in SET A With No Specified Employee');
 
@@ -994,13 +998,14 @@ public function updatePreventiveMaintenance(Request $request, $mainId)
         'printer_details' => 'nullable|string',
         'network_mac_ip_details' => 'nullable|string',
         'technician' => 'nullable|string|max:255',
+        'details' => 'nullable|string|max:255',
 
 
     ]);
 
  
 
-    DB::statement('CALL UpdatePreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+    DB::statement('CALL UpdatePreventiveMaintenance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
         $validated['mainId'],
         $validated['employeeId'],
         $validated['deptId'],
@@ -1043,6 +1048,7 @@ public function updatePreventiveMaintenance(Request $request, $mainId)
         $validated['printer_details'],
         $validated['network_mac_ip_details'],
         $validated['technician'],
+        $validated['details']
 
     ]);
     self::recordLog('Updated First Page in SET A With Add Specific Employee');

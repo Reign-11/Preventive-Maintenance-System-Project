@@ -39,6 +39,7 @@ const form = reactive({
     details:'',
     department: ['']    ,
     code: '',
+    email: '',
 });
 
 // Form validation errors
@@ -176,9 +177,7 @@ onUnmounted(() => {
                                     <button type="button" class="btn btn-sm btn-info me-1">
                                   <i data-feather="edit" style="width: 16px; height: 16px;"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-danger">
-                                <i data-feather="trash-2" style="width: 16px; height: 16px;"></i>
-                                </button>
+                           
                                 </div>
                                   </td>
                                 </tr>
@@ -280,6 +279,20 @@ onUnmounted(() => {
                                     id="details" 
                                     v-model="form.details"
                                     placeholder="Enter details"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 mt-3">
+                            <div class="form-group">
+                                <label for="details" class="form-label">Emails <span class="text-danger">*</span></label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="details" 
+                                    v-model="form.email"
+                                    placeholder="Enter Emails"
                                     required
                                 >
                             </div>

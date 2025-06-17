@@ -70,7 +70,7 @@ onMounted(() => {
 
                 <!-- Logo Container -->
                 <div class="sidebar-logo my-1 d-flex justify-content-center">
-                    <img src="/assets/slogo.svg" alt="Logo">
+                    <img src="/assets/dto.png" alt="Logo">
                 </div>
 
                 <!-- Nav Items Wrapper (Push Down Set A) -->

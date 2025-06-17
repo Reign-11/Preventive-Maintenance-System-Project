@@ -33,22 +33,24 @@ class AdminController extends Controller
             'Details' => 'required|string|max:250',
 
             'Departments' => 'required|array|min:1', 
+            'Emails' => 'nullable|string|max:250',
         ]);
 
         $officeName = $request->input('OfficeName');
 
         $code = $request->input('Code');
         $details = $request->input('Details');
+        $emails = $request->input('Emails');
 
         $departments = implode(',', $request->input('Departments')); // convert to comma-separated
 
         try {
-            DB::statement("CALL AddOfficeWithDepartments(?, ?, ?, ?)", [
+            DB::statement("CALL AddOfficeWithDepartments(?, ?, ?, ?, ?)", [
                 $officeName,
 
                 $code,
                 $details,
-
+                $emails,
                 $departments,
             ]);
 

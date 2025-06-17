@@ -536,7 +536,8 @@ const formData = reactive({
     NetWorkMacIp: "",
 
   },
-      image: ""
+      image: "",
+      details:""
 
 
 });
@@ -617,6 +618,9 @@ watch(selectedDepartments, (newVal) => {
     formData.desktopSpecs.UPS = newVal.ups_details || "";
     formData.desktopSpecs.Printer = newVal.printer_details || "";
     formData.desktopSpecs.NetWorkMacIp = newVal.network_mac_ip_details || "";
+
+    formData.details = newVal.details || "";
+
   }
 });
 
@@ -631,7 +635,7 @@ const updateOsInstalled = (option) => {
   formData.windows10 = 0;
   formData.windows11 = 0;
   formData.other_os = "";
-  formData.license = null; // Reset license when switching OS
+  formData.license = null; 
 
   // Assign value when Windows 10 or 11 is selected
   if (option === "Windows 10") {
@@ -784,6 +788,8 @@ const submitForm = async () => {
       ups_details: desktopSpecs.UPS || '',
       printer_details: desktopSpecs.Printer || '',
       network_mac_ip_details: desktopSpecs.NetWorkMacIp || '',
+      details: formData.details || '',
+
     };
 
     const formPayload = new FormData();
@@ -1087,6 +1093,16 @@ watch(isStatusDropdownOpen, (newVal) => {
     document.removeEventListener("click", handleClickOutside);
   }
 });
+
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
 </script>
 
 <template>
@@ -1110,6 +1126,8 @@ watch(isStatusDropdownOpen, (newVal) => {
               <th>Equipment Number</th>
               <th>Actions</th>
               <th>Status</th>
+              <th>Date</th>
+
             </tr>
           </thead>
           <tbody>
@@ -1130,7 +1148,7 @@ watch(isStatusDropdownOpen, (newVal) => {
                   {{ employee.disposal === '1' ? 'For Disposal' : (employee.disposal == null ? 'Completed' : employee.disposal) }}
                 </span>
               </td>
-            </tr>
+          <td>{{ formatDate(employee.date) }}</td>            </tr>
           </tbody>
         </table>
       </div>
@@ -1200,7 +1218,7 @@ watch(isStatusDropdownOpen, (newVal) => {
                 <!-- For Disposal button (smaller) -->
                 <div class="col-md-2">
                   <label class="form-label invisible">For Disposal</label> <!-- Keeps alignment -->
-                  <button class="btn btn-danger w-100" @click="setForDisposal">
+                  <button class="btn btn-danger w-100" @click="openDisposalModal">
                     <i class="fas fa-trash-alt"></i> Disposal
                   </button>
                 </div>
@@ -1405,6 +1423,16 @@ watch(isStatusDropdownOpen, (newVal) => {
                   <p v-else class="no-image-text">No image available</p>
                 </div>
               </div>
+                    <div class="summary-container">
+            <label for="comments" class="summary-label"> Details </label>
+            <textarea
+              id="comments"
+              v-model="formData.details"
+              class="summary-textarea"
+              rows="3"
+              placeholder="">
+            </textarea>
+          </div>
             </div>
 
           <div class="modal-footer">
@@ -1854,6 +1882,7 @@ watch(isStatusDropdownOpen, (newVal) => {
         </div>
       </div>
     </div>
+    
   </MainLayout>
 </template>
 

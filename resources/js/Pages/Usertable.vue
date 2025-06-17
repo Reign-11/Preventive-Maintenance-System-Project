@@ -193,7 +193,7 @@ const formData = reactive({
   windows10: "0",
   windows11: "0",
   license : "0",
-  other_os: null,
+  other_os: "",
   softwareInstalled: [],
   enrollment: "0",
   adobe_reader: "0",
@@ -221,6 +221,7 @@ const formData = reactive({
     NetWorkMacIp: ""
   },
   image: "",
+  details:""
 });
 
 watch(selectedEmployee, (newVal) => {
@@ -435,7 +436,7 @@ const submitForm = async () => {
       avr_status: formData.avr_status,
       windows10: formData.windows10,
       windows11: formData.windows11,
-      license: formData.license,
+      license: formData.license || 0,
       enrollment: formData.enrollment,
       microsoft: formData.microsoft,
       browser: formData.browser,
@@ -461,6 +462,7 @@ const submitForm = async () => {
       printer_details: formData.desktopSpecs.Printer,
       network_mac_ip_details: formData.desktopSpecs.NetWorkMacIp,
       technician: formData.technician, 
+      details: formData.details
     };
     const formPayload = new FormData();
 
@@ -1023,8 +1025,19 @@ watch(isStatusDropdownOpen, (newVal) => {
               </div>
             </div>
           </div>
+            <div class="summary-container">
+            <label for="comments" class="summary-label"> Details </label>
+            <textarea
+              id="comments"
+              v-model="formData.details"
+              class="summary-textarea"
+              rows="3"
+              placeholder="">
+            </textarea>
+          </div>
         </div>
 
+        
         <div class="modal-footer">
           <button type="button" class="btn cancel-btn" @click="closeModal">
             <i class="fas fa-times"></i> Close

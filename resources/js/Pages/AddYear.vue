@@ -333,12 +333,13 @@ const updateYear = async () => {
         <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editYrModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header bg-warning text-white">
+      <div class="modal-header bg-success text-white">
         <h5 class="modal-title" id="editYrModalLabel">Edit User</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
    <div class="modal-body">
-  <form @submit.prevent="updateUser">
+  <form @submit.prevent="updateYear">
+
     <div class="mb-3">
       <label for="editName" class="form-label">Name</label>
       <input  type="text" id="editName" class="form-control" v-model="form.name" required />
@@ -349,7 +350,7 @@ const updateYear = async () => {
     </div>
     <div class="modal-footer">
       <button type="button"class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-      <button type="submit" class="btn btn-warning" @click="updateYear">Update</button>
+      <button type="submit" class="btn btn-success" @click="updateYear">Update</button>
     </div>
   </form>
 </div>

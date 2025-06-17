@@ -109,7 +109,8 @@ const formData = reactive({
     AVR: "",
     NetWorkMacIp: "",
   },
-  images:""
+  images:"",
+  details:""
 });
 
 watch(selectedEmployee, (newVal) => {
@@ -177,6 +178,9 @@ watch(selectedEmployee, (newVal) => {
     formData.desktopSpecs.UPS = newVal.ups_details || "";
     formData.desktopSpecs.Printer = newVal.printer_details || "";
     formData.desktopSpecs.NetWorkMacIp = newVal.network_mac_ip_details || "";
+
+    formData.details = newVal.details || "";
+
   }
 });
 
@@ -640,6 +644,7 @@ const printDetails = async (emp) => {
                   </div>
                 </div>
               </div>
+
             </div>
 
 
@@ -658,6 +663,7 @@ const printDetails = async (emp) => {
                   </div>
                 </div>
               </div>
+              
               </div>
 
               <!-- Image Card -->
@@ -675,6 +681,16 @@ const printDetails = async (emp) => {
                   <p v-else class="no-image-text">No image available</p>
                 </div>
               </div>
+                    <div class="summary-container">
+            <label for="comments" class="summary-label"> Details </label>
+            <textarea
+              id="comments"
+              v-model="formData.details"
+              class="summary-textarea"
+              rows="3"
+              placeholder="">
+            </textarea>
+          </div>
             </div>
 
 
